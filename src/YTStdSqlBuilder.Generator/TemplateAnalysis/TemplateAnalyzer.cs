@@ -762,14 +762,14 @@ namespace YTStdSqlBuilder.Generator.TemplateAnalysis
             List<(string Name, string Type, bool IsNullable)> methodParams,
             List<TemplateParam> extractedParams)
         {
-            // Use method signature parameters, enriched with ordinals from extraction
+            // Always use method signature types as the source of truth.
+            // The extracted type from b.Param<T>() is only used if no method param exists,
+            // or if the non-generic b.Param() was used (which defaults to "object").
             var result = new List<TemplateParam>();
             int ordinal = 0;
             foreach (var mp in methodParams)
             {
-                var extracted = extractedParams.Find(p => p.ParamName == mp.Name);
-                string typeName = extracted?.TypeName ?? mp.Type;
-                result.Add(new TemplateParam(mp.Name, typeName, mp.IsNullable, ordinal++));
+                result.Add(new TemplateParam(mp.Name, mp.Type, mp.IsNullable, ordinal++));
             }
             return result.ToImmutableArray();
         }

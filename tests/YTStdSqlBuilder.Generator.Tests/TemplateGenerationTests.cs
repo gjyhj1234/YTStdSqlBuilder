@@ -58,4 +58,41 @@ public class TemplateGenerationTests
             d.Severity == DiagnosticSeverity.Warning || d.Severity == DiagnosticSeverity.Error);
         Assert.NotEmpty(relevantDiags);
     }
+
+    [Fact]
+    public void NonGenericParam_GeneratesWithoutErrors()
+    {
+        var (_, _, diagnostics) =
+            GeneratorTestHelper.RunGenerator(GeneratorTestHelper.NonGenericParamSource);
+
+        var errors = GeneratorTestHelper.GetErrors(diagnostics);
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void NonGenericParam_GeneratesCorrectMethodSignature()
+    {
+        var (driver, _, _) =
+            GeneratorTestHelper.RunGenerator(GeneratorTestHelper.NonGenericParamSource);
+
+        var generatedSource = GeneratorTestHelper.GetGeneratedSource(driver, "TestQueries");
+        Assert.NotNull(generatedSource);
+        // Method signature should use int (from method declaration), not object
+        Assert.Contains("int userId", generatedSource);
+        Assert.DoesNotContain("object userId", generatedSource);
+    }
+
+    [Fact]
+    public void NonGenericParam_GeneratedCodeCompiles()
+    {
+        var (_, outputCompilation, _) =
+            GeneratorTestHelper.RunGenerator(GeneratorTestHelper.NonGenericParamSource);
+
+        var compilationErrors = GeneratorTestHelper.GetCompilationErrors(outputCompilation);
+        // Should not have partial method signature mismatch errors
+        var signatureErrors = compilationErrors
+            .Where(d => d.GetMessage().Contains("partial") || d.GetMessage().Contains("signature"))
+            .ToArray();
+        Assert.Empty(signatureErrors);
+    }
 }

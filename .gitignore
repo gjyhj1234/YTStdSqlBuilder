@@ -46,3 +46,6 @@ coverage*/
 
 ## BenchmarkDotNet
 BenchmarkDotNet.Artifacts/
+
+## Source Generator output
+**/Generated/

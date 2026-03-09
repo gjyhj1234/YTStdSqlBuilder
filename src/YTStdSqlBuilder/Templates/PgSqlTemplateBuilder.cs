@@ -18,6 +18,9 @@ public sealed class PgSqlTemplateBuilder
     /// <summary>Parameter reference (maps to method parameter).</summary>
     public ParamExpr Param<T>(string paramName) => new(default(T));
 
+    /// <summary>Parameter reference without explicit type (type inferred from method signature).</summary>
+    public ParamExpr Param(string paramName) => new(null);
+
     /// <summary>Condition reference for WhereIf etc.</summary>
     public bool ConditionRef(string paramName, string conditionTemplate) => false;
 

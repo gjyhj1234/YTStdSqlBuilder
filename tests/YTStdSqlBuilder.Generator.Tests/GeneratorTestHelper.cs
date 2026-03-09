@@ -176,4 +176,26 @@ public static partial class TestQueries
          .From(user);
     }
 }";
+
+    public const string NonGenericParamSource = @"
+using YTStdSqlBuilder;
+using YTStdSqlBuilder.Conditions;
+using YTStdSqlBuilder.Expressions;
+
+[PgSqlTemplate]
+public static partial class TestQueries
+{
+    [PgSqlQuery]
+    public static partial PgSqlRenderResult GetUserById(int userId);
+
+    private static void Define_GetUserById(PgSqlTemplateBuilder b)
+    {
+        var user = b.Table(""users"", ""u"");
+        b.Select(
+            user.Col(""id""),
+            user.Col(""name""))
+         .From(user)
+         .Where(user.Col(""id""), Op.Eq, b.Param(""userId""));
+    }
+}";
 }

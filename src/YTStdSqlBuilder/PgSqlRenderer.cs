@@ -626,7 +626,7 @@ internal static partial class PgSqlRenderer
         {
             Mode = mode;
             _sb = new ValueStringBuilder(initialBuffer);
-            _params = new List<PgSqlParam>();
+            _params = new List<PgSqlParam>(4);
         }
 
         public void Append(char c) => _sb.Append(c);

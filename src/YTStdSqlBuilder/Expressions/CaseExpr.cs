@@ -1,4 +1,5 @@
 using YTStdSqlBuilder.Conditions;
+using YTStdSqlBuilder.Internal;
 
 namespace YTStdSqlBuilder.Expressions;
 
@@ -11,7 +12,7 @@ public sealed class CaseExpr : SqlExpr
 
     public CaseExpr(List<(SqlConditionGroup Condition, SqlExpr Result)> whenClauses, SqlExpr? elseResult = null)
     {
-        WhenClauses = whenClauses ?? throw new ArgumentNullException(nameof(whenClauses));
+        WhenClauses = Guard.NotNull(whenClauses);
         ElseResult = elseResult;
     }
 }

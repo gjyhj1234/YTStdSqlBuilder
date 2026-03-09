@@ -13,7 +13,7 @@ public sealed class QueryResultColumn
     public QueryResultColumn(string name, Type clrType, int ordinal, bool isNullable = false)
     {
         Name = Guard.NotNullOrEmpty(name);
-        PropertyName = ToCamelCase(name);
+        PropertyName = ToPascalCase(name);
         ClrType = Guard.NotNull(clrType);
         Ordinal = ordinal;
         IsNullable = isNullable;
@@ -28,7 +28,7 @@ public sealed class QueryResultColumn
         IsNullable = isNullable;
     }
 
-    private static string ToCamelCase(string name)
+    private static string ToPascalCase(string name)
     {
         if (string.IsNullOrEmpty(name)) return name;
 

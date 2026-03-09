@@ -443,7 +443,6 @@ internal static partial class PgSqlRenderer
             case SqlConditionNodeKind.AndGroup:
             case SqlConditionNodeKind.OrGroup:
                 ctx.Append('(');
-                var childOp = node.NodeKind == SqlConditionNodeKind.OrGroup ? " OR " : " AND ";
                 for (int i = 0; i < node.Children!.Count; i++)
                 {
                     if (i > 0)

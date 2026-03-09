@@ -33,27 +33,34 @@
 
 生成结果的目标是：
 
-- 生成**对应查询结果的Dto结构类**
-  - 即根据查询的字段生成的Dto结构类
-- 生成**两个对外的使用的公共public方法**
-  - 方法一：`List<{{xxx}}Dto> QueryAsync{{xxx}}Dto(NpgsqlConnection conn,string p1,string p2,int p3,int tenantid,long userid)`
-  - 方法二：`bool Query{{xxx}}Json(NpgsqlConnection conn,string p1,string p2,int p3,int tenantid,long userid,ValueStringBuilder b)`
--  运行时**不再重新拼 SQL 主体**
-- 直接调用源生成器输出的两个静态方法
-  - 返回DTO类型
-- 传入
-  - Connection
-  - 类型确认的参数值
-  - int tenantid，租户id
-  - long userid， 用户id
-- 即可得到：
-  - 
-  - 对应参数数组
-  - 可选 DebugSql
+- 生成**对应查询结果的 DTO 结构类**
+  - 即根据查询的 SELECT 字段列表，自动生成对应的 DTO 结构类
+- 生成**静态构建方法**，用户直接调用即可获得 SQL 与参数，运行时**不再重新拼 SQL 主体**
+- 生成结果至少包含：
+  - `string Sql`（编译期常量）
+  - `PgSqlParam[] CreateParams(...)`（参数构造方法，入参为业务参数）
+  - `string BuildDebugSql(...)`（可选，调试用）
+  - DTO 结果结构类型
+  - 从 `NpgsqlDataReader` 映射到 DTO 的 Reader 方法
+
+调用体验目标示例：
+
+```csharp
+// 用户直接调用生成器产出的专用方法
+var result = UserSqlGenerated.GetById(id);
+// result.Sql      => 编译期常量 SQL
+// result.Params   => 构造好的参数数组
+
+// 查询结果结构类型直接可用
+UserSqlGenerated.GetByIdRow row = ...;
+
+// Reader 方法：从 DataReader 直接映射到 DTO
+var dto = UserSqlGenerated.ReadGetByIdRow(reader);
+```
 
 适用于：
 - 没有 `WhereIf`、没有动态结构分支、SQL 模板固定的高频热点场景
-- 或结构大部分固定、少量条件可裁剪的“半静态”场景（需谨慎设计兼容策略）
+- 或结构大部分固定、少量条件可裁剪的"半静态"场景（需谨慎设计兼容策略）
 
 ---
 
@@ -63,8 +70,30 @@
 目标：
 - 开发者写完 SQL 的 select 返回字段后，尽量不需要再手写 DTO / Record
 - 由生成器直接生成对应的结果结构类型与该类型的Reader方法，即直接从DataReader转成DTO / Record对象。
-  - 结构中DTO类型的各个属性名根据Select的列名或别名，属性数据类型需要在Select的构建语法中说明，没有写（默认形式）为string
-  - 因此在实现查询列语法时需要设计可以设置数据类型的方法
+  - 结构中 DTO 类型的各个属性名根据 Select 的列名或别名，属性数据类型需要在 Select 的构建语法中说明，没有写（默认形式）为 `string`
+  - 因此在实现查询列语法时需要设计可以设置数据类型的方法，例如：
+
+```csharp
+// 方式一：通过泛型方法指定列的 CLR 类型
+.Select(
+    user["id"].As<int>("id"),         // int Id
+    user["name"].As<string>("name"),  // string Name（默认类型，可省略泛型）
+    user["age"].As<int>("age"),       // int Age
+    user["balance"].As<decimal>("balance"),
+    Func.Count(All.Value).As<int>("order_count"))
+
+// 方式二：通过 TypedCol 指定
+.Select(
+    user.Col<int>("id"),
+    user.Col("name"),                 // 省略泛型时默认 string
+    user.Col<int>("age"),
+    Func.Count(All.Value).As<int>("order_count"))
+```
+
+  - 具体语法请你选择最适合生产使用的方案，但必须满足：
+    - 能在 Select 项上显式指定 CLR 类型
+    - 未指定时默认为 `string`
+    - Source Generator 能从语法中提取类型信息以生成 DTO 属性
 - 对于能静态生成 SQL 的查询：
   - 生成 SQL 常量
   - 生成参数构造方法
@@ -78,6 +107,29 @@
 这点非常重要：  
 **SQL 常量是否可生成** 与 **查询结果结构是否可生成** 是两个不同维度。  
 即使无法生成固定 SQL，也仍然可能生成结果结构类型。
+
+### Reader 方法生成示例
+生成的 Reader 方法必须使用**基于序号（ordinal）的高性能读取方式**，而非基于列名的低效读取。生成示例：
+
+```csharp
+// 生成器自动生成的 Reader 方法
+public static GetByIdRow ReadGetByIdRow(NpgsqlDataReader reader)
+{
+    return new GetByIdRow
+    {
+        Id = reader.GetInt32(0),
+        Name = reader.GetString(1),
+        Age = reader.IsDBNull(2) ? null : reader.GetInt32(2),
+        Balance = reader.GetDecimal(3)
+    };
+}
+```
+
+要求：
+- 使用 `GetXxx(ordinal)` 方法，而非 `reader["columnName"]`
+- 正确处理可空类型（`IsDBNull` 检查）
+- 序号顺序与 SELECT 字段顺序严格一致
+- 方法为 `static`，AOT 友好
 
 ---
 
@@ -326,6 +378,12 @@ Source Generator 的使用方式必须尽量清晰，不要搞成用户根本不
 - 复合括号条件树
 - `WhereIf` / `AndIf` / `OrIf`
 - `OnGroup` / `HavingGroup`
+- `CASE WHEN ... THEN ... ELSE ... END` 表达式
+- 聚合函数：`COUNT`、`SUM`、`AVG`、`MIN`、`MAX`
+- 常用标量函数：`COALESCE`、`NULLIF`、`CAST`
+- `UNION` / `UNION ALL`（至少预留扩展点，建议实现）
+- `CTE`（`WITH ... AS`）（可选支持，建议至少预留扩展点）
+- `DISTINCT ON (...)` （PostgreSQL 特有，可选支持）
 
 ---
 
@@ -370,7 +428,7 @@ Source Generator 的使用方式必须尽量清晰，不要搞成用户根本不
 - 动态 join 结构
 - 动态 order 列
 
-对于这些场景，应明确回退到运行时解释器���
+对于这些场景，应明确回退到运行时解释器。
 
 ---
 
@@ -378,7 +436,7 @@ Source Generator 的使用方式必须尽量清晰，不要搞成用户根本不
 必须支持自动生成查询结果结构代码。
 
 ### 生成条件
-只要 `SELECT` 返回字段结���可静态确定，即可考虑生成结果结构类型。  
+只要 `SELECT` 返回字段结构可静态确定，即可考虑生成结果结构类型。  
 即使以下情况存在，也应尽量生成结果结构：
 - `WhereIf`
 - 动态 where 条件
@@ -390,7 +448,10 @@ Source Generator 的使用方式必须尽量清晰，不要搞成用户根本不
 - 结果 DTO / record / sealed class / readonly struct（你需要给出最合理的生产级选择）
 - 属性名/字段名
 - 字段别名映射
-- 可选读取辅助方法，如从 `DbDataReader` / `NpgsqlDataReader` 映射
+- **必须生成 Reader 映射方法**：从 `NpgsqlDataReader` 基于序号（ordinal）映射到 DTO
+  - 不是"可选"，而是每个结果结构类型都必须附带 Reader 方法
+  - 使用 `reader.GetXxx(ordinal)` 高性能方式读取
+  - 正确处理可空类型（`reader.IsDBNull(ordinal)` 检查）
 
 ### 命名要求
 需要提供稳定、易理解的命名策略，例如：
@@ -426,21 +487,72 @@ Source Generator 的使用方式必须尽量清晰，不要搞成用户根本不
 你必须设计一个清晰、可维护、可调试的 Source Generator 使用方式。  
 以下是推荐方向，允许你优化，但必须保证清晰与工程可落地。
 
-### 方式 A：通过特性标记模板方法
-例如：
+### 关键问题：Source Generator 如何获得 SQL 模板的定义内容？
+
+这是整个 Source Generator 方案的核心问题，你必须明确回答。  
+Source Generator 在编译期运行，它需要一种方式来"知道"SQL 的结构。  
+推荐方案是：**用户在 partial 方法体中使用与运行时 Builder 一致的 API 描述 SQL 结构，Source Generator 通过语法树分析提取结构信息。**
+
+完整示例（推荐方案）：
+
+```csharp
+[PgSqlTemplate]
+public static partial class UserQueries
+{
+    /// <summary>
+    /// 用户在此方法中用 Builder API 描述 SQL 结构。
+    /// Source Generator 分析此方法的语法树，提取 SQL 结构信息并生成代码。
+    /// 运行时不会执行此方法体——生成器会替换为静态优化版本。
+    /// </summary>
+    [PgSqlQuery]
+    public static partial PgSqlRenderResult GetUserById(int userId);
+    
+    // Source Generator 会分析与此方法同名的"定义方法"来获取 SQL 结构：
+    // 定义方法约定：private static void Define_GetUserById(PgSqlTemplateBuilder b)
+    // 或通过 attribute 参数指定定义方法
+    
+    /// <summary>
+    /// SQL 结构定义方法（Source Generator 的输入源）
+    /// 此方法仅在编译期被 Source Generator 分析语法树，运行时不会被调用。
+    /// 必须使用 Builder API 的子集（可静态分析的部分）。
+    /// </summary>
+    private static void Define_GetUserById(PgSqlTemplateBuilder b)
+    {
+        var user = b.Table("users", "u");
+        b.Select(
+            user.Col<int>("id"),
+            user.Col<string>("name"),
+            user.Col<int>("age"))
+         .From(user)
+         .Where(user.Col("id"), Op.Eq, b.Param<int>("userId"));
+    }
+}
+```
+
+Source Generator 分析 `Define_GetUserById` 的语法树后，会生成：
+- `GetUserById_Sql` 常量
+- `GetUserById(int userId)` 方法实现
+- `GetUserByIdRow` 结果结构类型
+- `ReadGetUserByIdRow(NpgsqlDataReader reader)` Reader 方法
+
+### 可选替代方式
+
+#### 方式 A：通过特性参数传递 SQL 模板（适合简单场景）
 
 ```csharp
 [PgSqlTemplate]
 public static partial class UserSqlTemplates
 {
-    public static partial PgSqlTemplate GetUserById();
+    [PgSqlQuery(
+        Sql = "SELECT \"id\", \"name\" FROM \"users\" WHERE \"id\" = @userId",
+        ResultType = typeof(GetUserByIdRow))]
+    public static partial PgSqlRenderResult GetUserById(int userId);
 }
 ```
 
-由生成器生成对应实现。
+缺点：SQL 字符串失去结构化优势，复杂查询可读性差。
 
-### 方式 B：通过固定 Builder 表达式识别
-例如：
+#### 方式 B：通过固定 Builder 表达式识别
 
 ```csharp
 [PgSqlTemplate]
@@ -449,29 +561,13 @@ static partial void BuildQuery(PgSqlTemplateBuilder b);
 
 由源码生成器解析固定构建逻辑。
 
-### 方式 C：通过专用模板 DSL
-例如：
-
-```csharp
-[PgSqlTemplate]
-public static partial class UserQueries
-{
-    public static partial QueryTemplate<int> GetById();
-}
-```
-
-要求：
-- 明确参数顺序
-- 明确参数名
-- 明确 select 结果结构
-- 便于生成 SQL 常量、参数方法、结果结构类型
-
 ### 你的任务
 请你选择**最适合生产和维护**的一种方案，或给出更优方案，但必须说明理由。  
 优先考虑：
+- Source Generator 如何可靠地获取 SQL 结构信息（这是最关键的）
 - 生成器实现难度合理
 - 用户使用清晰
-- 与运行时 Builder 能协同
+- 与运行时 Builder 能协同（共用 API 语义）
 - AOT 友好
 - 可测试
 - 可生成结果结构类型
@@ -497,6 +593,16 @@ public static class UserSqlGenerated
         public int Id { get; init; }
         public string Name { get; init; } = "";
     }
+
+    // Reader 方法：从 DataReader 直接映射到 DTO（基于序号读取，高性能）
+    public static GetByIdRow ReadGetByIdRow(NpgsqlDataReader reader)
+    {
+        return new GetByIdRow
+        {
+            Id = reader.GetInt32(0),
+            Name = reader.GetString(1)
+        };
+    }
 }
 ```
 
@@ -505,6 +611,7 @@ public static class UserSqlGenerated
 - 参数构造逻辑尽量少分配
 - DebugSql 逻辑可复用字面量格式化器
 - 结果结构类型自动生成
+- Reader 映射方法自动生成（基于序号的高性能读取）
 - 命名清晰
 - 使用体验好
 
@@ -639,10 +746,11 @@ order.UserId
 - ColumnExpr
 - ParamExpr
 - LiteralExpr
-- FuncExpr
+- FuncExpr（包含 `COUNT`、`SUM`、`AVG`、`MIN`、`MAX`、`COALESCE`、`NULLIF`、`CAST` 等）
 - SubQueryExpr
-- RawExpr（危险）
+- RawExpr（危险，必须显式标记）
 - AllExpr / TableAllExpr
+- CaseExpr（`CASE WHEN ... THEN ... ELSE ... END`）
 - 可选 BinaryExpr
 
 ## 9.2 条件模型必须支持
@@ -692,8 +800,10 @@ order.UserId
 
 - 单字段、多字段
 - 别名
-- 聚合函数
-- 函数表达式
+- **指定列的 CLR 类型**（用于 Source Generator 生成 DTO 属性类型，默认为 `string`）
+- 聚合函数（`COUNT`、`SUM`、`AVG`、`MIN`、`MAX`）
+- 函数表达式（`COALESCE`、`NULLIF`、`CAST` 等）
+- `CASE WHEN` 表达式
 - 子查询作为 Select 项
 - 原始 SQL 表达式（显式危险 API）
 - `*`
@@ -849,10 +959,24 @@ AND
 ## 11.2 Update
 支持：
 - `UPDATE`
-- `SET`
-- `SET IF`
+- `SET` — 无条件设置字段值
+- `SET IF` / `SetIf` — 条件成立时才设置字段值（类似 `WhereIf` 的思路）
 - `WHERE`
 - 可选 `RETURNING`
+
+`SetIf` 详细说明与示例：
+```csharp
+var update = PgSql
+    .Update(user)
+    .Set(user["updated_at"], Param.Value(DateTime.UtcNow))          // 始终设置
+    .SetIf(!string.IsNullOrEmpty(newName), user["name"], Param.Value(newName))  // 条件成立时才设置
+    .SetIf(newAge.HasValue, user["age"], Param.Value(newAge))       // 条件成立时才设置
+    .Where(user["id"], Op.Eq, Param.Value(userId));
+```
+
+行为规则：
+- `SetIf(condition, column, value)` — 当 `condition` 为 `false` 时，完全忽略该 SET 项
+- 如果所有 `SetIf` 条件均不成立且无无条件 `Set`，最终无任何 SET 项时应抛异常（不能生成无效 UPDATE 语句）
 
 要求：
 - 默认禁止无 where 全表更新
@@ -1017,6 +1141,20 @@ public readonly struct PgSqlParam
 - 默认禁止
 - 明确开关允许关闭保护
 
+## 14.8 Builder 状态校验
+必须在 `Build()` / 渲染时校验 Builder 状态的有效性，例如：
+- `SELECT` 无 `FROM`（子查询或特殊情况除外） — 是否报错或允许
+- `UPDATE` 无 `SET` 项 — 必须报错
+- `INSERT` 无列或无值 — 必须报错
+- 重复调用 `From()` — 是否报错或覆盖
+- 请明确每种无效状态的处理策略并测试
+
+## 14.9 Builder 实例的可重用性与线程安全
+必须明确：
+- Builder 实例是**一次性使用**还是**可重用**？（推荐一次性使用）
+- Builder 实例是否线程安全？（推荐不保证线程安全，明确文档说明）
+- `Build()` 后是否允许继续修改？（推荐不允许，或记录清晰行为）
+
 ---
 
 # 15. 性能设计要求
@@ -1098,9 +1236,9 @@ var paidOrder = Tables.Orders.As("o2");
 
 var query = PgSql
     .Select(
-        user["id"],
-        user["name"],
-        Func.Count(All.Value).As("order_count"))
+        user["id"].As<int>("id"),                        // 指定 CLR 类型为 int
+        user["name"],                                     // 默认 string
+        Func.Count(All.Value).As<int>("order_count"))    // 聚合函数 + 类型
     .From(user)
     .LeftJoin(order, join => join
         .On(user["id"], Op.Eq, order["user_id"])
@@ -1126,22 +1264,82 @@ var result = query.Build();
 var debugSql = query.BuildDebugSql();
 ```
 
+### CASE WHEN 示例
+```csharp
+.Select(
+    user["id"].As<int>("id"),
+    Case.When(user["age"], Op.Lt, Param.Value(18)).Then(Literal.Of("minor"))
+        .When(user["age"], Op.Lt, Param.Value(60)).Then(Literal.Of("adult"))
+        .Else(Literal.Of("senior"))
+        .As<string>("age_group"))
+```
+
 要求：
 - 比 `Col.Of("u", "id")` 更易读
 - 比满屏 `"u"`、`"o"` 字符串更工程化
 - 不引入沉重 ORM 风格
 - 保持结构清晰
+- Select 项支持指定 CLR 类型（用于 DTO 生成）
 
 ---
 
 ## 18.2 静态模板示例
-请设计一种清晰的方式，使以下目标可实现：
+请设计一种清晰的方式，使以下目标可实现。以下为推荐示例（与 6.2 节保持一致）：
 
 ```csharp
 [PgSqlTemplate]
 public static partial class UserQueries
 {
-    public static partial QueryTemplate<GetUserByIdRow> GetUserById();
+    // 用户声明查询方法签名（partial 方法，由 Source Generator 生成实现）
+    [PgSqlQuery]
+    public static partial PgSqlRenderResult GetUserById(int userId);
+
+    // SQL 结构定义方法（Source Generator 分析此方法的语法树）
+    private static void Define_GetUserById(PgSqlTemplateBuilder b)
+    {
+        var user = b.Table("users", "u");
+        b.Select(
+            user.Col<int>("id"),
+            user.Col<string>("name"),
+            user.Col<int>("age"))
+         .From(user)
+         .Where(user.Col("id"), Op.Eq, b.Param<int>("userId"));
+    }
+}
+```
+
+Source Generator 会自动生成：
+
+```csharp
+// === 生成的代码 ===
+public static partial class UserQueries
+{
+    public const string GetUserById_Sql = 
+        "SELECT \"u\".\"id\", \"u\".\"name\", \"u\".\"age\" FROM \"users\" AS \"u\" WHERE \"u\".\"id\" = @p0";
+
+    public static partial PgSqlRenderResult GetUserById(int userId)
+    {
+        return new PgSqlRenderResult(
+            GetUserById_Sql,
+            new PgSqlParam[] { new("@p0", userId) });
+    }
+
+    public sealed class GetUserByIdRow
+    {
+        public int Id { get; init; }
+        public string Name { get; init; } = "";
+        public int Age { get; init; }
+    }
+
+    public static GetUserByIdRow ReadGetUserByIdRow(NpgsqlDataReader reader)
+    {
+        return new GetUserByIdRow
+        {
+            Id = reader.GetInt32(0),
+            Name = reader.GetString(1),
+            Age = reader.GetInt32(2)
+        };
+    }
 }
 ```
 
@@ -1151,36 +1349,90 @@ public static partial class UserQueries
 - 参数构造方法
 - DebugSql 方法
 - `GetUserByIdRow` 结果结构类型
+- Reader 映射方法
 
 ---
 
 ## 18.3 动态 SQL 但静态结果结构示例
-需要支持类似语义：
+需要支持以下语义——当 SQL 定义中包含动态条件时，Source Generator 应：
+- 检测到 `WhereIf` / `AndIf` 等动态条件 → SQL 常量**无法**生成
+- 检测到 `SELECT` 列结构固定 → 结果结构类型**仍然可以**生成
 
 ```csharp
 [PgSqlTemplate]
 public static partial class UserQueries
 {
-    public static partial QueryTemplate<SearchUsersRow> SearchUsers();
+    // 此查询包含 WhereIf，SQL 不可静态生成
+    // 但 SELECT 列固定，DTO 仍可生成
+    [PgSqlQuery(FallbackToInterpreter = true)]
+    public static partial PgSqlRenderResult SearchUsers(
+        string? name, int? minAge, int? maxAge);
+
+    private static void Define_SearchUsers(PgSqlTemplateBuilder b)
+    {
+        var user = b.Table("users", "u");
+        b.Select(
+            user.Col<int>("id"),
+            user.Col<string>("name"),
+            user.Col<int>("order_count"))
+         .From(user)
+         .WhereIf(!string.IsNullOrEmpty(b.Param<string?>("name")),
+                  user.Col("name"), Op.ILike, b.Param<string?>("name"))
+         .AndIf(b.Param<int?>("minAge").HasValue,
+                user.Col("age"), Op.Gte, b.Param<int?>("minAge"))
+         .AndIf(b.Param<int?>("maxAge").HasValue,
+                user.Col("age"), Op.Lte, b.Param<int?>("maxAge"));
+    }
 }
 ```
 
-即使 `SearchUsers()` 内部有：
-- `WhereIf`
-- `AndIf`
-
-导致无法生成固定 SQL 常量，只要 `SELECT` 返回列固定，仍然要生成：
+Source Generator 应生成：
 
 ```csharp
-public sealed partial class SearchUsersRow
+// === 生成的代码 ===
+public static partial class UserQueries
 {
-    public int Id { get; init; }
-    public string Name { get; init; } = "";
-    public int OrderCount { get; init; }
+    // SQL 常量不生成（因为包含 WhereIf）
+
+    // 方法实现回退到运行时解释器
+    public static partial PgSqlRenderResult SearchUsers(
+        string? name, int? minAge, int? maxAge)
+    {
+        // 内部调用运行时 Builder/Interpreter 构建 SQL
+        var user = Table.Def("users").As("u");
+        var builder = PgSql
+            .Select(user["id"].As<int>(), user["name"], user["order_count"].As<int>())
+            .From(user)
+            .WhereIf(!string.IsNullOrEmpty(name), user["name"], Op.ILike, Param.Value(name))
+            .AndIf(minAge.HasValue, user["age"], Op.Gte, Param.Value(minAge))
+            .AndIf(maxAge.HasValue, user["age"], Op.Lte, Param.Value(maxAge));
+        return builder.Build();
+    }
+
+    // DTO 仍然可以生成（SELECT 列固定）
+    public sealed class SearchUsersRow
+    {
+        public int Id { get; init; }
+        public string Name { get; init; } = "";
+        public int OrderCount { get; init; }
+    }
+
+    // Reader 方法仍然可以生成
+    public static SearchUsersRow ReadSearchUsersRow(NpgsqlDataReader reader)
+    {
+        return new SearchUsersRow
+        {
+            Id = reader.GetInt32(0),
+            Name = reader.GetString(1),
+            OrderCount = reader.GetInt32(2)
+        };
+    }
 }
 ```
 
-同时 SQL 本体回退运行时解释器。
+这个示例清楚地展示了：
+- SQL 常量是否可生成 与 结果结构是否可生成 是**两个独立维度**
+- 即使 SQL 回退运行时解释器，DTO 和 Reader 方法仍然自动生成
 
 ---
 
@@ -1222,14 +1474,14 @@ public sealed partial class SearchUsersRow
 - `SqlComparisonOperator`
 
 模板 / 生成器：
-- `PgSqlTemplate`
-- `PgSqlTemplateAttribute`
-- `QueryTemplate<TResult>`
+- `PgSqlTemplateAttribute`（`[PgSqlTemplate]` — 标记包含模板定义的类）
+- `PgSqlQueryAttribute`（`[PgSqlQuery]` — 标记单个查询模板方法）
 - `QueryResultShape`
 - `QueryResultColumn`
-- `TemplateAnalyzer`
-- `TemplateEmitter`
-- `TemplateSupportAnalyzer`
+- `TemplateAnalyzer`（分析语法树提取 SQL 结构）
+- `TemplateEmitter`（生成代码输出）
+- `TemplateSupportAnalyzer`（判定是否可静态生成）
+- `ResultShapeAnalyzer`（分析 SELECT 列结构以生成 DTO）
 - `TemplateFallbackPolicy`
 
 内部：
@@ -1270,6 +1522,10 @@ public sealed partial class SearchUsersRow
 20. 标识符转义正确性
 21. 别名引用正确性
 22. 与少 magic string 设计相关的表/列 API 可用性
+23. CASE WHEN 表达式
+24. 聚合函数（COUNT / SUM / AVG / MIN / MAX）
+25. SetIf 条件赋值
+26. Builder 状态校验（无 SET 的 UPDATE、无列的 INSERT 等）
 
 ## 20.2 Source Generator
 1. 静态模板识别
@@ -1280,6 +1536,7 @@ public sealed partial class SearchUsersRow
 6. 别名/字段名映射到结果属性的正确性
 7. 动态 SQL 回退解释器但仍生成结果结构的正确性
 8. 不支持模板的诊断/回退策略
+9. Reader 方法生成正确性（序号映射、可空类型处理）
 9. 生成结果与运行时解释器输出一致性
 
 ## 20.3 Benchmark
@@ -1343,6 +1600,7 @@ src/
       SubQueryExpr.cs
       RawExpr.cs
       AllExpr.cs
+      CaseExpr.cs
 
     Conditions/
       SqlCondition.cs
@@ -1353,9 +1611,9 @@ src/
       SqlComparisonOperator.cs
 
     Templates/
-      PgSqlTemplate.cs
       PgSqlTemplateAttribute.cs
-      QueryTemplate.cs
+      PgSqlQueryAttribute.cs
+      PgSqlTemplateBuilder.cs
       TemplateFallbackPolicy.cs
 
     Internal/
@@ -1416,6 +1674,9 @@ benchmarks/
 12. 哪些地方故意没有做“极限优化”，原因是什么？
 13. 为什么结果结构生成能够显著减少业务编码量？
 14. 结果结构类型应选用 record/class/readonly struct 的依据是什么？
+15. Source Generator 如何从用户代码（Define_ 方法或其他方式）中可靠地提取 SQL 结构信息？
+16. Builder 实例是否一次性使用？线程安全策略是什么？
+17. Reader 方法为什么使用基于序号（ordinal）而非列名的读取方式？
 
 ---
 

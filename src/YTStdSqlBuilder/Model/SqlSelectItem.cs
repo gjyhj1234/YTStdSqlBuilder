@@ -15,4 +15,7 @@ public sealed class SqlSelectItem
         Alias = alias;
         ClrType = clrType;
     }
+
+    public static implicit operator SqlSelectItem(SqlExpr expr) => new(expr);
+    public static implicit operator SqlSelectItem(ColumnExpr expr) => new(expr);
 }

@@ -29,6 +29,13 @@ public sealed class PgSqlUpdateBuilder
         return this;
     }
 
+    public PgSqlUpdateBuilder SetIf(bool condition, ColumnExpr column, SqlExpr value)
+    {
+        if (condition)
+            _assignments.Add(new SqlAssignment(column, value));
+        return this;
+    }
+
     // WHERE
     public PgSqlUpdateBuilder Where(SqlExpr left, SqlComparisonOperator op, SqlExpr right)
     {

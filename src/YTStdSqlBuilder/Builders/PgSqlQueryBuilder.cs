@@ -197,6 +197,20 @@ public sealed class PgSqlQueryBuilder
         return this;
     }
 
+    public PgSqlQueryBuilder OrderBy(params SqlExpr[] exprs)
+    {
+        foreach (var expr in exprs)
+            _orderBy.Add(new SqlOrderItem(expr, descending: false));
+        return this;
+    }
+
+    public PgSqlQueryBuilder OrderByDesc(params SqlExpr[] exprs)
+    {
+        foreach (var expr in exprs)
+            _orderBy.Add(new SqlOrderItem(expr, descending: true));
+        return this;
+    }
+
     // LIMIT / OFFSET
     public PgSqlQueryBuilder Limit(int limit)
     {

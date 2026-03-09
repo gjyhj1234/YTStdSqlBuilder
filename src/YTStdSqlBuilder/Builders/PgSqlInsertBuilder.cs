@@ -8,6 +8,7 @@ public sealed class PgSqlInsertBuilder
     private readonly SqlTableSource _table;
     private readonly List<SqlAssignment> _assignments = new();
     private readonly List<SqlSelectItem> _returning = new();
+    private ColumnExpr[]? _columns;
     private bool _built;
 
     internal SqlTableSource Table => _table;
@@ -22,6 +23,26 @@ public sealed class PgSqlInsertBuilder
     public PgSqlInsertBuilder Set(ColumnExpr column, SqlExpr value)
     {
         _assignments.Add(new SqlAssignment(column, value));
+        return this;
+    }
+
+    public PgSqlInsertBuilder Columns(params ColumnExpr[] columns)
+    {
+        _columns = columns;
+        return this;
+    }
+
+    public PgSqlInsertBuilder Values(params SqlExpr[] values)
+    {
+        if (_columns == null || _columns.Length == 0)
+            ThrowHelper.ThrowInvalidOperation("Columns must be specified before Values.");
+
+        if (_columns.Length != values.Length)
+            ThrowHelper.ThrowInvalidOperation("Column count must match value count.");
+
+        for (int i = 0; i < _columns.Length; i++)
+            _assignments.Add(new SqlAssignment(_columns[i], values[i]));
+
         return this;
     }
 

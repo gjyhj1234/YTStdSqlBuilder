@@ -277,8 +277,9 @@ namespace YTStdSqlBuilder.Generator.Emission
 
         private static string GenerateConditionExpression(string conditionParam, ImmutableArray<TemplateParam> parameters)
         {
-            // Use a bool parameter with '_condition' suffix
-            // The user declares this parameter in their method signature
+            // conditionParam is the base parameter name (e.g., "name") derived from b.Param("name").
+            // We append '_condition' to create the boolean parameter name (e.g., "name_condition")
+            // that the user declares in their method signature.
             return $"{conditionParam}_condition";
         }
 

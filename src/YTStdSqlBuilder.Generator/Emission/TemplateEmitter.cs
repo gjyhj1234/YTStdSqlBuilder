@@ -277,30 +277,9 @@ namespace YTStdSqlBuilder.Generator.Emission
 
         private static string GenerateConditionExpression(string conditionParam, ImmutableArray<TemplateParam> parameters)
         {
-            // Try to find matching parameter to generate appropriate null/empty check
-            foreach (var p in parameters)
-            {
-                if (p.ParamName == conditionParam)
-                {
-                    if (p.TypeName == "string" || p.TypeName == "string?")
-                    {
-                        return $"!string.IsNullOrEmpty({conditionParam})";
-                    }
-                    if (p.IsNullable)
-                    {
-                        return $"{conditionParam}.HasValue";
-                    }
-                }
-            }
-
-            // If it looks like a ConditionRef call, just use HasValue or non-null
-            if (conditionParam.Contains("."))
-            {
-                return conditionParam;
-            }
-
-            // Default: check for null
-            return $"{conditionParam} != null";
+            // Use a bool parameter with '_condition' suffix
+            // The user declares this parameter in their method signature
+            return $"{conditionParam}_condition";
         }
 
         internal static string BuildStaticSql(TemplateQueryInfo query)
@@ -505,6 +484,9 @@ namespace YTStdSqlBuilder.Generator.Emission
                 "IS NOT NULL" => "IsNotNull",
                 "BETWEEN" => "Between",
                 "NOT BETWEEN" => "NotBetween",
+                "@>" => "ArrayContains",
+                "<@" => "ArrayContainedBy",
+                "&&" => "ArrayOverlaps",
                 _ => "Eq"
             };
         }

@@ -62,7 +62,7 @@ public class UserQueriesTests
     [Fact]
     public void SearchUsers_DynamicQuery_WithAllParams()
     {
-        var result = UserQueries.SearchUsers("alice", 18);
+        var result = UserQueries.SearchUsers(true, "alice", true, 18);
 
         Assert.Contains("SELECT", result.Sql);
         Assert.Contains("FROM", result.Sql);
@@ -71,9 +71,9 @@ public class UserQueriesTests
     [Fact]
     public void SearchUsers_DynamicQuery_WithNullParams()
     {
-        var result = UserQueries.SearchUsers(null, null);
+        var result = UserQueries.SearchUsers(false, "", false, 0);
 
-        // With null params, dynamic conditions should be skipped
+        // With false condition params, dynamic conditions should be skipped
         Assert.Contains("SELECT", result.Sql);
         Assert.Contains("FROM", result.Sql);
     }

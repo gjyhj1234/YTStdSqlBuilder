@@ -22,4 +22,7 @@ public static class Op
     public static readonly SqlComparisonOperator NotBetween = SqlComparisonOperator.NotBetween;
     public static readonly SqlComparisonOperator Exists = SqlComparisonOperator.Exists;
     public static readonly SqlComparisonOperator NotExists = SqlComparisonOperator.NotExists;
+    public static readonly SqlComparisonOperator ArrayContains = SqlComparisonOperator.ArrayContains;
+    public static readonly SqlComparisonOperator ArrayContainedBy = SqlComparisonOperator.ArrayContainedBy;
+    public static readonly SqlComparisonOperator ArrayOverlaps = SqlComparisonOperator.ArrayOverlaps;
 }

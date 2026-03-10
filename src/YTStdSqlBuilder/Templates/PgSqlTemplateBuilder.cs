@@ -21,7 +21,8 @@ public sealed class PgSqlTemplateBuilder
     /// <summary>Parameter reference without explicit type (type inferred from method signature).</summary>
     public ParamExpr Param(string paramName) => new(null);
 
-    /// <summary>Condition reference for WhereIf etc.</summary>
+    /// <summary>Condition reference for WhereIf etc. (Deprecated: WhereIf now uses 3-arg form with auto-generated bool parameter)</summary>
+    [System.Obsolete("ConditionRef is no longer needed. WhereIf/AndIf/OrIf now use the same 3-arg form as Where/And/Or. A bool parameter with '_condition' suffix is auto-generated.")]
     public bool ConditionRef(string paramName, string conditionTemplate) => false;
 
     /// <summary>Query building.</summary>
@@ -50,11 +51,11 @@ public sealed class TemplateQueryBuilder
 {
     public TemplateQueryBuilder From(TemplateTableSource table) => this;
     public TemplateQueryBuilder Where(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
-    public TemplateQueryBuilder WhereIf(bool condition, SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+    public TemplateQueryBuilder WhereIf(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
     public TemplateQueryBuilder And(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
-    public TemplateQueryBuilder AndIf(bool condition, SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+    public TemplateQueryBuilder AndIf(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
     public TemplateQueryBuilder Or(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
-    public TemplateQueryBuilder OrIf(bool condition, SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+    public TemplateQueryBuilder OrIf(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
     public TemplateQueryBuilder LeftJoin(TemplateTableSource table, Action<object> onBuilder) => this;
     public TemplateQueryBuilder InnerJoin(TemplateTableSource table, Action<object> onBuilder) => this;
     public TemplateQueryBuilder GroupBy(params SqlExpr[] fields) => this;

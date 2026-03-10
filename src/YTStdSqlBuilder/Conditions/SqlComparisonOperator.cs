@@ -19,5 +19,8 @@ public enum SqlComparisonOperator
     Between,
     NotBetween,
     Exists,
-    NotExists
+    NotExists,
+    ArrayContains,
+    ArrayContainedBy,
+    ArrayOverlaps
 }

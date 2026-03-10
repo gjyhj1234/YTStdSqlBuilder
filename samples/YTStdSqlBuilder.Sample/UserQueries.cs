@@ -77,9 +77,10 @@ public static partial class UserQueries
 
     /// <summary>
     /// Search users — dynamic query with WhereIf/AndIf.
+    /// Bool parameters with '_condition' suffix control whether each condition is included.
     /// </summary>
     [PgSqlQuery]
-    public static partial PgSqlRenderResult SearchUsers(string? name, int? minAge);
+    public static partial PgSqlRenderResult SearchUsers(bool name_condition, string name, bool minAge_condition, int minAge);
 
     private static void Define_SearchUsers(PgSqlTemplateBuilder b)
     {
@@ -88,11 +89,7 @@ public static partial class UserQueries
             user.Col<int>("id"),
             user.Col<string>("name"))
          .From(user)
-         .WhereIf(
-             b.ConditionRef("name", "!string.IsNullOrEmpty"),
-             user.Col("name"), Op.ILike, b.Param<string>("name"))
-         .AndIf(
-             b.ConditionRef("minAge", ".HasValue"),
-             user.Col("age"), Op.Gte, b.Param<int>("minAge"));
+         .WhereIf(user.Col("name"), Op.ILike, b.Param<string>("name"))
+         .AndIf(user.Col("age"), Op.Gte, b.Param<int>("minAge"));
     }
 }

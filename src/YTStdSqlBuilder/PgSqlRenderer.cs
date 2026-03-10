@@ -611,6 +611,9 @@ internal static partial class PgSqlRenderer
         SqlComparisonOperator.NotILike => "NOT ILIKE",
         SqlComparisonOperator.Between => "BETWEEN",
         SqlComparisonOperator.NotBetween => "NOT BETWEEN",
+        SqlComparisonOperator.ArrayContains => "@>",
+        SqlComparisonOperator.ArrayContainedBy => "<@",
+        SqlComparisonOperator.ArrayOverlaps => "&&",
         _ => "="
     };
 

@@ -9,32 +9,11 @@
 
 ## 目录
 
-- [YTStd.Common（通用工具库）](#ytstdcommon通用工具库)
 - [YTStdSqlBuilder（SQL 构建器）](#ytstdsqlbuildersql-构建器)
 - [YTStdSqlBuilder.Generator（源代码生成器）](#ytstdsqlbuildergenerator源代码生成器)
 
 ---
 
-## YTStd.Common（通用工具库）
-
-> **状态**：待添加。以下为预留 API 规划。
-
-### 项目信息
-
-| 属性 | 值 |
-|------|-----|
-| 路径 | `src/YTStd.Common/` |
-| 目标框架 | net10.0 |
-| NuGet 包 | YTStd.Common |
-
-### 核心类型
-
-```csharp
-// DBNullable<T> — 数据库可空值包装
-// （具体 API 待用户代码合并后补充）
-```
-
----
 
 ## YTStdSqlBuilder（SQL 构建器）
 

@@ -40,7 +40,6 @@
 |------|---------|------|
 | `PgSqlRenderResult` | YTStdSqlBuilder | SQL 构建结果，包含 Sql 和 Params |
 | `PgSqlParam` | YTStdSqlBuilder | SQL 参数，包含 Name、Value、DbType |
-| `DBNullable<T>` | YTStd.Common | 数据库可空值包装 |
 ```
 
 ### 2.2 为什么使用参考文档而非直接嵌入源代码
@@ -208,7 +207,7 @@ grep -rn "public.*class\|public.*struct\|public.*record\|public.*enum" src/ | \
 - `PgSqlParam` — 参数对象（`.Name`, `.Value`, `.DbType`）
 - `PgSqlQueryBuilder` — 查询构建器（用于类型推断）
 
-从 **YTStd.Common**：
+从 **YTStdCommon**：
 - `DBNullable<T>` — 数据库可空值包装
 
 ### 关键交互模式

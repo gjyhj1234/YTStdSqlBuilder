@@ -25,8 +25,8 @@
 | 模块 | 文件名 | 状态 |
 |------|--------|------|
 | SQL Builder | `sql-builder-prompt.md` | ✅ 完成 |
-| 日志系统 | `logging-prompt.md` | 📝 待补充 |
-| ADO 数据访问 | `ado-prompt.md` | 📝 待补充 |
+| 日志系统 | `logging-prompt.md` | ✅ 完成 |
+| ADO 数据访问 | `ado-prompt.md` | 📝 待优化 |
 
 后续新增模块时，按此格式命名：
 - `{module-name}-prompt.md`
@@ -108,7 +108,6 @@
 请查阅 [已有项目参考文档](../../docs/existing-projects-reference.md)。
 
 ### 直接依赖
-- **YTStd.Common** — `DBNullable<T>` 等通用类型
 - **YTStdSqlBuilder** — `PgSqlRenderResult`, `PgSqlParam` 等 SQL 构建输出类型
 
 ### 引用示例

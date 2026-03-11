@@ -11,7 +11,7 @@ public class UserQueriesTests
     [Fact]
     public void GetUserById_NonGenericParam_GeneratesCorrectSql()
     {
-        var result = UserQueries.GetUserById(42);
+        var result = UserQueries.GetUserById(1, 100L, 42);
 
         Assert.Equal(
             "SELECT \"u\".\"id\", \"u\".\"name\" FROM \"users\" AS \"u\" WHERE \"u\".\"id\" = @p0",
@@ -24,7 +24,7 @@ public class UserQueriesTests
     [Fact]
     public void GetUserByIdTyped_GenericParam_GeneratesCorrectSql()
     {
-        var result = UserQueries.GetUserByIdTyped(99);
+        var result = UserQueries.GetUserByIdTyped(1, 100L, 99);
 
         Assert.Equal(
             "SELECT \"u\".\"id\", \"u\".\"name\" FROM \"users\" AS \"u\" WHERE \"u\".\"id\" = @p0",
@@ -37,7 +37,7 @@ public class UserQueriesTests
     [Fact]
     public void GetAllUsers_NoParams_GeneratesCorrectSql()
     {
-        var result = UserQueries.GetAllUsers();
+        var result = UserQueries.GetAllUsers(1, 100L);
 
         Assert.Equal(
             "SELECT \"u\".\"id\", \"u\".\"name\" FROM \"users\" AS \"u\"",
@@ -48,7 +48,7 @@ public class UserQueriesTests
     [Fact]
     public void GetUserDetails_MultipleColumns_GeneratesCorrectSql()
     {
-        var result = UserQueries.GetUserDetails(1);
+        var result = UserQueries.GetUserDetails(1, 100L, 1);
 
         Assert.Contains("\"u\".\"id\"", result.Sql);
         Assert.Contains("\"u\".\"name\"", result.Sql);
@@ -62,7 +62,7 @@ public class UserQueriesTests
     [Fact]
     public void SearchUsers_DynamicQuery_WithAllParams()
     {
-        var result = UserQueries.SearchUsers(true, "alice", true, 18);
+        var result = UserQueries.SearchUsers(1, 100L, true, "alice", true, 18);
 
         Assert.Contains("SELECT", result.Sql);
         Assert.Contains("FROM", result.Sql);
@@ -71,7 +71,7 @@ public class UserQueriesTests
     [Fact]
     public void SearchUsers_DynamicQuery_WithNullParams()
     {
-        var result = UserQueries.SearchUsers(false, "", false, 0);
+        var result = UserQueries.SearchUsers(1, 100L, false, "", false, 0);
 
         // With false condition params, dynamic conditions should be skipped
         Assert.Contains("SELECT", result.Sql);

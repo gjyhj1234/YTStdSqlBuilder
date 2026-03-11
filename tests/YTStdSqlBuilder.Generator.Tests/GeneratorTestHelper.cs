@@ -32,6 +32,10 @@ internal static class GeneratorTestHelper
         var npgsqlAssembly = typeof(NpgsqlTypes.NpgsqlDbType).Assembly;
         references.Add(MetadataReference.CreateFromFile(npgsqlAssembly.Location));
 
+        // Add YTStdLogger reference (needed for Logger.Debug in generated code)
+        var loggerAssembly = typeof(YTStdLogger.Core.Logger).Assembly;
+        references.Add(MetadataReference.CreateFromFile(loggerAssembly.Location));
+
         return CSharpCompilation.Create(
             "TestAssembly",
             new[] { syntaxTree },
@@ -84,7 +88,7 @@ using YTStdSqlBuilder.Expressions;
 public static partial class TestQueries
 {
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetUserById(int userId);
+    public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id);
 
     private static void Define_GetUserById(PgSqlTemplateBuilder b)
     {
@@ -93,7 +97,7 @@ public static partial class TestQueries
             user.Col<int>(""id""),
             user.Col<string>(""name""))
          .From(user)
-         .Where(user.Col(""id""), Op.Eq, b.Param<int>(""userId""));
+         .Where(user.Col(""id""), Op.Eq, b.Param<int>(""id""));
     }
 }";
 
@@ -106,7 +110,7 @@ using YTStdSqlBuilder.Expressions;
 public static partial class TestQueries
 {
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetUserDetails(int userId);
+    public static partial PgSqlRenderResult GetUserDetails(int tenantId, long userId, int id);
 
     private static void Define_GetUserDetails(PgSqlTemplateBuilder b)
     {
@@ -117,7 +121,7 @@ public static partial class TestQueries
             user.Col<string>(""email""),
             user.Col<bool>(""is_active""))
          .From(user)
-         .Where(user.Col(""id""), Op.Eq, b.Param<int>(""userId""));
+         .Where(user.Col(""id""), Op.Eq, b.Param<int>(""id""));
     }
 }";
 
@@ -130,7 +134,7 @@ using YTStdSqlBuilder.Expressions;
 public static partial class TestQueries
 {
     [PgSqlQuery]
-    public static partial PgSqlRenderResult SearchUsers(bool name_condition, string name, bool minAge_condition, int minAge);
+    public static partial PgSqlRenderResult SearchUsers(int tenantId, long userId, bool name_condition, string name, bool minAge_condition, int minAge);
 
     private static void Define_SearchUsers(PgSqlTemplateBuilder b)
     {
@@ -153,7 +157,7 @@ using YTStdSqlBuilder.Expressions;
 public static partial class TestQueries
 {
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetUserById(int userId);
+    public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id);
 }";
 
     public const string NoParametersSource = @"
@@ -165,7 +169,7 @@ using YTStdSqlBuilder.Expressions;
 public static partial class TestQueries
 {
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetAllUsers();
+    public static partial PgSqlRenderResult GetAllUsers(int tenantId, long userId);
 
     private static void Define_GetAllUsers(PgSqlTemplateBuilder b)
     {
@@ -186,7 +190,7 @@ using YTStdSqlBuilder.Expressions;
 public static partial class TestQueries
 {
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetUserById(int userId);
+    public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id);
 
     private static void Define_GetUserById(PgSqlTemplateBuilder b)
     {
@@ -195,7 +199,7 @@ public static partial class TestQueries
             user.Col(""id""),
             user.Col(""name""))
          .From(user)
-         .Where(user.Col(""id""), Op.Eq, b.Param(""userId""));
+         .Where(user.Col(""id""), Op.Eq, b.Param(""id""));
     }
 }";
 }

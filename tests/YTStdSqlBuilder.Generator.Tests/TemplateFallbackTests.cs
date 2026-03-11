@@ -35,7 +35,9 @@ public class TemplateFallbackTests
 
         var generatedSource = GeneratorTestHelper.GetGeneratedSource(driver, "TestQueries");
         Assert.NotNull(generatedSource);
-        // The generated method should include bool condition parameters
+        // The generated method should include tenantId/userId and bool condition parameters
+        Assert.Contains("int tenantId", generatedSource);
+        Assert.Contains("long userId", generatedSource);
         Assert.Contains("bool name_condition", generatedSource);
         Assert.Contains("string name", generatedSource);
         Assert.Contains("bool minAge_condition", generatedSource);

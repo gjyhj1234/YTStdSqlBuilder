@@ -78,8 +78,11 @@ public class TemplateGenerationTests
         var generatedSource = GeneratorTestHelper.GetGeneratedSource(driver, "TestQueries");
         Assert.NotNull(generatedSource);
         // Method signature should use int (from method declaration), not object
-        Assert.Contains("int userId", generatedSource);
-        Assert.DoesNotContain("object userId", generatedSource);
+        Assert.Contains("int id", generatedSource);
+        Assert.DoesNotContain("object id", generatedSource);
+        // Should contain tenantId and userId parameters
+        Assert.Contains("int tenantId", generatedSource);
+        Assert.Contains("long userId", generatedSource);
     }
 
     [Fact]

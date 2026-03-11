@@ -21,7 +21,7 @@
 
 | 类型 | 来源项目 | 用途 |
 |------|---------|------|
-| `Logger` | YTStdLogger | 日志记录（`Logger.Debug`, `Logger.Error`, `Logger.Info`） |
+| `Logger` | YTStdLogger | 日志记录（`Logger.Debug(int, long, Func<string>)`, `Logger.Error(int, long, string)`, `Logger.Info(int, long, string)`） |
 
 ---
 
@@ -139,13 +139,13 @@ public static class I18n
 
 ### 4.3 语言资源定义方式
 
-语言资源使用纯 C# 静态字典定义，**不使用 .resx 文件**：
+语言资源使用纯 C# 静态**只读**字典定义，**不使用 .resx 文件**：
 
 ```csharp
 [I18nResource]
 public static class LangZhCn
 {
-    public static readonly Dictionary<string, string> Resources = new()
+    public static readonly IReadOnlyDictionary<string, string> Resources = new Dictionary<string, string>()
     {
         // === 通用 ===
         ["common.success"] = "操作成功",
@@ -173,7 +173,7 @@ public static class LangZhCn
 [I18nResource]
 public static class LangEn
 {
-    public static readonly Dictionary<string, string> Resources = new()
+    public static readonly IReadOnlyDictionary<string, string> Resources = new Dictionary<string, string>()
     {
         ["common.success"] = "Operation successful",
         ["common.failed"] = "Operation failed",
@@ -278,20 +278,31 @@ string detailMsg = $"{I18n.T(K.Common.ValidationError)}: 共 {errorCount} 个错
 
 ### 5.4 在 ADO / 数据库操作中的集成
 
+ADO 层**仅** CRUD 操作返回的 `ErrorMessage` 使用国际化，日志本身不使用国际化：
+
 ```csharp
 public static async Task<DbInsResult> InsertUserAsync(int tenantId, long userId, string name, int age)
 {
-    Logger.Debug(tenantId, userId, $"[InsertUserAsync] 开始插入用户: name={name}, age={age}");
+    // ADO 层 Debug 日志不使用国际化，直接使用中文
+    Logger.Debug(tenantId, userId, () => $"[InsertUserAsync] 开始插入用户: name={name}, age={age}");
     try
     {
         // ... 执行数据库操作 ...
-        Logger.Debug(tenantId, userId, $"[InsertUserAsync] 插入成功, id={result.Id}");
+        Logger.Debug(tenantId, userId, () => $"[InsertUserAsync] 插入成功, id={result.Id}");
         return result;
     }
     catch (Exception ex)
     {
-        Logger.Error(tenantId, userId, $"[InsertUserAsync] {I18n.T(tenantId, K.Db.InsertFailed)}: {ex}");
-        return new DbInsResult { Success = false, ErrorMessage = I18n.T(tenantId, K.Db.InsertFailed) };
+        // ADO 层 Error 日志不使用国际化
+        Logger.Error(tenantId, userId, $"[InsertUserAsync] 执行异常: {ex}");
+        return new DbInsResult
+        {
+            Success = false,
+            // ErrorMessage 使用国际化语言，用于返回前端展示
+            ErrorMessage = I18n.T(tenantId, K.Db.InsertFailed),
+            // DebugMessage 是堆栈信息，不使用国际化
+            DebugMessage = $"SQL=..., 异常={ex}"
+        };
     }
 }
 ```
@@ -320,8 +331,8 @@ Console.WriteLine(I18n.T(1001, K.Common.Success));   // 日语翻译（如已注
 internal static class I18nStore
 {
     // 按 Lang 枚举值索引，O(1) 查找
-    private static readonly Dictionary<string, string>?[] _resources
-        = new Dictionary<string, string>?[8];
+    private static readonly IReadOnlyDictionary<string, string>?[] _resources
+        = new IReadOnlyDictionary<string, string>?[8];
 
     // 租户语言偏好：tenantId => Lang
     private static readonly ConcurrentDictionary<int, Lang> _tenantLangs = new();
@@ -369,7 +380,10 @@ T(key) → _resources[(int)DefaultLang]?.TryGetValue(key, out val)
 ## 8. 在其他工程中的集成
 
 ### 8.1 ADO 工程
-- 错误信息使用 `I18n.T(tenantId, key)` 返回国际化文本
+- **仅** CRUD 操作返回结构中的 `ErrorMessage` 字段使用 `I18n.T(tenantId, key)` 返回国际化文本，用于前端展示
+- ADO 层的 `Logger.Info` / `Logger.Debug` / `Logger.Error` 日志**不使用**国际化语言，直接使用中文
+- `DebugMessage` 是堆栈信息，用于开发调试，**不使用**国际化语言
+- DDL 操作不使用国际化（DDL 日志使用固定中文）
 
 ### 8.2 Entity 工程
 - CRUD 方法中的用户提示使用国际化键
@@ -397,10 +411,10 @@ Logger.Info(0, 0L, $"[I18n] 初始化完成, 默认语言: {defaultLang}");
 Logger.Info(0, 0L, $"[I18n] 注册语言包: {lang}, 键数量: {resources.Count}");
 
 // 租户语言切换
-Logger.Debug(tenantId, 0L, $"[I18n] 设置租户语言: tenantId={tenantId}, lang={lang}");
+Logger.Debug(tenantId, 0L, () => $"[I18n] 设置租户语言: tenantId={tenantId}, lang={lang}");
 
 // 翻译键未找到（Debug 级别）
-Logger.Debug(tenantId, 0L, $"[I18n] 翻译键未找到: key={key}, lang={lang}");
+Logger.Debug(tenantId, 0L, () => $"[I18n] 翻译键未找到: key={key}, lang={lang}");
 ```
 
 ---

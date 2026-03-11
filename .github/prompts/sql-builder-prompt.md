@@ -1294,7 +1294,7 @@ public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, i
 
 ## 16.1.2 Debug 日志要求
 
-生成的实现方法中，必须在以下关键节点添加 `Logger.Debug` 调用：
+生成的实现方法中，必须在以下关键节点添加 `Logger.Debug` 调用（使用 `Func<string>` 延迟求值重载，避免 Debug 未启用时产生不必要的字符串分配）：
 
 1. **方法入口**：记录方法名称，表明开始构建 SQL
 2. **SQL 构建完成**：记录方法名称 + 生成的 SQL 文本
@@ -1304,7 +1304,7 @@ public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, i
 // 生成的代码示例（静态查询）
 public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id)
 {
-    Logger.Debug(tenantId, userId, $"[GetUserById] SQL: {GetUserById_Sql}");
+    Logger.Debug(tenantId, userId, () => $"[GetUserById] SQL: {GetUserById_Sql}");
     return new PgSqlRenderResult(
         GetUserById_Sql,
         new PgSqlParam[] { new("@p0", id) });
@@ -1313,10 +1313,10 @@ public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, i
 // 生成的代码示例（动态查询）
 public static partial PgSqlRenderResult SearchUsers(int tenantId, long userId, bool name_condition, string name, bool minAge_condition, int minAge)
 {
-    Logger.Debug(tenantId, userId, "[SearchUsers] 开始构建动态SQL");
+    Logger.Debug(tenantId, userId, () => "[SearchUsers] 开始构建动态SQL");
     // ... 构建 SQL ...
     var __result__ = builder.Build();
-    Logger.Debug(tenantId, userId, $"[SearchUsers] SQL: {__result__.Sql}");
+    Logger.Debug(tenantId, userId, () => $"[SearchUsers] SQL: {__result__.Sql}");
     return __result__;
 }
 ```
@@ -1341,7 +1341,10 @@ catch (Exception ex)
 
 - **Debug 日志**：用于开发阶段调试 SQL 生成逻辑，以及上线后通过 `Logger.EnableTenantDebug(tenantId)` 对指定租户开启跟踪调试
 - **Error 日志**：用于记录完整堆栈信息，便于快速定位问题
-- 日志 API 参考 `YTStdLogger.Core.Logger` 静态类（`Logger.Debug(int tenantId, long userId, string message)`）
+- 日志 API 参考 `YTStdLogger.Core.Logger` 静态类
+  - `Logger.Debug(int tenantId, long userId, Func<string> messageFactory)` — 延迟求值，Debug 未启用时不构建字符串
+  - `Logger.Debug(int tenantId, long userId, string message)` — 直接传入字符串
+  - `Logger.Error(int tenantId, long userId, string message)` — 错误日志
 
 ## 16.1.5 项目引用要求
 
@@ -1471,7 +1474,7 @@ public static partial class UserQueries
 
     public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id)
     {
-        Logger.Debug(tenantId, userId, $"[GetUserById] SQL: {GetUserById_Sql}");
+        Logger.Debug(tenantId, userId, () => $"[GetUserById] SQL: {GetUserById_Sql}");
         return new PgSqlRenderResult(
             GetUserById_Sql,
             new PgSqlParam[] { new("@p0", id) });
@@ -1558,7 +1561,7 @@ public static partial class UserQueries
     public static partial PgSqlRenderResult SearchUsers(
         int tenantId, long userId, string? name, int? minAge, int? maxAge)
     {
-        Logger.Debug(tenantId, userId, "[SearchUsers] 开始构建动态SQL");
+        Logger.Debug(tenantId, userId, () => "[SearchUsers] 开始构建动态SQL");
         // 内部调用运行时 Builder/Interpreter 构建 SQL
         var user = Table.Def("users").As("u");
         var builder = PgSql
@@ -1568,7 +1571,7 @@ public static partial class UserQueries
             .AndIf(minAge.HasValue, user["age"], Op.Gte, Param.Value(minAge))
             .AndIf(maxAge.HasValue, user["age"], Op.Lte, Param.Value(maxAge));
         var __result__ = builder.Build();
-        Logger.Debug(tenantId, userId, $"[SearchUsers] SQL: {__result__.Sql}");
+        Logger.Debug(tenantId, userId, () => $"[SearchUsers] SQL: {__result__.Sql}");
         return __result__;
     }
 

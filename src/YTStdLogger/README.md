@@ -36,10 +36,45 @@ LogOptions options = new LogOptions
 Logger.Init(options);
 Logger.EnableTenantDebug(1002); // 仅租户1002临时开启Debug
 Logger.Info(1001, 90001, "hello");
+
+// 推荐使用 Func<string> 延迟求值重载，避免 Debug 未启用时产生不必要的字符串分配
+Logger.Debug(1001, 90001, () => $"[SomeMethod] 参数详情: id={id}, name={name}");
+
 await Logger.ShutdownAsync();
 ```
 
 说明：默认采用全局单例日志引擎，业务侧通过 `Logger` 直接传入 `tenantId` 与 `userId`，避免每租户创建日志对象。
+
+## API 概览
+
+### 两种重载
+
+每个日志等级方法（Fatal/Error/Warn/Info/Debug）均提供两种重载：
+
+```csharp
+// 1. 直接传入字符串 — 适用于 Error/Fatal 等始终启用的等级
+Logger.Error(tenantId, userId, $"[方法名] 异常: {ex}");
+
+// 2. Func<string> 延迟求值 — 推荐用于 Debug 等可能被全局禁用的等级
+// 仅在该等级启用时才调用工厂方法构建字符串，避免不必要的 GC 压力
+Logger.Debug(tenantId, userId, () => $"[方法名] SQL: {sql}, 参数: {paramValue}");
+```
+
+### 完整方法列表
+
+| 方法 | 直接字符串 | 延迟求值 |
+|------|-----------|---------|
+| Fatal | `Fatal(int tenantId, long userId, string message)` | `Fatal(int tenantId, long userId, Func<string> messageFactory)` |
+| Error | `Error(int tenantId, long userId, string message)` | `Error(int tenantId, long userId, Func<string> messageFactory)` |
+| Warn | `Warn(int tenantId, long userId, string message)` | `Warn(int tenantId, long userId, Func<string> messageFactory)` |
+| Info | `Info(int tenantId, long userId, string message)` | `Info(int tenantId, long userId, Func<string> messageFactory)` |
+| Debug | `Debug(int tenantId, long userId, string message)` | `Debug(int tenantId, long userId, Func<string> messageFactory)` |
+
+### 何时使用哪种重载
+
+- **Debug**：推荐使用 `Func<string>` 重载，因为生产环境通常禁用 Debug，避免无意义字符串分配
+- **Info**：如果日志消息包含复杂插值，推荐使用 `Func<string>` 重载
+- **Error/Fatal**：通常使用直接字符串重载，因为这些等级几乎始终启用
 
 ## 供其他工程自动编码调用的设置建议
 
@@ -49,7 +84,8 @@ await Logger.ShutdownAsync();
 项目统一使用 YTStdLogger.Core.Logger 静态门面。
 禁止创建每租户 Logger 对象。
 应用启动时调用 Logger.Init(LogOptions)。
-业务日志统一调用 Logger.Info/Error/Warn/Debug/Fatal(tenantId, userId, message)。
+业务日志统一调用 Logger.Info/Error/Warn/Debug/Fatal(tenantId, userId, message) 或 Func<string> 延迟求值重载。
+Debug 日志推荐使用 Func<string> 重载：Logger.Debug(tenantId, userId, () => $"...");
 应用退出时调用 await Logger.ShutdownAsync()。
 日志目录结构必须为 yyyyMM/yyyyMMdd/tenantId/level.txt。
 ```
@@ -62,7 +98,7 @@ await Logger.ShutdownAsync();
 
 ```csharp
 Logger.EnableTenantDebug(tenantId);
-Logger.Debug(tenantId, userId, "仅该租户会放行的调试日志");
+Logger.Debug(tenantId, userId, () => "仅该租户会放行的调试日志");
 Logger.DisableTenantDebug(tenantId);
 ```
 

@@ -64,14 +64,32 @@ YTStdI18n ────→ YTStdLogger（日志记录）
 
 所有模块在实现时，必须遵循以下日志规范：
 
+### Logger API（两种重载）
+
+Logger 提供 `string` 和 `Func<string>` 两种重载：
+
+```csharp
+// 直接传入字符串（适用于 Error/Fatal 等始终启用的等级）
+Logger.Error(tenantId, userId, $"[方法名] 异常: {ex}");
+
+// 延迟求值（推荐用于 Debug/Info 等可能被全局禁用的等级）
+// 仅在该等级启用时才调用工厂方法构建字符串，避免不必要的 GC 压力
+Logger.Debug(tenantId, userId, () => $"[方法名] SQL: {sql}");
+```
+
 ### Debug 日志
 - 方法入口、关键节点、返回前均需记录 `Logger.Debug`
+- **必须使用 `Func<string>` 延迟求值重载**，避免 Debug 未启用时产生不必要的字符串分配
 - 记录即时值（参数值、SQL、返回结果等），便于开发与指定租户跟踪调试
 - 支持通过 `Logger.EnableTenantDebug(tenantId)` 运行时开启指定租户调试
+- Debug 日志仅在 CRUD 操作过程中使用；DDL 操作使用 `Logger.Info`
 
 ### Error 日志
 - 异常时必须记录完整堆栈信息：`Logger.Error(tenantId, userId, $"[方法名] 异常: {ex}")`
 - 必须包含：方法名、SQL（如有）、参数值、完整异常 `ex.ToString()`
+
+### Fatal 日志
+- DDL 操作（建表、修改字段、创建索引）异常时使用 `Logger.Fatal` 并调用 `Environment.FailFast` 终止程序
 
 ### 方法签名
 - 所有公开方法必须包含 `int tenantId, long userId` 参数

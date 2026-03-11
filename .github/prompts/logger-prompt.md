@@ -112,12 +112,15 @@
   - `ValueTask ShutdownAsync()`
 - 基础写入（必须）：
   - `void Log(int tenantId, long userId, LogLevel level, string message)`
-- 快捷方法（必须）：
-  - `Fatal(int tenantId, long userId, string message)`
-  - `Error(int tenantId, long userId, string message)`
-  - `Warn(int tenantId, long userId, string message)`
-  - `Info(int tenantId, long userId, string message)`
-  - `Debug(int tenantId, long userId, string message)`
+  - `void Log(int tenantId, long userId, LogLevel level, Func<string> messageFactory)` — 延迟求值重载
+- 快捷方法（必须，每个方法同时提供 `string` 和 `Func<string>` 两种重载）：
+  - `Fatal(int tenantId, long userId, string message)` / `Fatal(int tenantId, long userId, Func<string> messageFactory)`
+  - `Error(int tenantId, long userId, string message)` / `Error(int tenantId, long userId, Func<string> messageFactory)`
+  - `Warn(int tenantId, long userId, string message)` / `Warn(int tenantId, long userId, Func<string> messageFactory)`
+  - `Info(int tenantId, long userId, string message)` / `Info(int tenantId, long userId, Func<string> messageFactory)`
+  - `Debug(int tenantId, long userId, string message)` / `Debug(int tenantId, long userId, Func<string> messageFactory)`
+- **`Func<string>` 重载的语义**：先检查 `IsEnabled(tenantId, level)`，仅在启用时才调用 `messageFactory()` 构建字符串。
+  这样在 Debug 等级未启用时，避免因 `$"..."` 插值产生不必要的字符串分配与 GC 压力。推荐在高频路径上使用此重载。
 - 运行时租户级 Debug 开关（必须）：
   - `EnableTenantDebug(int tenantId)`
   - `DisableTenantDebug(int tenantId)`

@@ -552,7 +552,7 @@ public static partial class UserQueries
     /// 运行时不会执行此方法体——生成器会替换为静态优化版本。
     /// </summary>
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetUserById(int userId);
+    public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id);
     
     // Source Generator 会分析与此方法同名的"定义方法"来获取 SQL 结构：
     // 定义方法约定：private static void Define_GetUserById(PgSqlTemplateBuilder b)
@@ -571,14 +571,14 @@ public static partial class UserQueries
             user.Col<string>("name"),
             user.Col<int>("age"))
          .From(user)
-         .Where(user.Col("id"), Op.Eq, b.Param<int>("userId"));
+         .Where(user.Col("id"), Op.Eq, b.Param<int>("id"));
     }
 }
 ```
 
 Source Generator 分析 `Define_GetUserById` 的语法树后，会生成：
 - `GetUserById_Sql` 常量
-- `GetUserById(int userId)` 方法实现
+- `GetUserById(int tenantId, long userId, int id)` 方法实现（含 Logger.Debug 调用）
 - `GetUserByIdRow` 结果结构类型
 - `ReadGetUserByIdRow(NpgsqlDataReader reader)` Reader 方法
 
@@ -1279,6 +1279,80 @@ public readonly struct PgSqlRenderResult
 
 ---
 
+# 16.1 日志集成要求（YTStdLogger）
+
+Source Generator 生成的所有 `[PgSqlQuery]` 方法实现中，**必须**集成 `YTStdLogger.Core.Logger` 进行调试与错误日志记录。
+
+## 16.1.1 方法签名要求
+
+所有 `[PgSqlQuery]` 标记的 partial 方法，**必须**在参数列表中包含 `int tenantId, long userId` 作为前两个参数，用于日志中记录租户与用户信息。
+
+```csharp
+[PgSqlQuery]
+public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id);
+```
+
+## 16.1.2 Debug 日志要求
+
+生成的实现方法中，必须在以下关键节点添加 `Logger.Debug` 调用：
+
+1. **方法入口**：记录方法名称，表明开始构建 SQL
+2. **SQL 构建完成**：记录方法名称 + 生成的 SQL 文本
+3. **参数即时值**：记录传入的参数值，便于调试
+
+```csharp
+// 生成的代码示例（静态查询）
+public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id)
+{
+    Logger.Debug(tenantId, userId, $"[GetUserById] SQL: {GetUserById_Sql}");
+    return new PgSqlRenderResult(
+        GetUserById_Sql,
+        new PgSqlParam[] { new("@p0", id) });
+}
+
+// 生成的代码示例（动态查询）
+public static partial PgSqlRenderResult SearchUsers(int tenantId, long userId, bool name_condition, string name, bool minAge_condition, int minAge)
+{
+    Logger.Debug(tenantId, userId, "[SearchUsers] 开始构建动态SQL");
+    // ... 构建 SQL ...
+    var __result__ = builder.Build();
+    Logger.Debug(tenantId, userId, $"[SearchUsers] SQL: {__result__.Sql}");
+    return __result__;
+}
+```
+
+## 16.1.3 Error 日志要求
+
+当 SQL 构建过程中发生异常时，必须使用 `Logger.Error` 记录：
+- 完整异常堆栈信息（`ex.ToString()`）
+- 方法名称
+- 当前参数值
+- 已构建的部分 SQL（如果可用）
+
+```csharp
+catch (Exception ex)
+{
+    Logger.Error(tenantId, userId, $"[{methodName}] SQL构建异常: {ex}");
+    throw;
+}
+```
+
+## 16.1.4 日志用途说明
+
+- **Debug 日志**：用于开发阶段调试 SQL 生成逻辑，以及上线后通过 `Logger.EnableTenantDebug(tenantId)` 对指定租户开启跟踪调试
+- **Error 日志**：用于记录完整堆栈信息，便于快速定位问题
+- 日志 API 参考 `YTStdLogger.Core.Logger` 静态类（`Logger.Debug(int tenantId, long userId, string message)`）
+
+## 16.1.5 项目引用要求
+
+使用 Source Generator 生成代码的项目，必须添加对 `YTStdLogger` 的项目引用：
+
+```xml
+<ProjectReference Include="..\..\src\YTStdLogger\YTStdLogger.csproj" />
+```
+
+---
+
 # 17. 代码风格与可维护性要求
 
 你必须输出的是**可维护工程代码**，不是只追求跑通。
@@ -1370,7 +1444,7 @@ public static partial class UserQueries
 {
     // 用户声明查询方法签名（partial 方法，由 Source Generator 生成实现）
     [PgSqlQuery]
-    public static partial PgSqlRenderResult GetUserById(int userId);
+    public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id);
 
     // SQL 结构定义方法（Source Generator 分析此方法的语法树）
     private static void Define_GetUserById(PgSqlTemplateBuilder b)
@@ -1381,7 +1455,7 @@ public static partial class UserQueries
             user.Col<string>("name"),
             user.Col<int>("age"))
          .From(user)
-         .Where(user.Col("id"), Op.Eq, b.Param<int>("userId"));
+         .Where(user.Col("id"), Op.Eq, b.Param<int>("id"));
     }
 }
 ```
@@ -1395,11 +1469,12 @@ public static partial class UserQueries
     public const string GetUserById_Sql = 
         "SELECT \"u\".\"id\", \"u\".\"name\", \"u\".\"age\" FROM \"users\" AS \"u\" WHERE \"u\".\"id\" = @p0";
 
-    public static partial PgSqlRenderResult GetUserById(int userId)
+    public static partial PgSqlRenderResult GetUserById(int tenantId, long userId, int id)
     {
+        Logger.Debug(tenantId, userId, $"[GetUserById] SQL: {GetUserById_Sql}");
         return new PgSqlRenderResult(
             GetUserById_Sql,
-            new PgSqlParam[] { new("@p0", userId) });
+            new PgSqlParam[] { new("@p0", id) });
     }
 
     public sealed class GetUserByIdRow
@@ -1444,7 +1519,7 @@ public static partial class UserQueries
     // 但 SELECT 列固定，DTO 仍可生成
     [PgSqlQuery(FallbackToInterpreter = true)]
     public static partial PgSqlRenderResult SearchUsers(
-        string? name, int? minAge, int? maxAge);
+        int tenantId, long userId, string? name, int? minAge, int? maxAge);
 
     private static void Define_SearchUsers(PgSqlTemplateBuilder b)
     {
@@ -1481,8 +1556,9 @@ public static partial class UserQueries
 
     // 方法实现回退到运行时解释器
     public static partial PgSqlRenderResult SearchUsers(
-        string? name, int? minAge, int? maxAge)
+        int tenantId, long userId, string? name, int? minAge, int? maxAge)
     {
+        Logger.Debug(tenantId, userId, "[SearchUsers] 开始构建动态SQL");
         // 内部调用运行时 Builder/Interpreter 构建 SQL
         var user = Table.Def("users").As("u");
         var builder = PgSql
@@ -1491,7 +1567,9 @@ public static partial class UserQueries
             .WhereIf(!string.IsNullOrEmpty(name), user["name"], Op.ILike, Param.Value(name))
             .AndIf(minAge.HasValue, user["age"], Op.Gte, Param.Value(minAge))
             .AndIf(maxAge.HasValue, user["age"], Op.Lte, Param.Value(maxAge));
-        return builder.Build();
+        var __result__ = builder.Build();
+        Logger.Debug(tenantId, userId, $"[SearchUsers] SQL: {__result__.Sql}");
+        return __result__;
     }
 
     // DTO 仍然可以生成（SELECT 列固定）

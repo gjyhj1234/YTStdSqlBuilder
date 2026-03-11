@@ -172,7 +172,7 @@ public sealed class DbIndex
     public string IndexName { get; init; } = "";
     public string TableName { get; init; } = "";
     public bool IsUnique { get; init; }
-    public string Columns { get; init; } = "";
+    public string[] Columns { get; init; } = Array.Empty<string>();
 }
 ```
 
@@ -185,9 +185,21 @@ public sealed class DbIndex
 ```csharp
 public sealed class DbOptions
 {
-    /// <summary>PostgreSQL 连接字符串</summary>
-    public string ConnectionString { get; init; } = "";
-
+    /// <summary>PostgreSQL 主机地址</summary>
+    public string Host { get; init; } = "localhost";
+    
+    /// <summary>PostgreSQL 端口</summary>
+    public int Port { get; init; } = 5432;
+    
+    /// <summary>数据库名称</summary>
+    public string Database { get; init; } = "";
+    
+    /// <summary>数据库用户名</summary>
+    public string Username { get; init; } = "";
+    
+    /// <summary>数据库密码</summary>
+    public string Password { get; init; } = "";
+    
     /// <summary>最小连接数（初始化时自动创建）</summary>
     public int MinPoolSize { get; init; } = 2;
 
@@ -202,6 +214,15 @@ public sealed class DbOptions
 
     /// <summary>连接池中空闲连接的注销时间（秒）</summary>
     public int IdleTimeoutSeconds { get; init; } = 300;
+    
+    /// <summary>
+    /// 构建 Npgsql 连接字符串。对象化设置避免拼接字符串导致错误。
+    /// </summary>
+    public string BuildConnectionString()
+    {
+        return $"Host={Host};Port={Port};Database={Database};Username={Username};Password={Password};" +
+               $"Timeout={ConnectionTimeoutSeconds};Command Timeout={ConnectionTimeoutSeconds}";
+    }
 }
 ```
 
@@ -250,11 +271,11 @@ public static async ValueTask<NpgsqlBatch> GetBatchAsync(int tenantId, long user
 ```csharp
 // 1. 从连接池获取连接
 var conn = GetConnection();
-Logger.Debug(tenantId, userId, $"[GetBatchAsync] 从连接池获取连接成功");
+Logger.Debug(tenantId, userId, () => $"[GetBatchAsync] 从连接池获取连接成功");
 
 // 2. 创建事务
 var tx = await conn.BeginTransactionAsync();
-Logger.Debug(tenantId, userId, $"[GetBatchAsync] 事务创建成功");
+Logger.Debug(tenantId, userId, () => $"[GetBatchAsync] 事务创建成功");
 
 // 3. 创建 NpgsqlBatch 并关联事务
 var batch = new NpgsqlBatch(conn, tx);
@@ -264,7 +285,7 @@ var cmd1 = new NpgsqlBatchCommand("SELECT set_config('app.user_id', @userId::tex
 cmd1.Parameters.AddWithValue("userId", userId);
 batch.BatchCommands.Add(cmd1);
 
-Logger.Debug(tenantId, userId, $"[GetBatchAsync] 已添加 set_config 命令，userId={userId}");
+Logger.Debug(tenantId, userId, () => $"[GetBatchAsync] 已添加 set_config 命令，userId={userId}");
 
 // 5. 返回 batch
 return batch;
@@ -275,6 +296,13 @@ return batch;
 ```csharp
 /// <summary>从连接池获取一个可用连接</summary>
 public static NpgsqlConnection GetConnection()
+```
+
+#### `ReturnConnection` — 归还连接到连接池
+
+```csharp
+/// <summary>归还连接到连接池。验证连接状态，无效连接丢弃并补充新连接。</summary>
+public static void ReturnConnection(NpgsqlConnection conn)
 ```
 
 #### `BatchCommitAsync` — 批量提交事务
@@ -309,8 +337,8 @@ public static ValueTask<DbInsResult> InsertTxAsync(
 **独立事务（`InsertAsync`）执行过程**：
 
 ```csharp
-var sw = Stopwatch.StartNew();
-Logger.Debug(tenantId, userId, $"[InsertAsync] 开始执行，SQL={sql}");
+Stopwatch? sw = Logger.IsTenantDebugEnabled(tenantId) ? Stopwatch.StartNew() : null;
+Logger.Debug(tenantId, userId, () => $"[InsertAsync] 开始执行，SQL={sql}");
 
 // 1. 获取事务批处理
 var batch = await GetBatchAsync(tenantId, userId);
@@ -320,12 +348,10 @@ var cmd = new NpgsqlBatchCommand(sql);
 for (int i = 0; i < parameters.Length; i++)
 {
     var p = parameters[i];
-    Logger.Debug(tenantId, userId,
+    Logger.Debug(tenantId, userId, () =>
         $"[InsertAsync] 参数[{i}]: Name={p.Name}, Value={p.Value}, DbType={p.DbType}");
-    if (p.DbType.HasValue)
-        cmd.Parameters.AddWithValue(p.Name, p.DbType.Value, p.Value ?? DBNull.Value);
-    else
-        cmd.Parameters.AddWithValue(p.Name, p.Value ?? DBNull.Value);
+    // PgSqlParam 必须指定 DbType 以提升 Npgsql 参数绑定性能
+    cmd.Parameters.AddWithValue(p.Name, p.DbType, p.Value ?? DBNull.Value);
 }
 batch.BatchCommands.Add(cmd);
 
@@ -338,9 +364,9 @@ if (await reader.ReadAsync())
 await reader.CloseAsync();
 await batch.Transaction!.CommitAsync();
 
-sw.Stop();
-Logger.Debug(tenantId, userId,
-    $"[InsertAsync] 执行完成，耗时={sw.ElapsedMilliseconds}ms，Id={id}");
+sw?.Stop();
+Logger.Debug(tenantId, userId, () =>
+    $"[InsertAsync] 执行完成，耗时={sw?.ElapsedMilliseconds ?? 0}ms，Id={id}");
 
 // 4. 归还连接
 ReturnConnection(batch.Connection!);
@@ -404,8 +430,8 @@ public static async ValueTask<DbUdqResult> GetListAsync(
 **`GetListAsync<T>` 执行过程**：
 
 ```csharp
-var sw = Stopwatch.StartNew();
-Logger.Debug(tenantId, userId, $"[GetListAsync] 开始执行，SQL={sql}");
+Stopwatch? sw = Logger.IsTenantDebugEnabled(tenantId) ? Stopwatch.StartNew() : null;
+Logger.Debug(tenantId, userId, () => $"[GetListAsync] 开始执行，SQL={sql}");
 
 // 1. 获取连接
 var conn = GetConnection();
@@ -427,9 +453,9 @@ while (await reader.ReadAsync())
     rowCount++;
 }
 
-sw.Stop();
-Logger.Debug(tenantId, userId,
-    $"[GetListAsync] 执行完成，行数={rowCount}，耗时={sw.ElapsedMilliseconds}ms");
+sw?.Stop();
+Logger.Debug(tenantId, userId, () =>
+    $"[GetListAsync] 执行完成，行数={rowCount}，耗时={sw?.ElapsedMilliseconds ?? 0}ms");
 
 // 4. 归还连接
 ReturnConnection(conn);
@@ -492,14 +518,13 @@ public static async ValueTask<DDLStatus> CreateTable(string tableName, string sq
 **执行过程**：
 
 ```csharp
-Logger.Debug(0, 0, $"[CreateTable] 开始创建表: {tableName}");
-var sw = Stopwatch.StartNew();
+Logger.Info(0, 0, $"[CreateTable] 开始创建表: {tableName}");
 
 // 1. 检查表是否存在
 var exists = await GetTableInfor(tableName);
 if (exists.RowsAffected == 1)
 {
-    Logger.Debug(0, 0, $"[CreateTable] 表已存在: {tableName}");
+    Logger.Info(0, 0, $"[CreateTable] 表已存在: {tableName}");
     return DDLStatus.Existed;
 }
 
@@ -510,17 +535,16 @@ try
     using var cmd = new NpgsqlCommand(sql, conn);
     await cmd.ExecuteNonQueryAsync();
     ReturnConnection(conn);
-    sw.Stop();
-    Logger.Debug(0, 0,
-        $"[CreateTable] 创建成功: {tableName}，耗时={sw.ElapsedMilliseconds}ms，SQL={sql}");
+    Logger.Info(0, 0,
+        $"[CreateTable] 创建成功: {tableName}，SQL={sql}");
     return DDLStatus.Success;
 }
 catch (Exception ex)
 {
-    sw.Stop();
-    Logger.Error(0, 0,
-        $"[CreateTable] 创建失败: {tableName}，耗时={sw.ElapsedMilliseconds}ms，SQL={sql}，异常: {ex}");
-    return DDLStatus.Failed;
+    Logger.Fatal(0, 0,
+        $"[CreateTable] 创建失败: {tableName}，SQL={sql}，异常: {ex}");
+    Environment.FailFast($"DDL 操作失败，程序终止: {ex.Message}");
+    return DDLStatus.Failed; // unreachable
 }
 ```
 
@@ -575,6 +599,12 @@ Logger.Warn(int tenantId, long userId, string message)
 Logger.Error(int tenantId, long userId, string message)
 Logger.Fatal(int tenantId, long userId, string message)
 
+// 延迟求值重载（避免未启用时创建字符串）
+Logger.Debug(int tenantId, long userId, Func<string> messageFactory)
+Logger.Info(int tenantId, long userId, Func<string> messageFactory)
+Logger.Error(int tenantId, long userId, Func<string> messageFactory)
+Logger.Fatal(int tenantId, long userId, Func<string> messageFactory)
+
 // 运行时租户级 Debug 开关
 Logger.EnableTenantDebug(int tenantId)
 Logger.DisableTenantDebug(int tenantId)
@@ -587,6 +617,7 @@ Logger.IsTenantDebugEnabled(int tenantId)
 2. **方法签名含 `int tenantId, long userId` 的方法** — 直接传递给 Logger
 3. **方法签名不含 `tenantId`/`userId` 的方法**（DDL 操作等）— 使用 `tenantId = 0, userId = 0`
 4. **运行时可通过 `Logger.EnableTenantDebug(tenantId)` 开启特定租户的 Debug 追踪**
+5. **Debug 日志仅在 CRUD 操作过程中使用。DDL 操作使用 `Logger.Info` 记录执行过程。**
 
 ### 7.3 Debug 日志必须覆盖的步骤
 
@@ -610,21 +641,19 @@ Logger.IsTenantDebugEnabled(int tenantId)
 ```csharp
 catch (Exception ex)
 {
-    sw.Stop();
+    sw?.Stop();
 
-    // 使用 ValueStringBuilder 拼接调试信息，避免多次字符串分配
-    var debugInfo = BuildDebugInfo(sql, parameters, tenantId, userId, sw.ElapsedMilliseconds);
-
+    // ADO 层日志不使用国际化，直接使用中文
     Logger.Error(tenantId, userId,
         $"[InsertAsync] 执行异常: {ex}");
 
-    // 返回结果中包含用户友好的 ErrorMessage 和完整的 DebugMessage
     return new DbInsResult
     {
         Success = false,
-        ErrorMessage = "数据库操作失败，请稍后重试",
-        DebugMessage = $"SQL={sql}，参数={debugInfo}，耗时={sw.ElapsedMilliseconds}ms，" +
-                       $"操作人=tenantId:{tenantId}/userId:{userId}，异常={ex}"
+        // ErrorMessage 使用国际化语言，用于返回前端展示
+        ErrorMessage = I18n.T(tenantId, K.Db.InsertFailed),
+        // DebugMessage 是堆栈信息，用于开发与调试，不使用国际化
+        DebugMessage = $"SQL={sql}，操作人=tenantId:{tenantId}/userId:{userId}，异常={ex}"
     };
 }
 ```
@@ -634,7 +663,11 @@ catch (Exception ex)
 - 原始 SQL 语句
 - 所有参数的名称和值
 - 操作人信息（`tenantId`、`userId`）
-- 执行时间（毫秒）
+
+**ADO 层日志国际化规则**：
+- ADO 层内部日志（`Logger.Info` / `Logger.Debug` / `Logger.Error`）**不使用国际化**，直接使用中文字符串
+- 仅 CRUD 返回结果中的 `ErrorMessage` 使用 `I18n.T(tenantId, ...)` 进行国际化，用于前端展示
+- `DebugMessage` 包含堆栈跟踪等调试信息，不使用国际化
 
 ### 7.5 辅助方法 — `BuildDebugInfo`
 
@@ -723,7 +756,11 @@ GetConnection() → 使用 → ReturnConnection()
 // 应用启动时初始化
 DB.Init(new DbOptions
 {
-    ConnectionString = "Host=localhost;Port=5432;Database=mydb;Username=admin;Password=xxx",
+    Host = "localhost",
+    Port = 5432,
+    Database = "mydb",
+    Username = "admin",
+    Password = "xxx",
     MinPoolSize = 2,
     MaxPoolSize = 20,
     ConnectionTimeoutSeconds = 30,
@@ -876,8 +913,10 @@ var (result, data) = await DB.GetListAsync(
 - [ ] 连接池正确实现（最大/最小/超时/重试/注销）
 - [ ] 所有 CRUD 方法支持独立事务和批量事务两种模式
 - [ ] 所有 DDL 方法有前置检查（存在性、字段比较）
-- [ ] 所有执行方法包含 `Logger.Debug` 调用（入口、参数、执行、结果、耗时）
-- [ ] 所有异常使用 `Logger.Error` 记录完整信息（`ex.ToString()`、SQL、参数、操作人、耗时）
+- [ ] 所有 CRUD 执行方法包含 `Logger.Debug` 调用（入口、参数、执行、结果、耗时）
+- [ ] 所有 DDL 执行方法包含 `Logger.Info` 调用（入口、执行、结果）
+- [ ] 所有 CRUD 异常使用 `Logger.Error` 记录完整信息（`ex.ToString()`、SQL、参数、操作人）
+- [ ] DDL 异常使用 `Logger.Fatal` 记录并调用 `Environment.FailFast` 终止程序
 - [ ] DDL 方法使用 `tenantId = 0, userId = 0` 记录日志
 - [ ] 返回结构中 `DebugMessage` 包含可执行 SQL（参数替换为实际值）
 - [ ] 使用 `ValueStringBuilder` / `stackalloc` 优化字符串拼接

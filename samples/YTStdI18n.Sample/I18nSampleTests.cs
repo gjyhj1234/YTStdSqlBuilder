@@ -62,7 +62,7 @@ public class I18nSampleTests
     }
 
     [Fact]
-    public void Common_WithTenantId_UsesTenanLang()
+    public void Common_WithTenantId_UsesTenantLang()
     {
         I18n.SetTenantLang(1001, Lang.En);
         Assert.Equal("Operation successful", K.Common.Success.Common(1001));

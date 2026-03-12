@@ -212,7 +212,7 @@ public sealed class I18nGenerator : IIncrementalGenerator
             {
                 string commentText = trivia.ToString();
                 // Strip /* and */
-                if (commentText.StartsWith("/*") && commentText.EndsWith("*/"))
+                if (commentText.StartsWith("/*") && commentText.EndsWith("*/") && commentText.Length > 4)
                 {
                     string inner = commentText.Substring(2, commentText.Length - 4).Trim();
                     // Handle format like "0 Success" - take the name part after optional index

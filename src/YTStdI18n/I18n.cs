@@ -34,7 +34,7 @@ public static class I18nCore
     {
         _defaultLang = defaultLang;
         _tenantLangs.Clear();
-        Logger.Info(0, 0L, $"[I18n] 初始化完成, 默认语言: {defaultLang}");
+        Logger.Info(0, 0L, () => $"[I18n] 初始化完成, 默认语言: {defaultLang}");
     }
 
     /// <summary>

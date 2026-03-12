@@ -21,6 +21,7 @@ internal static class CrudEmitter
         sb.AppendLine("using Npgsql;");
         sb.AppendLine("using NpgsqlTypes;");
         sb.AppendLine("using YTStdAdo;");
+        sb.AppendLine("using YTStdEntity;");
         sb.AppendLine("using YTStdLogger.Core;");
         sb.AppendLine("using YTStdSqlBuilder;");
         sb.AppendLine();
@@ -31,6 +32,8 @@ internal static class CrudEmitter
         sb.AppendLine("    {");
 
         EmitReadEntity(sb, model);
+        sb.AppendLine();
+        EmitReadEntityPartial(sb, model);
         sb.AppendLine();
         EmitInsertAsync(sb, model);
         sb.AppendLine();
@@ -44,11 +47,17 @@ internal static class CrudEmitter
         sb.AppendLine();
         EmitUpdateTxAsync(sb, model);
         sb.AppendLine();
+        EmitUpdateFieldsAsync(sb, model);
+        sb.AppendLine();
+        EmitUpdateFieldsTxAsync(sb, model);
+        sb.AppendLine();
         EmitDeleteAsync(sb, model);
         sb.AppendLine();
         EmitDeleteTxAsync(sb, model);
         sb.AppendLine();
         EmitGetAsync(sb, model);
+        sb.AppendLine();
+        EmitGetAsyncPartial(sb, model);
         sb.AppendLine();
         EmitGetListAsync(sb, model);
 
@@ -367,8 +376,8 @@ internal static class CrudEmitter
         var pkType = pk != null ? EntityGenerator.GetClrTypeForCode(pk) : "long";
         var pkDbType = pk != null ? pk.NpgsqlDbTypeName : "Bigint";
 
-        sb.AppendLine($"        /// <summary>按主键查询 {cn}</summary>");
-        sb.AppendLine($"        public static async ValueTask<(DbUdqResult Result, List<{cn}>? Data)> GetAsync(");
+        sb.AppendLine($"        /// <summary>按主键查询 {cn}，返回单个实体</summary>");
+        sb.AppendLine($"        public static async ValueTask<{cn}?> GetAsync(");
         sb.AppendLine($"            int tenantId, long userId, {pkType} id)");
         sb.AppendLine("        {");
         sb.AppendLine($"            Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.GetAsync] 进入方法, id={{id}}\");");
@@ -391,8 +400,9 @@ internal static class CrudEmitter
         sb.AppendLine("            try");
         sb.AppendLine("            {");
         sb.AppendLine($"                var (result, data) = await DB.GetListAsync<{cn}>(sql, parameters, ReadEntity, tenantId, userId);");
-        sb.AppendLine($"                Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.GetAsync] 完成, 记录数={{data?.Count ?? 0}}\");");
-        sb.AppendLine("                return (result, data);");
+        sb.AppendLine($"                var entity = (data != null && data.Count > 0) ? data[0] : null;");
+        sb.AppendLine($"                Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.GetAsync] 完成, found={{entity != null}}\");");
+        sb.AppendLine("                return entity;");
         sb.AppendLine("            }");
         sb.AppendLine("            catch (Exception ex)");
         sb.AppendLine("            {");
@@ -475,5 +485,236 @@ internal static class CrudEmitter
             return $"reader.GetFieldValue<{EntityGenerator.GetClrTypeForCode(col)}>({ordinal})";
         }
         return $"reader.{EntityGenerator.GetReaderMethod(col)}({ordinal})";
+    }
+
+    private static void EmitReadEntityPartial(StringBuilder sb, EntityModel model)
+    {
+        var cn = model.ClassName;
+        sb.AppendLine($"        /// <summary>从 NpgsqlDataReader 按列名映射 {cn} 实体（部分字段）</summary>");
+        sb.AppendLine($"        public static {cn} ReadEntityPartial(NpgsqlDataReader reader)");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            var entity = new {cn}();");
+        sb.AppendLine("            for (int i = 0; i < reader.FieldCount; i++)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                if (reader.IsDBNull(i)) continue;");
+        sb.AppendLine("                var colName = reader.GetName(i);");
+        sb.AppendLine("                switch (colName)");
+        sb.AppendLine("                {");
+
+        for (int i = 0; i < model.Columns.Count; i++)
+        {
+            var col = model.Columns[i];
+            sb.AppendLine($"                    case \"{col.ColumnName}\":");
+            sb.AppendLine($"                        entity.{col.PropertyName} = {GetPartialReaderExpression(col)};");
+            sb.AppendLine("                        break;");
+        }
+
+        sb.AppendLine("                }");
+        sb.AppendLine("            }");
+        sb.AppendLine("            return entity;");
+        sb.AppendLine("        }");
+    }
+
+    private static string GetPartialReaderExpression(ColumnModel col)
+    {
+        if (EntityGenerator.NeedsGenericReader(col))
+        {
+            return $"reader.GetFieldValue<{EntityGenerator.GetClrTypeForCode(col)}>(i)";
+        }
+        return $"reader.{EntityGenerator.GetReaderMethod(col)}(i)";
+    }
+
+    private static void EmitUpdateFieldsAsync(StringBuilder sb, EntityModel model)
+    {
+        var cn = model.ClassName;
+        var tn = model.TableName;
+        var pk = model.PrimaryKey;
+        var pkCol = pk != null ? pk.ColumnName : "id";
+        var pkType = pk != null ? EntityGenerator.GetClrTypeForCode(pk) : "long";
+        var pkDbType = pk != null ? pk.NpgsqlDbTypeName : "Bigint";
+
+        // Scattered parameter fields: exclude PK and tenant_id
+        var scatteredCols = model.Columns.Where(c => !c.IsPrimaryKey && !c.IsTenantField).ToList();
+
+        sb.AppendLine($"        /// <summary>按字段更新 {cn}（打散参数版，独立事务）</summary>");
+        sb.AppendLine($"        public static async ValueTask<DbUdqResult> UpdateFieldsAsync(");
+        sb.Append($"            int tenantId, long userId, {pkType} id");
+
+        foreach (var col in scatteredCols)
+        {
+            var clrType = EntityGenerator.GetClrTypeForCode(col);
+            sb.AppendLine(",");
+            sb.Append($"            DbNullable<{clrType}>? {ToCamelCase(col.PropertyName)} = null");
+        }
+        sb.AppendLine(")");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.UpdateFieldsAsync] 进入方法, id={{id}}\");");
+        sb.AppendLine();
+
+        // Dynamic SQL building
+        sb.AppendLine("            var setClauses = new System.Collections.Generic.List<string>();");
+        sb.AppendLine("            var paramList = new System.Collections.Generic.List<PgSqlParam>();");
+        sb.AppendLine();
+
+        foreach (var col in scatteredCols)
+        {
+            var camel = ToCamelCase(col.PropertyName);
+            sb.AppendLine($"            if ({camel}.HasValue && {camel}.Value.IsSet)");
+            sb.AppendLine("            {");
+            sb.AppendLine($"                setClauses.Add(\"\\\"{col.ColumnName}\\\" = @{col.ColumnName}\");");
+            sb.AppendLine($"                paramList.Add(new PgSqlParam(\"@{col.ColumnName}\", (object?){camel}.Value.Value ?? DBNull.Value, NpgsqlDbType.{col.NpgsqlDbTypeName}));");
+            sb.AppendLine("            }");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("            if (setClauses.Count == 0)");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                Logger.Debug(tenantId, userId, () => \"[{cn}CRUD.UpdateFieldsAsync] 无字段需要更新\");");
+        sb.AppendLine("                return new DbUdqResult { Success = true, RowsAffected = 0 };");
+        sb.AppendLine("            }");
+        sb.AppendLine();
+
+        sb.AppendLine($"            paramList.Add(new PgSqlParam(\"@{pkCol}\", id, NpgsqlDbType.{pkDbType}));");
+        sb.AppendLine();
+        sb.AppendLine($"            var sql = \"UPDATE \\\"{tn}\\\" SET \" +");
+        sb.AppendLine("                string.Join(\", \", setClauses) +");
+        sb.AppendLine($"                \" WHERE \\\"{pkCol}\\\" = @{pkCol}\";");
+        sb.AppendLine();
+
+        sb.AppendLine("            try");
+        sb.AppendLine("            {");
+        sb.AppendLine("                var result = await DB.UpdateAsync(sql, paramList.ToArray(), tenantId, userId);");
+        sb.AppendLine($"                Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.UpdateFieldsAsync] 完成, RowsAffected={{result.RowsAffected}}\");");
+        sb.AppendLine("                return result;");
+        sb.AppendLine("            }");
+        sb.AppendLine("            catch (Exception ex)");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                Logger.Error(tenantId, userId, $\"[{cn}CRUD.UpdateFieldsAsync] 异常: {{ex}}\");");
+        sb.AppendLine("                throw;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+    }
+
+    private static void EmitUpdateFieldsTxAsync(StringBuilder sb, EntityModel model)
+    {
+        var cn = model.ClassName;
+        var tn = model.TableName;
+        var pk = model.PrimaryKey;
+        var pkCol = pk != null ? pk.ColumnName : "id";
+        var pkType = pk != null ? EntityGenerator.GetClrTypeForCode(pk) : "long";
+        var pkDbType = pk != null ? pk.NpgsqlDbTypeName : "Bigint";
+
+        var scatteredCols = model.Columns.Where(c => !c.IsPrimaryKey && !c.IsTenantField).ToList();
+
+        sb.AppendLine($"        /// <summary>按字段更新 {cn}（打散参数版，事务变体）</summary>");
+        sb.AppendLine($"        public static ValueTask UpdateFieldsTxAsync(");
+        sb.Append($"            NpgsqlBatch batch, int tenantId, long userId, {pkType} id");
+
+        foreach (var col in scatteredCols)
+        {
+            var clrType = EntityGenerator.GetClrTypeForCode(col);
+            sb.AppendLine(",");
+            sb.Append($"            DbNullable<{clrType}>? {ToCamelCase(col.PropertyName)} = null");
+        }
+        sb.AppendLine(")");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.UpdateFieldsTxAsync] 进入方法, id={{id}}\");");
+        sb.AppendLine();
+
+        sb.AppendLine("            var setClauses = new System.Collections.Generic.List<string>();");
+        sb.AppendLine("            var paramList = new System.Collections.Generic.List<PgSqlParam>();");
+        sb.AppendLine();
+
+        foreach (var col in scatteredCols)
+        {
+            var camel = ToCamelCase(col.PropertyName);
+            sb.AppendLine($"            if ({camel}.HasValue && {camel}.Value.IsSet)");
+            sb.AppendLine("            {");
+            sb.AppendLine($"                setClauses.Add(\"\\\"{col.ColumnName}\\\" = @{col.ColumnName}\");");
+            sb.AppendLine($"                paramList.Add(new PgSqlParam(\"@{col.ColumnName}\", (object?){camel}.Value.Value ?? DBNull.Value, NpgsqlDbType.{col.NpgsqlDbTypeName}));");
+            sb.AppendLine("            }");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("            if (setClauses.Count == 0)");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                Logger.Debug(tenantId, userId, () => \"[{cn}CRUD.UpdateFieldsTxAsync] 无字段需要更新\");");
+        sb.AppendLine("                return ValueTask.CompletedTask;");
+        sb.AppendLine("            }");
+        sb.AppendLine();
+
+        sb.AppendLine($"            paramList.Add(new PgSqlParam(\"@{pkCol}\", id, NpgsqlDbType.{pkDbType}));");
+        sb.AppendLine();
+        sb.AppendLine($"            var sql = \"UPDATE \\\"{tn}\\\" SET \" +");
+        sb.AppendLine("                string.Join(\", \", setClauses) +");
+        sb.AppendLine($"                \" WHERE \\\"{pkCol}\\\" = @{pkCol}\";");
+        sb.AppendLine();
+
+        sb.AppendLine("            return DB.UpdateTxAsync(batch, sql, paramList.ToArray(), tenantId, userId);");
+        sb.AppendLine("        }");
+    }
+
+    private static void EmitGetAsyncPartial(StringBuilder sb, EntityModel model)
+    {
+        var cn = model.ClassName;
+        var tn = model.TableName;
+        var pk = model.PrimaryKey;
+        var pkCol = pk != null ? pk.ColumnName : "id";
+        var pkType = pk != null ? EntityGenerator.GetClrTypeForCode(pk) : "long";
+        var pkDbType = pk != null ? pk.NpgsqlDbTypeName : "Bigint";
+
+        sb.AppendLine($"        /// <summary>按主键查询 {cn}，仅返回指定字段</summary>");
+        sb.AppendLine($"        public static async ValueTask<{cn}?> GetAsync(");
+        sb.AppendLine($"            int tenantId, long userId, {pkType} id, params string[] columns)");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.GetAsync(partial)] 进入方法, id={{id}}, columns={{string.Join(\",\", columns)}}\");");
+        sb.AppendLine();
+
+        sb.AppendLine("            if (columns == null || columns.Length == 0)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                return await GetAsync(tenantId, userId, id);");
+        sb.AppendLine("            }");
+        sb.AppendLine();
+
+        // Build dynamic SQL with only specified columns
+        sb.AppendLine("            var quotedCols = new string[columns.Length];");
+        sb.AppendLine("            for (int i = 0; i < columns.Length; i++)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                quotedCols[i] = \"\\\"\" + columns[i] + \"\\\"\";");
+        sb.AppendLine("            }");
+        sb.AppendLine();
+        sb.AppendLine($"            var sql = \"SELECT \" + string.Join(\", \", quotedCols) +");
+        sb.AppendLine($"                \" FROM \\\"{tn}\\\" WHERE \\\"{pkCol}\\\" = @{pkCol}\";");
+        sb.AppendLine();
+
+        sb.AppendLine($"            var parameters = new PgSqlParam[]");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                new PgSqlParam(\"@{pkCol}\", id, NpgsqlDbType.{pkDbType})");
+        sb.AppendLine("            };");
+        sb.AppendLine();
+
+        sb.AppendLine("            try");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                var (result, data) = await DB.GetListAsync<{cn}>(sql, parameters, ReadEntityPartial, tenantId, userId);");
+        sb.AppendLine($"                var entity = (data != null && data.Count > 0) ? data[0] : null;");
+        sb.AppendLine($"                Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.GetAsync(partial)] 完成, found={{entity != null}}\");");
+        sb.AppendLine("                return entity;");
+        sb.AppendLine("            }");
+        sb.AppendLine("            catch (Exception ex)");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                Logger.Error(tenantId, userId, $\"[{cn}CRUD.GetAsync(partial)] 异常: {{ex}}\");");
+        sb.AppendLine("                throw;");
+        sb.AppendLine("            }");
+        sb.AppendLine("        }");
+    }
+
+    private static string ToCamelCase(string propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName)) return propertyName;
+        var camel = char.ToLowerInvariant(propertyName[0]) + propertyName.Substring(1);
+        // Avoid conflict with method parameters tenantId, userId, id, batch
+        if (camel == "tenantId" || camel == "userId" || camel == "id" || camel == "batch")
+            return "p" + propertyName;
+        return camel;
     }
 }

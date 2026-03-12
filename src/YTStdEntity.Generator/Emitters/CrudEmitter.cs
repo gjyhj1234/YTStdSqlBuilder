@@ -536,7 +536,10 @@ internal static class CrudEmitter
         // Scattered parameter fields: exclude PK and tenant_id
         var scatteredCols = model.Columns.Where(c => !c.IsPrimaryKey && !c.IsTenantField).ToList();
 
-        sb.AppendLine($"        /// <summary>按字段更新 {cn}（打散参数版，独立事务）</summary>");
+        sb.AppendLine($"        /// <summary>");
+        sb.AppendLine($"        /// 按字段更新 {cn}（打散参数版，独立事务）。");
+        sb.AppendLine($"        /// 参数使用 DbNullable&lt;T&gt;? 包装：null 表示不更新，DbNullable.NullValue 表示设置为 NULL。");
+        sb.AppendLine($"        /// </summary>");
         sb.AppendLine($"        public static async ValueTask<DbUdqResult> UpdateFieldsAsync(");
         sb.Append($"            int tenantId, long userId, {pkType} id");
 
@@ -714,7 +717,7 @@ internal static class CrudEmitter
         var camel = char.ToLowerInvariant(propertyName[0]) + propertyName.Substring(1);
         // Avoid conflict with method parameters tenantId, userId, id, batch
         if (camel == "tenantId" || camel == "userId" || camel == "id" || camel == "batch")
-            return "p" + propertyName;
+            return "field_" + camel;
         return camel;
     }
 }

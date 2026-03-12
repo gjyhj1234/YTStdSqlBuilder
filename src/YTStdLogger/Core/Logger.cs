@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using YTStdLogger.Logging;
@@ -7,6 +8,14 @@ namespace YTStdLogger.Core;
 /// <summary>
 /// 全局静态日志门面。
 /// 用于业务代码以单例方式调用日志能力，避免在业务层重复管理引擎实例。
+/// <para>
+/// 提供两类重载：
+/// <list type="bullet">
+/// <item><c>string message</c> — 直接传入已构建好的消息字符串。</item>
+/// <item><c>Func&lt;string&gt; messageFactory</c> — 延迟求值：仅在该日志等级实际启用时才调用工厂方法构建字符串，
+/// 避免在日志未启用时产生不必要的字符串分配与 GC 压力。推荐在 Debug 等可能被全局禁用的等级使用。</item>
+/// </list>
+/// </para>
 /// </summary>
 public static class Logger
 {
@@ -36,12 +45,30 @@ public static class Logger
     }
 
     /// <summary>
+    /// 写入任意等级日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Log(int tenantId, long userId, LogLevel level, Func<string> messageFactory)
+    {
+        _engine?.Log(tenantId, userId, level, messageFactory);
+    }
+
+    /// <summary>
     /// 写入致命日志。
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Fatal(int tenantId, long userId, string message)
     {
         _engine?.Fatal(tenantId, userId, message);
+    }
+
+    /// <summary>
+    /// 写入致命日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Fatal(int tenantId, long userId, Func<string> messageFactory)
+    {
+        _engine?.Fatal(tenantId, userId, messageFactory);
     }
 
     /// <summary>
@@ -54,12 +81,30 @@ public static class Logger
     }
 
     /// <summary>
+    /// 写入错误日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Error(int tenantId, long userId, Func<string> messageFactory)
+    {
+        _engine?.Error(tenantId, userId, messageFactory);
+    }
+
+    /// <summary>
     /// 写入警告日志。
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Warn(int tenantId, long userId, string message)
     {
         _engine?.Warn(tenantId, userId, message);
+    }
+
+    /// <summary>
+    /// 写入警告日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Warn(int tenantId, long userId, Func<string> messageFactory)
+    {
+        _engine?.Warn(tenantId, userId, messageFactory);
     }
 
     /// <summary>
@@ -72,12 +117,31 @@ public static class Logger
     }
 
     /// <summary>
+    /// 写入信息日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Info(int tenantId, long userId, Func<string> messageFactory)
+    {
+        _engine?.Info(tenantId, userId, messageFactory);
+    }
+
+    /// <summary>
     /// 写入调试日志。
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Debug(int tenantId, long userId, string message)
     {
         _engine?.Debug(tenantId, userId, message);
+    }
+
+    /// <summary>
+    /// 写入调试日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串，
+    /// 避免在 Debug 未启用时产生不必要的字符串分配。推荐在高频调用路径中使用此重载。
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void Debug(int tenantId, long userId, Func<string> messageFactory)
+    {
+        _engine?.Debug(tenantId, userId, messageFactory);
     }
 
     /// <summary>

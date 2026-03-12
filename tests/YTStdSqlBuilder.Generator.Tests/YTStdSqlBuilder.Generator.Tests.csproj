@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\YTStdSqlBuilder.Generator\YTStdSqlBuilder.Generator.csproj" />
     <ProjectReference Include="..\..\src\YTStdSqlBuilder\YTStdSqlBuilder.csproj" />
+    <ProjectReference Include="..\..\src\YTStdLogger\YTStdLogger.csproj" />
   </ItemGroup>
 
 </Project>

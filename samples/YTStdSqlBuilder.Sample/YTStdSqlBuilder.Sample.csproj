@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\YTStdSqlBuilder\YTStdSqlBuilder.csproj" />
+    <ProjectReference Include="..\..\src\YTStdLogger\YTStdLogger.csproj" />
     <ProjectReference Include="..\..\src\YTStdSqlBuilder.Generator\YTStdSqlBuilder.Generator.csproj"
                       OutputItemType="Analyzer"
                       ReferenceOutputAssembly="false" />

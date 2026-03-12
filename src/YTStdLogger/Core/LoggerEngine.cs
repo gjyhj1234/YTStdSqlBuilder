@@ -156,11 +156,38 @@ public sealed class LoggerEngine : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 写入日志（延迟求值）。仅在该等级启用时才调用 <paramref name="messageFactory"/> 构建消息字符串，
+    /// 避免在日志等级未启用时产生不必要的字符串分配。
+    /// </summary>
+    public void Log(int tenantId, long userId, LogLevel level, Func<string> messageFactory)
+    {
+        if (!_accepting)
+        {
+            return;
+        }
+
+        if (!IsEnabled(tenantId, level))
+        {
+            return;
+        }
+
+        Log(tenantId, userId, level, messageFactory());
+    }
+
+    /// <summary>
     /// 写入致命日志。
     /// </summary>
     public void Fatal(int tenantId, long userId, string message)
     {
         Log(tenantId, userId, LogLevel.Fatal, message);
+    }
+
+    /// <summary>
+    /// 写入致命日志（延迟求值）。
+    /// </summary>
+    public void Fatal(int tenantId, long userId, Func<string> messageFactory)
+    {
+        Log(tenantId, userId, LogLevel.Fatal, messageFactory);
     }
 
     /// <summary>
@@ -172,6 +199,14 @@ public sealed class LoggerEngine : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 写入错误日志（延迟求值）。
+    /// </summary>
+    public void Error(int tenantId, long userId, Func<string> messageFactory)
+    {
+        Log(tenantId, userId, LogLevel.Error, messageFactory);
+    }
+
+    /// <summary>
     /// 写入警告日志。
     /// </summary>
     public void Warn(int tenantId, long userId, string message)
@@ -180,11 +215,28 @@ public sealed class LoggerEngine : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 写入警告日志（延迟求值）。
+    /// </summary>
+    public void Warn(int tenantId, long userId, Func<string> messageFactory)
+    {
+        Log(tenantId, userId, LogLevel.Warn, messageFactory);
+    }
+
+    /// <summary>
     /// 写入信息日志。
+    /// 与 <see cref="Infor(int,long,string)"/> 语义一致，提供更常见命名。
     /// </summary>
     public void Infor(int tenantId, long userId, string message)
     {
         Log(tenantId, userId, LogLevel.Infor, message);
+    }
+
+    /// <summary>
+    /// 写入信息日志（延迟求值）。
+    /// </summary>
+    public void Infor(int tenantId, long userId, Func<string> messageFactory)
+    {
+        Log(tenantId, userId, LogLevel.Infor, messageFactory);
     }
 
     /// <summary>
@@ -197,11 +249,27 @@ public sealed class LoggerEngine : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 写入信息日志（延迟求值）。
+    /// </summary>
+    public void Info(int tenantId, long userId, Func<string> messageFactory)
+    {
+        Log(tenantId, userId, LogLevel.Infor, messageFactory);
+    }
+
+    /// <summary>
     /// 写入调试日志。
     /// </summary>
     public void Debug(int tenantId, long userId, string message)
     {
         Log(tenantId, userId, LogLevel.Debug, message);
+    }
+
+    /// <summary>
+    /// 写入调试日志（延迟求值）。
+    /// </summary>
+    public void Debug(int tenantId, long userId, Func<string> messageFactory)
+    {
+        Log(tenantId, userId, LogLevel.Debug, messageFactory);
     }
 
     /// <summary>

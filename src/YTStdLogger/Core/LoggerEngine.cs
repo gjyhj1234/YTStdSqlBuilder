@@ -386,7 +386,10 @@ public sealed class LoggerEngine : IDisposable, IAsyncDisposable
         catch (Exception ex)
         {
             ConsumerFault?.Invoke(ex);
-            Console.Error.WriteLine("[YTStdLogger][Consumer] " + ex.Message);
+            var vsb = new ValueStringBuilder(128);
+            vsb.Append("[YTStdLogger][Consumer] ");
+            vsb.Append(ex.Message);
+            Console.Error.WriteLine(vsb.ToString());
         }
         finally
         {

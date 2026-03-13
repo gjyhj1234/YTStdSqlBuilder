@@ -55,6 +55,10 @@ public readonly struct DbNullable<T>
     {
         if (!IsSet) return "[Unset]";
         if (Value == null) return "[Set: null]";
-        return "[Set: " + Value + "]";
+        var vsb = new ValueStringBuilder(stackalloc char[64]);
+        vsb.Append("[Set: ");
+        vsb.Append(Value.ToString());
+        vsb.Append(']');
+        return vsb.ToString();
     }
 }

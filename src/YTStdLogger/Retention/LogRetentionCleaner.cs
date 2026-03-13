@@ -33,7 +33,10 @@ public sealed class LogRetentionCleaner : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine("[YTStdLogger][Retention] " + ex.Message);
+            var vsb = new ValueStringBuilder(128);
+            vsb.Append("[YTStdLogger][Retention] ");
+            vsb.Append(ex.Message);
+            Console.Error.WriteLine(vsb.ToString());
         }
     }
 
@@ -122,7 +125,10 @@ public sealed class LogRetentionCleaner : IDisposable
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine("[YTStdLogger][Retention] 删除失败: " + ex.Message);
+            var vsb = new ValueStringBuilder(128);
+            vsb.Append("[YTStdLogger][Retention] 删除失败: ");
+            vsb.Append(ex.Message);
+            Console.Error.WriteLine(vsb.ToString());
         }
     }
 

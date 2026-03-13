@@ -37,7 +37,13 @@ public static class I18nCore
     {
         _defaultLang = defaultLang;
         _tenantLangs.Clear();
-        Logger.Info(0, 0L, () => "[I18n] 初始化完成, 默认语言: " + defaultLang.ToString());
+        Logger.Info(0, 0L, () =>
+        {
+            var vsb = new ValueStringBuilder(64);
+            vsb.Append("[I18n] 初始化完成, 默认语言: ");
+            vsb.Append(defaultLang.ToString());
+            return vsb.ToString();
+        });
     }
 
     /// <summary>
@@ -49,7 +55,15 @@ public static class I18nCore
     public static void SetTenantLang(int tenantId, Lang lang)
     {
         _tenantLangs[tenantId] = lang;
-        Logger.Debug(tenantId, 0L, () => "[I18n] 设置租户语言: tenantId=" + tenantId.ToString() + ", lang=" + lang.ToString());
+        Logger.Debug(tenantId, 0L, () =>
+        {
+            var vsb = new ValueStringBuilder(64);
+            vsb.Append("[I18n] 设置租户语言: tenantId=");
+            vsb.Append(tenantId);
+            vsb.Append(", lang=");
+            vsb.Append(lang.ToString());
+            return vsb.ToString();
+        });
     }
 
     /// <summary>

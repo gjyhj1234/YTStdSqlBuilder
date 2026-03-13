@@ -46,7 +46,13 @@ public sealed class TenantSeparationService
     /// <returns>迁移的总记录数</returns>
     public async ValueTask<int> MigrateAsync(string sourceConnectionString, int tenantId, long userId)
     {
-        Logger.Info(tenantId, userId, "[TenantSeparationService] 开始租户分离, 租户=" + string.Join(",", _options.TenantIds));
+        Logger.Info(tenantId, userId, () =>
+        {
+            var vsb = new ValueStringBuilder(64);
+            vsb.Append("[TenantSeparationService] 开始租户分离, 租户=");
+            vsb.Append(string.Join(",", _options.TenantIds));
+            return vsb.ToString();
+        });
 
         int totalMigrated = 0;
 
@@ -69,7 +75,14 @@ public sealed class TenantSeparationService
             }
         }
 
-        Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 发现 " + tables.Count.ToString() + " 张表");
+        Logger.Debug(tenantId, userId, () =>
+        {
+            var vsb = new ValueStringBuilder(64);
+            vsb.Append("[TenantSeparationService] 发现 ");
+            vsb.Append(tables.Count);
+            vsb.Append(" 张表");
+            return vsb.ToString();
+        });
 
         // 过滤掉 _Log 结尾的表
         var migraTables = new List<string>();
@@ -81,7 +94,13 @@ public sealed class TenantSeparationService
             }
             else
             {
-                Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 跳过 Log 表: " + tables[i]);
+                Logger.Debug(tenantId, userId, () =>
+                {
+                    var vsb = new ValueStringBuilder(64);
+                    vsb.Append("[TenantSeparationService] 跳过 Log 表: ");
+                    vsb.Append(tables[i]);
+                    return vsb.ToString();
+                });
             }
         }
 
@@ -98,13 +117,24 @@ public sealed class TenantSeparationService
             string tbl = migraTables[i];
             try
             {
-                await using var disableCmd = new NpgsqlCommand(
-                    "ALTER TABLE \"" + tbl + "\" DISABLE TRIGGER ALL", targetConn);
+                var vsbDisable = new ValueStringBuilder(64);
+                vsbDisable.Append("ALTER TABLE \"");
+                vsbDisable.Append(tbl);
+                vsbDisable.Append("\" DISABLE TRIGGER ALL");
+                await using var disableCmd = new NpgsqlCommand(vsbDisable.ToString(), targetConn);
                 await disableCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 关闭触发器失败: " + tbl + ", " + ex.Message);
+                Logger.Debug(tenantId, userId, () =>
+                {
+                    var vsb = new ValueStringBuilder(128);
+                    vsb.Append("[TenantSeparationService] 关闭触发器失败: ");
+                    vsb.Append(tbl);
+                    vsb.Append(", ");
+                    vsb.Append(ex.Message);
+                    return vsb.ToString();
+                });
             }
         }
 
@@ -129,7 +159,16 @@ public sealed class TenantSeparationService
                 }
 
                 totalMigrated += migrated;
-                Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 迁移 " + tbl + ": " + migrated.ToString() + " 条");
+                Logger.Debug(tenantId, userId, () =>
+                {
+                    var vsb = new ValueStringBuilder(64);
+                    vsb.Append("[TenantSeparationService] 迁移 ");
+                    vsb.Append(tbl);
+                    vsb.Append(": ");
+                    vsb.Append(migrated);
+                    vsb.Append(" 条");
+                    return vsb.ToString();
+                });
             }
         }
         finally
@@ -140,18 +179,36 @@ public sealed class TenantSeparationService
                 string tbl = migraTables[i];
                 try
                 {
-                    await using var enableCmd = new NpgsqlCommand(
-                        "ALTER TABLE \"" + tbl + "\" ENABLE TRIGGER ALL", targetConn);
+                    var vsbEnable = new ValueStringBuilder(64);
+                    vsbEnable.Append("ALTER TABLE \"");
+                    vsbEnable.Append(tbl);
+                    vsbEnable.Append("\" ENABLE TRIGGER ALL");
+                    await using var enableCmd = new NpgsqlCommand(vsbEnable.ToString(), targetConn);
                     await enableCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 恢复触发器失败: " + tbl + ", " + ex.Message);
+                    Logger.Debug(tenantId, userId, () =>
+                    {
+                        var vsb = new ValueStringBuilder(128);
+                        vsb.Append("[TenantSeparationService] 恢复触发器失败: ");
+                        vsb.Append(tbl);
+                        vsb.Append(", ");
+                        vsb.Append(ex.Message);
+                        return vsb.ToString();
+                    });
                 }
             }
         }
 
-        Logger.Info(tenantId, userId, "[TenantSeparationService] 迁移完成，共 " + totalMigrated.ToString() + " 条记录");
+        Logger.Info(tenantId, userId, () =>
+        {
+            var vsb = new ValueStringBuilder(64);
+            vsb.Append("[TenantSeparationService] 迁移完成，共 ");
+            vsb.Append(totalMigrated);
+            vsb.Append(" 条记录");
+            return vsb.ToString();
+        });
         return totalMigrated;
     }
 
@@ -171,7 +228,13 @@ public sealed class TenantSeparationService
 
         if (count > 0)
         {
-            Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 目标表已存在: " + tableName);
+            Logger.Debug(tenantId, userId, () =>
+            {
+                var vsb = new ValueStringBuilder(64);
+                vsb.Append("[TenantSeparationService] 目标表已存在: ");
+                vsb.Append(tableName);
+                return vsb.ToString();
+            });
             return;
         }
 
@@ -190,30 +253,62 @@ public sealed class TenantSeparationService
                 string colType = reader.GetString(1);
                 bool isNullable = reader.GetString(2) == "YES";
                 int? maxLen = reader.IsDBNull(3) ? null : reader.GetInt32(3);
-                string fullType = maxLen.HasValue ? colType + "(" + maxLen.Value.ToString() + ")" : colType;
+                string fullType;
+                if (maxLen.HasValue)
+                {
+                    var vsbType = new ValueStringBuilder(32);
+                    vsbType.Append(colType);
+                    vsbType.Append('(');
+                    vsbType.Append(maxLen.Value);
+                    vsbType.Append(')');
+                    fullType = vsbType.ToString();
+                }
+                else
+                {
+                    fullType = colType;
+                }
                 columns.Add((colName, fullType, isNullable));
             }
         }
 
         if (columns.Count == 0)
         {
-            Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 源表无列信息: " + tableName);
+            Logger.Debug(tenantId, userId, () =>
+            {
+                var vsb = new ValueStringBuilder(64);
+                vsb.Append("[TenantSeparationService] 源表无列信息: ");
+                vsb.Append(tableName);
+                return vsb.ToString();
+            });
             return;
         }
 
         // 构建 CREATE TABLE 语句
-        string createSql = "CREATE TABLE IF NOT EXISTS \"" + tableName + "\" (";
+        var vsbCreate = new ValueStringBuilder(512);
+        vsbCreate.Append("CREATE TABLE IF NOT EXISTS \"");
+        vsbCreate.Append(tableName);
+        vsbCreate.Append("\" (");
         for (int i = 0; i < columns.Count; i++)
         {
-            if (i > 0) createSql += ", ";
-            createSql += "\"" + columns[i].Name + "\" " + columns[i].Type;
-            if (!columns[i].Nullable) createSql += " NOT NULL";
+            if (i > 0) vsbCreate.Append(", ");
+            vsbCreate.Append('"');
+            vsbCreate.Append(columns[i].Name);
+            vsbCreate.Append("\" ");
+            vsbCreate.Append(columns[i].Type);
+            if (!columns[i].Nullable) vsbCreate.Append(" NOT NULL");
         }
-        createSql += ")";
+        vsbCreate.Append(')');
+        string createSql = vsbCreate.ToString();
 
         await using var createCmd = new NpgsqlCommand(createSql, targetConn);
         await createCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-        Logger.Debug(tenantId, userId, () => "[TenantSeparationService] 创建目标表: " + tableName);
+        Logger.Debug(tenantId, userId, () =>
+        {
+            var vsb = new ValueStringBuilder(64);
+            vsb.Append("[TenantSeparationService] 创建目标表: ");
+            vsb.Append(tableName);
+            return vsb.ToString();
+        });
     }
 
     /// <summary>
@@ -242,7 +337,13 @@ public sealed class TenantSeparationService
         if (columns.Count == 0) return 0;
 
         string columnList = BuildColumnList(columns);
-        string selectSql = "SELECT " + columnList + " FROM \"" + tableName + "\" WHERE tenant_id = ANY(@tids)";
+        var vsbSelect = new ValueStringBuilder(256);
+        vsbSelect.Append("SELECT ");
+        vsbSelect.Append(columnList);
+        vsbSelect.Append(" FROM \"");
+        vsbSelect.Append(tableName);
+        vsbSelect.Append("\" WHERE tenant_id = ANY(@tids)");
+        string selectSql = vsbSelect.ToString();
 
         return await CopyDataAsync(srcConn, targetConn, tableName, columns, columnList, selectSql,
             cmd => cmd.Parameters.AddWithValue("tids", tenantIds), tenantId, userId).ConfigureAwait(false);
@@ -259,7 +360,13 @@ public sealed class TenantSeparationService
         if (columns.Count == 0) return 0;
 
         string columnList = BuildColumnList(columns);
-        string selectSql = "SELECT " + columnList + " FROM \"" + tableName + "\"";
+        var vsbSelect = new ValueStringBuilder(256);
+        vsbSelect.Append("SELECT ");
+        vsbSelect.Append(columnList);
+        vsbSelect.Append(" FROM \"");
+        vsbSelect.Append(tableName);
+        vsbSelect.Append('"');
+        string selectSql = vsbSelect.ToString();
 
         return await CopyDataAsync(srcConn, targetConn, tableName, columns, columnList, selectSql,
             null, tenantId, userId).ConfigureAwait(false);
@@ -283,15 +390,26 @@ public sealed class TenantSeparationService
         // 构建参数列表和 UPSERT SQL（仅构建一次）
         string paramList = BuildParamList(columns.Count);
         string updateList = BuildUpdateList(columns);
-        string upsertSql = "INSERT INTO \"" + tableName + "\" (" + columnList + ") VALUES (" + paramList +
-            ") ON CONFLICT (id) DO UPDATE SET " + updateList;
+        var vsbUpsert = new ValueStringBuilder(512);
+        vsbUpsert.Append("INSERT INTO \"");
+        vsbUpsert.Append(tableName);
+        vsbUpsert.Append("\" (");
+        vsbUpsert.Append(columnList);
+        vsbUpsert.Append(") VALUES (");
+        vsbUpsert.Append(paramList);
+        vsbUpsert.Append(") ON CONFLICT (id) DO UPDATE SET ");
+        vsbUpsert.Append(updateList);
+        string upsertSql = vsbUpsert.ToString();
 
         while (await reader.ReadAsync().ConfigureAwait(false))
         {
             await using var upsertCmd = new NpgsqlCommand(upsertSql, targetConn);
             for (int i = 0; i < columns.Count; i++)
             {
-                upsertCmd.Parameters.AddWithValue("p" + i.ToString(), reader.GetValue(i) ?? DBNull.Value);
+                var vsbParam = new ValueStringBuilder(8);
+                vsbParam.Append('p');
+                vsbParam.Append(i);
+                upsertCmd.Parameters.AddWithValue(vsbParam.ToString(), reader.GetValue(i) ?? DBNull.Value);
             }
             await upsertCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
             migrated++;
@@ -324,14 +442,15 @@ public sealed class TenantSeparationService
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string BuildColumnList(List<string> columns)
     {
-        // 非热路径操作，使用字符串拼接确保任意列数安全
-        string result = "";
+        var vsb = new ValueStringBuilder(stackalloc char[256]);
         for (int i = 0; i < columns.Count; i++)
         {
-            if (i > 0) result += ",";
-            result += "\"" + columns[i] + "\"";
+            if (i > 0) vsb.Append(',');
+            vsb.Append('"');
+            vsb.Append(columns[i]);
+            vsb.Append('"');
         }
-        return result;
+        return vsb.ToString();
     }
 
     /// <summary>
@@ -340,13 +459,14 @@ public sealed class TenantSeparationService
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string BuildParamList(int count)
     {
-        string result = "";
+        var vsb = new ValueStringBuilder(stackalloc char[256]);
         for (int i = 0; i < count; i++)
         {
-            if (i > 0) result += ",";
-            result += "@p" + i.ToString();
+            if (i > 0) vsb.Append(',');
+            vsb.Append("@p");
+            vsb.Append(i);
         }
-        return result;
+        return vsb.ToString();
     }
 
     /// <summary>
@@ -355,12 +475,16 @@ public sealed class TenantSeparationService
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static string BuildUpdateList(List<string> columns)
     {
-        string result = "";
+        var vsb = new ValueStringBuilder(stackalloc char[512]);
         for (int i = 1; i < columns.Count; i++)
         {
-            if (i > 1) result += ",";
-            result += "\"" + columns[i] + "\"=EXCLUDED.\"" + columns[i] + "\"";
+            if (i > 1) vsb.Append(',');
+            vsb.Append('"');
+            vsb.Append(columns[i]);
+            vsb.Append("\"=EXCLUDED.\"");
+            vsb.Append(columns[i]);
+            vsb.Append('"');
         }
-        return result;
+        return vsb.ToString();
     }
 }

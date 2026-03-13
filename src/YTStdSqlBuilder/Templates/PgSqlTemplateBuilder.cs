@@ -29,9 +29,12 @@ public sealed class PgSqlTemplateBuilder
     public TemplateQueryBuilder Select(params SqlSelectItem[] items) => new();
 }
 
+/// <summary>模板表源，用于源代码生成器分析</summary>
 public sealed class TemplateTableSource
 {
+    /// <summary>表名</summary>
     public string TableName { get; }
+    /// <summary>表别名</summary>
     public string Alias { get; }
 
     internal TemplateTableSource(string tableName, string alias)
@@ -40,28 +43,111 @@ public sealed class TemplateTableSource
         Alias = alias;
     }
 
+    /// <summary>创建列引用表达式</summary>
+    /// <param name="name">列名</param>
+    /// <returns>列表达式</returns>
     public ColumnExpr Col(string name)
         => new(new SqlColumn(new SqlTableSource(new SqlTable(TableName), Alias), name));
 
+    /// <summary>创建带 CLR 类型的列引用表达式</summary>
+    /// <typeparam name="T">CLR 类型</typeparam>
+    /// <param name="name">列名</param>
+    /// <returns>列表达式</returns>
     public ColumnExpr Col<T>(string name)
         => new(new SqlColumn(new SqlTableSource(new SqlTable(TableName), Alias), name, typeof(T)));
 }
 
+/// <summary>模板查询构建器，用于源代码生成器分析</summary>
 public sealed class TemplateQueryBuilder
 {
+    /// <summary>设置 FROM 表源</summary>
+    /// <param name="table">模板表源</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder From(TemplateTableSource table) => this;
+
+    /// <summary>添加 WHERE 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder Where(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>条件为真时添加 WHERE 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder WhereIf(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>添加 AND 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder And(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>条件为真时添加 AND 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder AndIf(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>添加 OR 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder Or(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>条件为真时添加 OR 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder OrIf(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>添加 LEFT JOIN</summary>
+    /// <param name="table">要连接的模板表源</param>
+    /// <param name="onBuilder">ON 条件配置委托</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder LeftJoin(TemplateTableSource table, Action<object> onBuilder) => this;
+
+    /// <summary>添加 INNER JOIN</summary>
+    /// <param name="table">要连接的模板表源</param>
+    /// <param name="onBuilder">ON 条件配置委托</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder InnerJoin(TemplateTableSource table, Action<object> onBuilder) => this;
+
+    /// <summary>添加 GROUP BY 子句</summary>
+    /// <param name="fields">分组表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder GroupBy(params SqlExpr[] fields) => this;
+
+    /// <summary>添加 HAVING 条件</summary>
+    /// <param name="left">左侧表达式</param>
+    /// <param name="op">比较运算符</param>
+    /// <param name="right">右侧表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder Having(SqlExpr left, SqlComparisonOperator op, SqlExpr right) => this;
+
+    /// <summary>添加 ORDER BY 子句（升序）</summary>
+    /// <param name="fields">排序表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder OrderBy(params SqlExpr[] fields) => this;
+
+    /// <summary>添加 ORDER BY 子句（降序）</summary>
+    /// <param name="fields">排序表达式</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder OrderByDesc(params SqlExpr[] fields) => this;
+
+    /// <summary>设置 LIMIT</summary>
+    /// <param name="count">最大行数</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder Limit(int count) => this;
+
+    /// <summary>设置 OFFSET</summary>
+    /// <param name="count">跳过行数</param>
+    /// <returns>当前构建器实例（链式调用）</returns>
     public TemplateQueryBuilder Offset(int count) => this;
 }

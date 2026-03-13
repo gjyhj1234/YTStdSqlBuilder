@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using YTStdLogger.Core;
 
 namespace YTStdI18n;
@@ -22,7 +23,9 @@ public static class I18nCore
     /// </summary>
     public static Lang DefaultLang
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _defaultLang;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set => _defaultLang = value;
     }
 
@@ -34,7 +37,7 @@ public static class I18nCore
     {
         _defaultLang = defaultLang;
         _tenantLangs.Clear();
-        Logger.Info(0, 0L, () => $"[I18n] 初始化完成, 默认语言: {defaultLang}");
+        Logger.Info(0, 0L, () => "[I18n] 初始化完成, 默认语言: " + defaultLang.ToString());
     }
 
     /// <summary>
@@ -42,10 +45,11 @@ public static class I18nCore
     /// </summary>
     /// <param name="tenantId">租户 ID。</param>
     /// <param name="lang">语言偏好。</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetTenantLang(int tenantId, Lang lang)
     {
         _tenantLangs[tenantId] = lang;
-        Logger.Debug(tenantId, 0L, () => $"[I18n] 设置租户语言: tenantId={tenantId}, lang={lang}");
+        Logger.Debug(tenantId, 0L, () => "[I18n] 设置租户语言: tenantId=" + tenantId.ToString() + ", lang=" + lang.ToString());
     }
 
     /// <summary>
@@ -53,6 +57,7 @@ public static class I18nCore
     /// </summary>
     /// <param name="tenantId">租户 ID。</param>
     /// <returns>租户语言偏好或全局默认语言。</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Lang GetTenantLang(int tenantId)
     {
         if (_tenantLangs.TryGetValue(tenantId, out Lang lang))

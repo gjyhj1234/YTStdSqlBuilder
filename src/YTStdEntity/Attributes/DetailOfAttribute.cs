@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace YTStdEntity.Attributes;
 
@@ -16,6 +17,11 @@ public sealed class DetailOfAttribute : Attribute
     /// <summary>当前从表中指向主表主键的外键属性名</summary>
     public string ForeignKey { get; set; } = "";
 
+    /// <summary>
+    /// 初始化明细表特性。
+    /// </summary>
+    /// <param name="masterType">主表实体的类型</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public DetailOfAttribute(Type masterType)
     {
         MasterType = masterType;

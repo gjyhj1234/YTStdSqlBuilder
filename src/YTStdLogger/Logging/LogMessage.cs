@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace YTStdLogger.Logging;
 
@@ -45,6 +46,7 @@ public sealed class LogMessage
     /// <summary>
     /// 重置对象字段。
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Reset()
     {
         TenantId = 0;

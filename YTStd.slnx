@@ -24,6 +24,8 @@
     <Project Path="samples/YTStdSqlBuilder.Sample/YTStdSqlBuilder.Sample.csproj" />
     <Project Path="samples/YTStdEntity.Sample/YTStdEntity.Sample.csproj" />
     <Project Path="samples/YTStdI18n.Sample/YTStdI18n.Sample.csproj" />
+    <Project Path="samples/YTStdAdo.Sample/YTStdAdo.Sample.csproj" />
+    <Project Path="samples/YTStdLogger.Sample/YTStdLogger.Sample.csproj" />
   </Folder>
   <Folder Name="/docs/">
     <File Path="docs/architecture.md" />

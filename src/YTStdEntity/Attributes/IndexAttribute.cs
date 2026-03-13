@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace YTStdEntity.Attributes;
 
@@ -15,6 +16,12 @@ public sealed class IndexAttribute : Attribute
     /// <summary>索引类型（默认 Normal）</summary>
     public IndexKind Kind { get; set; } = IndexKind.Normal;
 
+    /// <summary>
+    /// 初始化索引特性。
+    /// </summary>
+    /// <param name="indexName">索引名称</param>
+    /// <param name="columns">索引字段列表</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IndexAttribute(string indexName, params string[] columns)
     {
         IndexName = indexName;

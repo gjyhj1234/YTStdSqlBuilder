@@ -18,6 +18,7 @@
 > 租户平台的业务建模来源于以下文档：
 > - [租户平台架构说明](../../docs/TenantPlatform/architecture.md)
 > - [租户平台实体数据字典](../../docs/TenantPlatform/database_dictionary.md)
+> - [实体框架实现提示词](./entity-prompt.md)
 >
 > AI 在实现时，必须遵循参考文档和业务文档中的约束，不得自行发明与现有框架冲突的实现模式。
 
@@ -106,11 +107,19 @@ src/YTStdTenantPlatform/
 │   ├── ServiceRegistration.cs
 │   ├── RouteRegistration.cs
 │   └── StartupInitialization.cs
+├── entity/
+│   └── TenantPlatform/
+│       ├── PlatformUser.cs
+│       ├── PlatformRole.cs
+│       ├── TenantSubscription.cs
+│       └── ...
 ├── Domain/
-│   ├── Entities/
 │   ├── Enums/
 │   ├── ValueObjects/
 │   └── Descriptors/
+├── Generated/
+│   └── TenantPlatform/
+│       └── *.g.cs
 ├── Application/
 │   ├── Services/
 │   ├── Commands/
@@ -130,6 +139,12 @@ src/YTStdTenantPlatform/
     └── BillingEndpoints.cs
 ```
 
+补充约束：
+
+- 所有手写实体文件必须统一放在 **`src/YTStdTenantPlatform/entity/TenantPlatform/*.cs`**。
+- 实体命名空间建议统一为 `YTStdTenantPlatform.Entity.TenantPlatform`。
+- 源码生成器产生的 `.g.cs` 文件不得手写维护，应通过编译自动生成并单独归类到 `Generated/TenantPlatform/` 对应的编译输出视图中理解。
+
 ---
 
 ## 4. 模块设计要求
@@ -138,12 +153,25 @@ src/YTStdTenantPlatform/
 
 - 所有实体以 `docs/TenantPlatform/database_dictionary.md` 为唯一业务数据来源。
 - 所有菜单、权限、模块划分以 `docs/TenantPlatform/architecture.md` 为唯一功能来源。
+- 实体定义规则必须同时满足 `entity-prompt.md` 中对 `[Entity]`、`[Column]`、`[Index]`、审计表、描述类、CRUD 生成的约束。
 - 生成实体时必须输出：
   - 实体类
   - 枚举
   - 索引声明
   - 描述类 / 元数据
   - 必要的输入输出 DTO
+
+### 4.1.1 自动化执行顺序
+
+在 workflow 或 AI 自动执行链中，后端阶段必须严格按以下顺序推进：
+
+1. **整体分析**：先通读 `docs/TenantPlatform/architecture.md`、`docs/TenantPlatform/database_dictionary.md`、`entity-prompt.md`，输出模块拆分、实体清单、接口清单、中间件清单、测试清单。
+2. **实体建模**：先落地 `src/YTStdTenantPlatform/entity/TenantPlatform/*.cs` 下的实体文件，再补充枚举、值对象、DTO。
+3. **首次编译触发源码生成器**：执行编译，让 `YTStdEntity.Generator` 生成 DAL / CRUD / Audit / Desc 相关代码。
+4. **初始化数据实现**：在实体和生成代码稳定后，再生成初始化数据代码。
+5. **数据库初始化**：通过生成后的 DAL 能力创建数据库结构，并在启动初始化阶段调用初始化数据逻辑填充基础数据。
+6. **WebAPI 与中间件实现**：再实现应用服务、Endpoints、中间件和接口测试。
+7. **接口测试补齐**：至少覆盖实体主流程、初始化流程、权限流程、关键中间件和核心 API。
 
 ### 4.2 WebAPI 设计
 
@@ -156,6 +184,8 @@ src/YTStdTenantPlatform/
   - `/api/billing-invoices`
 - 必须覆盖：列表、详情、新增、编辑、启用/禁用、授权、状态流转、审计查询等操作。
 - 所有接口都要考虑分页、筛选、状态过滤、审计信息返回。
+- 所有公开类型、DTO、Endpoint 注册方法、应用服务方法都必须补齐**中文 XML 注释**，确保前端 AI 能稳定识别接口用途和字段语义。
+- 需要为前端提供清晰的接口语义描述：请求用途、关键参数、返回结构、分页字段、状态字段含义。
 
 ### 4.3 权限与 Local Cache
 
@@ -183,6 +213,18 @@ src/YTStdTenantPlatform/
 
 禁止把这些任务拆分为独立微服务。
 
+### 4.5 中间件要求
+
+至少实现并接入以下中间件或等效组件：
+
+1. 全局异常处理中间件
+2. 请求日志 / TraceId 中间件
+3. 租户平台权限中间件
+4. 限流中间件
+5. 审计记录中间件
+6. Local Cache 刷新 / 失效协调组件
+7. 启动初始化中间件或启动引导器（负责建表、预热缓存、执行初始化数据）
+
 ---
 
 ## 5. 初始化要求
@@ -202,9 +244,19 @@ src/YTStdTenantPlatform/
 - API Key、Webhook Secret、MFA 等敏感字段必须使用摘要或密文。
 - 权限相关接口必须输出审计日志。
 
+## 7. 测试要求
+
+- 必须添加后端接口测试代码。
+- 至少覆盖：
+  - 启动后数据库创建与生成代码协同工作测试
+  - 初始化数据填充测试
+  - 平台用户 / 角色 / 权限主流程接口测试
+  - 关键中间件行为测试
+  - 权限拒绝 / 限流 / 审计记录基础测试
+
 ---
 
-## 7. 最终质量标准
+## 8. 最终质量标准
 
 若设计上有取舍，请遵循以下优先级：
 
@@ -212,7 +264,7 @@ src/YTStdTenantPlatform/
 
 ---
 
-## 8. 最终指令
+## 9. 最终指令
 
 请现在开始实现，直接交付：
 
@@ -222,6 +274,8 @@ src/YTStdTenantPlatform/
 - 实体建模说明
 - Local Cache 设计说明
 - 路由清单
+- 中间件清单
+- 接口测试说明
 
 不要只给思路。
 不要输出微服务方案。

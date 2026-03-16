@@ -16,6 +16,7 @@
 > - [租户平台架构说明](../../docs/TenantPlatform/architecture.md)
 > - [租户平台实体数据字典](../../docs/TenantPlatform/database_dictionary.md)
 > - [租户平台后端服务工程提示词](./tenant-platform-backend-prompt.md)
+> - [实体框架实现提示词](./entity-prompt.md)
 
 ---
 
@@ -38,6 +39,8 @@
 - 必须兼容 `NativeAOT`。
 - 必须支持“表已存在、数据已存在、部分数据缺失”这三种场景。
 - 所有初始化逻辑仍在**单体主程序**中执行，不拆成独立初始化微服务。
+- 必须在**实体编译并触发源码生成器之后**再实现或执行初始化数据逻辑。
+- 必须通过**生成后的 DAL / CRUD 能力**创建表结构并填充数据，不允许绕开生成代码单独维护平台表 SQL。
 
 ---
 
@@ -122,6 +125,8 @@ Infrastructure/Initialization/
 - 每个 Contributor 负责一类数据的幂等初始化。
 - `SeedRunner` 负责排序、执行和日志输出。
 - 初始化判断优先使用业务唯一键（如 `code`、`username`、`template_code`），不要依赖固定 ID。
+- workflow 执行顺序必须是：**实体建模 → 编译触发生成器 → 数据库建表 → 初始化数据填充 → 缓存预热 → 初始化测试**。
+- 初始化阶段要能够被后端启动引导器直接调用，避免生成一次性临时脚本。
 
 ---
 
@@ -172,6 +177,8 @@ Infrastructure/Initialization/
 - 缺失部分关系数据时的补齐测试
 - 默认管理员 / 默认角色 / 默认权限存在性测试
 - 缓存预热触发测试
+- 生成后的 DAL / CRUD 与初始化协同测试
+- 数据库建表后再填充初始化数据的集成测试
 
 ---
 

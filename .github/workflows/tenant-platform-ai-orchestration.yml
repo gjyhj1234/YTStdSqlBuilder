@@ -1,0 +1,413 @@
+name: Tenant Platform AI Orchestration
+
+on:
+  workflow_dispatch:
+    inputs:
+      execution_mode:
+        description: "执行模式：plan-only 仅生成分阶段任务包，external-ai-runner 会额外调用外部 AI 执行器"
+        required: true
+        default: plan-only
+        type: choice
+        options:
+          - plan-only
+          - external-ai-runner
+      target_ref:
+        description: "目标分支或提交 SHA"
+        required: true
+        default: main
+        type: string
+      run_backend:
+        description: "是否生成并执行后端阶段任务包"
+        required: true
+        default: true
+        type: boolean
+      run_initdata:
+        description: "是否生成并执行初始化数据阶段任务包"
+        required: true
+        default: true
+        type: boolean
+      run_frontend:
+        description: "是否生成并执行前端阶段任务包"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: tenant-platform-ai-${{ github.event.inputs.target_ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      packet_dir: ${{ steps.prepare.outputs.packet_dir }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.target_ref }}
+          fetch-depth: 1
+
+      - name: Validate required prompt and doc files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_files=(
+            ".github/prompts/tenant-platform-backend-prompt.md"
+            ".github/prompts/tenant-platform-initdata-prompt.md"
+            ".github/prompts/tenant-platform-frontend-prompt.md"
+            ".github/prompts/entity-prompt.md"
+            "docs/TenantPlatform/architecture.md"
+            "docs/TenantPlatform/database_dictionary.md"
+            "YTStd.slnx"
+          )
+          for file in "${required_files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "缺少必要文件: $file" >&2
+              exit 1
+            fi
+          done
+
+      - name: Validate stage dependency inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event.inputs.run_initdata }}" == "true" && "${{ github.event.inputs.run_backend }}" != "true" ]]; then
+            echo "初始化数据阶段依赖后端阶段，请同时启用 run_backend。" >&2
+            exit 1
+          fi
+          if [[ "${{ github.event.inputs.run_frontend }}" == "true" && "${{ github.event.inputs.run_backend }}" != "true" ]]; then
+            echo "前端阶段依赖后端接口语义，请同时启用 run_backend。" >&2
+            exit 1
+          fi
+
+      - name: Build stage packets
+        id: prepare
+        shell: bash
+        env:
+          EXECUTION_MODE: ${{ github.event.inputs.execution_mode }}
+          RUN_BACKEND: ${{ github.event.inputs.run_backend }}
+          RUN_INITDATA: ${{ github.event.inputs.run_initdata }}
+          RUN_FRONTEND: ${{ github.event.inputs.run_frontend }}
+          TARGET_REF: ${{ github.event.inputs.target_ref }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          packet_dir="artifacts/tenant-platform-ai"
+          mkdir -p "$packet_dir"
+          python <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          repo = Path(".")
+          packet_dir = repo / "artifacts" / "tenant-platform-ai"
+          packet_dir.mkdir(parents=True, exist_ok=True)
+
+          def read_text(path: str) -> str:
+            return (repo / path).read_text(encoding="utf-8")
+
+          packets = [
+            {
+              "file": "01-analysis-packet.md",
+              "title": "阶段 1：整体分析与任务拆分",
+              "enabled": True,
+              "depends_on": [],
+              "deliverables": [
+                "模块拆分清单",
+                "实体清单与命名约束",
+                "后端中间件清单",
+                "初始化数据清单",
+                "前端模块清单",
+                "测试与验收清单",
+              ],
+              "context_files": [
+                "docs/TenantPlatform/architecture.md",
+                "docs/TenantPlatform/database_dictionary.md",
+                ".github/prompts/entity-prompt.md",
+                ".github/prompts/tenant-platform-backend-prompt.md",
+                ".github/prompts/tenant-platform-initdata-prompt.md",
+                ".github/prompts/tenant-platform-frontend-prompt.md",
+              ],
+              "body": """目标：先整体分析，再把大任务拆成可执行阶段。\n要求：必须先输出实体、服务、初始化、前端、测试、中间件的完整拆分，不允许直接跳到代码生成。""",
+            },
+            {
+              "file": "02-backend-packet.md",
+              "title": "阶段 2：后端实体、生成代码、WebAPI 与接口测试",
+              "enabled": os.environ["RUN_BACKEND"].lower() == "true",
+              "depends_on": ["01-analysis-packet.md"],
+              "deliverables": [
+                "src/YTStdTenantPlatform/entity/TenantPlatform/*.cs",
+                "编译触发后的实体生成代码",
+                "启动建表逻辑",
+                "应用服务与 WebAPI",
+                "中间件实现",
+                "接口测试代码",
+              ],
+              "context_files": [
+                ".github/prompts/entity-prompt.md",
+                ".github/prompts/tenant-platform-backend-prompt.md",
+                "docs/TenantPlatform/architecture.md",
+                "docs/TenantPlatform/database_dictionary.md",
+              ],
+              "body": """目标：先生成实体，再编译触发源码生成器，再实现 WebAPI、中间件和接口测试。\n关键要求：实体必须放在 src/YTStdTenantPlatform/entity/TenantPlatform/；接口要有中文 XML 注释；需要补齐异常、日志、权限、限流、审计、缓存刷新等中间件。""",
+            },
+            {
+              "file": "03-initdata-packet.md",
+              "title": "阶段 3：初始化数据与数据库填充",
+              "enabled": os.environ["RUN_INITDATA"].lower() == "true",
+              "depends_on": ["02-backend-packet.md"],
+              "deliverables": [
+                "幂等初始化服务",
+                "基础实体列表",
+                "建表后初始化填充逻辑",
+                "缓存预热逻辑",
+                "初始化测试代码",
+              ],
+              "context_files": [
+                ".github/prompts/tenant-platform-initdata-prompt.md",
+                ".github/prompts/tenant-platform-backend-prompt.md",
+                "docs/TenantPlatform/database_dictionary.md",
+              ],
+              "body": """目标：依赖已经生成的实体和 DAL/CRUD 能力完成建表后初始化与缓存预热。\n关键要求：不得使用一次性 SQL；必须通过实体列表 + 幂等 Contributor 执行。""",
+            },
+            {
+              "file": "04-frontend-packet.md",
+              "title": "阶段 4：前端工程与模块帮助能力",
+              "enabled": os.environ["RUN_FRONTEND"].lower() == "true",
+              "depends_on": ["02-backend-packet.md", "03-initdata-packet.md"],
+              "deliverables": [
+                "web/tenant-platform-web/ 工程",
+                "菜单与路由结构",
+                "按模块拆分的 API 封装",
+                "功能说明与操作指引组件",
+                "关键页面与前端测试",
+              ],
+              "context_files": [
+                ".github/prompts/tenant-platform-frontend-prompt.md",
+                ".github/prompts/tenant-platform-backend-prompt.md",
+                "docs/TenantPlatform/architecture.md",
+                "docs/TenantPlatform/database_dictionary.md",
+              ],
+              "body": """目标：按架构文档生成 devextreme-vue 前端工程。\n关键要求：每个功能模块必须提供“功能说明”与“操作指引”；前端生成应建立在稳定的后端接口语义之上。""",
+            },
+          ]
+
+          manifest = {
+            "repository": os.environ["GITHUB_REPOSITORY_NAME"],
+            "target_ref": os.environ["TARGET_REF"],
+            "execution_mode": os.environ["EXECUTION_MODE"],
+            "stages": packets,
+          }
+          (packet_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+          for packet in packets:
+            lines = [
+              f"# {packet['title']}",
+              "",
+              f"- 启用状态：{'enabled' if packet['enabled'] else 'disabled'}",
+              f"- 依赖阶段：{', '.join(packet['depends_on']) if packet['depends_on'] else '无'}",
+              "",
+              "## 阶段说明",
+              "",
+              packet["body"],
+              "",
+              "## 交付物",
+              "",
+            ]
+            for item in packet["deliverables"]:
+              lines.append(f"- {item}")
+            lines.extend(["", "## 上下文文件", ""])
+            for item in packet["context_files"]:
+              lines.append(f"- `{item}`")
+            lines.extend(["", "## 原始提示词与文档摘录", ""])
+            for item in packet["context_files"]:
+              lines.append(f"### 文件：`{item}`")
+              lines.append("")
+              lines.append("```markdown")
+              lines.append(read_text(item))
+              lines.append("```")
+              lines.append("")
+            (packet_dir / packet["file"]).write_text("\n".join(lines), encoding="utf-8")
+          PY
+          echo "packet_dir=$packet_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Upload orchestration packets
+        uses: actions/upload-artifact@v4
+        with:
+          name: tenant-platform-ai-packets
+          path: artifacts/tenant-platform-ai
+
+      - name: Write workflow summary
+        shell: bash
+        run: |
+          {
+            echo "## Tenant Platform AI Workflow"
+            echo
+            echo "- 执行模式：\`${{ github.event.inputs.execution_mode }}\`"
+            echo "- 目标 Ref：\`${{ github.event.inputs.target_ref }}\`"
+            echo "- 后端阶段：\`${{ github.event.inputs.run_backend }}\`"
+            echo "- 初始化阶段：\`${{ github.event.inputs.run_initdata }}\`"
+            echo "- 前端阶段：\`${{ github.event.inputs.run_frontend }}\`"
+            echo
+            echo "本次 workflow 会先生成分阶段任务包；若配置外部 AI 执行器，则后续阶段会按顺序自动调用。"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  backend:
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: ${{ github.event.inputs.run_backend == 'true' }}
+    steps:
+      - name: Download stage packets
+        uses: actions/download-artifact@v4
+        with:
+          name: tenant-platform-ai-packets
+          path: artifacts/tenant-platform-ai
+
+      - name: Invoke external AI runner for backend stage
+        if: ${{ github.event.inputs.execution_mode == 'external-ai-runner' }}
+        shell: bash
+        env:
+          AI_RUNNER_URL: ${{ vars.TENANT_PLATFORM_AI_RUNNER_URL }}
+          AI_RUNNER_TOKEN: ${{ secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          TARGET_REF: ${{ github.event.inputs.target_ref }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${AI_RUNNER_URL:-}" || -z "${AI_RUNNER_TOKEN:-}" ]]; then
+            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，无法执行 external-ai-runner 模式。" >&2
+            exit 1
+          fi
+          jq -n \
+            --arg repo "$GITHUB_REPOSITORY_NAME" \
+            --arg ref "$TARGET_REF" \
+            --arg stage "backend" \
+            --rawfile prompt artifacts/tenant-platform-ai/02-backend-packet.md \
+            '{repository:$repo,target_ref:$ref,stage:$stage,prompt:$prompt}' \
+            > backend-request.json
+          curl -fsSL \
+            -H "Authorization: Bearer ${AI_RUNNER_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data @backend-request.json \
+            "${AI_RUNNER_URL}"
+
+      - name: Summarize backend stage
+        shell: bash
+        run: |
+          {
+            echo "## Backend stage"
+            echo
+            echo "- 已生成并上传后端阶段任务包"
+            if [[ "${{ github.event.inputs.execution_mode }}" == "external-ai-runner" ]]; then
+              echo "- 已尝试调用外部 AI 执行器"
+            else
+              echo "- 当前为 plan-only，仅输出后端执行任务包"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  initdata:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - backend
+    if: ${{ github.event.inputs.run_initdata == 'true' }}
+    steps:
+      - name: Download stage packets
+        uses: actions/download-artifact@v4
+        with:
+          name: tenant-platform-ai-packets
+          path: artifacts/tenant-platform-ai
+
+      - name: Invoke external AI runner for initdata stage
+        if: ${{ github.event.inputs.execution_mode == 'external-ai-runner' }}
+        shell: bash
+        env:
+          AI_RUNNER_URL: ${{ vars.TENANT_PLATFORM_AI_RUNNER_URL }}
+          AI_RUNNER_TOKEN: ${{ secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          TARGET_REF: ${{ github.event.inputs.target_ref }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${AI_RUNNER_URL:-}" || -z "${AI_RUNNER_TOKEN:-}" ]]; then
+            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，无法执行 external-ai-runner 模式。" >&2
+            exit 1
+          fi
+          jq -n \
+            --arg repo "$GITHUB_REPOSITORY_NAME" \
+            --arg ref "$TARGET_REF" \
+            --arg stage "initdata" \
+            --rawfile prompt artifacts/tenant-platform-ai/03-initdata-packet.md \
+            '{repository:$repo,target_ref:$ref,stage:$stage,prompt:$prompt}' \
+            > initdata-request.json
+          curl -fsSL \
+            -H "Authorization: Bearer ${AI_RUNNER_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data @initdata-request.json \
+            "${AI_RUNNER_URL}"
+
+  frontend:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - backend
+    if: ${{ github.event.inputs.run_frontend == 'true' }}
+    steps:
+      - name: Download stage packets
+        uses: actions/download-artifact@v4
+        with:
+          name: tenant-platform-ai-packets
+          path: artifacts/tenant-platform-ai
+
+      - name: Invoke external AI runner for frontend stage
+        if: ${{ github.event.inputs.execution_mode == 'external-ai-runner' }}
+        shell: bash
+        env:
+          AI_RUNNER_URL: ${{ vars.TENANT_PLATFORM_AI_RUNNER_URL }}
+          AI_RUNNER_TOKEN: ${{ secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          TARGET_REF: ${{ github.event.inputs.target_ref }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${AI_RUNNER_URL:-}" || -z "${AI_RUNNER_TOKEN:-}" ]]; then
+            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，无法执行 external-ai-runner 模式。" >&2
+            exit 1
+          fi
+          jq -n \
+            --arg repo "$GITHUB_REPOSITORY_NAME" \
+            --arg ref "$TARGET_REF" \
+            --arg stage "frontend" \
+            --rawfile prompt artifacts/tenant-platform-ai/04-frontend-packet.md \
+            '{repository:$repo,target_ref:$ref,stage:$stage,prompt:$prompt}' \
+            > frontend-request.json
+          curl -fsSL \
+            -H "Authorization: Bearer ${AI_RUNNER_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data @frontend-request.json \
+            "${AI_RUNNER_URL}"
+
+  summary:
+    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - backend
+      - initdata
+      - frontend
+    if: ${{ always() }}
+    steps:
+      - name: Final summary
+        shell: bash
+        run: |
+          {
+            echo "## Tenant Platform AI Orchestration Summary"
+            echo
+            echo "- prepare：\`${{ needs.prepare.result }}\`"
+            echo "- backend：\`${{ needs.backend.result || 'skipped' }}\`"
+            echo "- initdata：\`${{ needs.initdata.result || 'skipped' }}\`"
+            echo "- frontend：\`${{ needs.frontend.result || 'skipped' }}\`"
+            echo
+            echo "如果当前为 \`plan-only\` 模式，请从 artifact \`tenant-platform-ai-packets\` 下载分阶段任务包后交给 AI 执行器。"
+          } >> "$GITHUB_STEP_SUMMARY"

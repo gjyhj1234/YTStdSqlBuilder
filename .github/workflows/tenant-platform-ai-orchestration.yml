@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       execution_mode:
-        description: "执行模式：plan-only 仅生成分阶段任务包，external-ai-runner 需要你自行提供外部 AI 执行器 URL/Token"
+        description: "执行模式：plan-only 仅生成分阶段任务包，external-ai-runner 需自行提供外部 AI 执行器 URL/Token"
         required: true
         default: plan-only
         type: choice

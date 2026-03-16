@@ -15,7 +15,10 @@
 ├── logger-prompt.md             # 日志系统实现提示词
 ├── ado-prompt.md                # ADO 数据访问实现提示词
 ├── entity-prompt.md             # 实体与数据表维护实现提示词
-└── i18n-prompt.md               # 国际化语言支持实现提示词
+├── i18n-prompt.md               # 国际化语言支持实现提示词
+├── tenant-platform-backend-prompt.md  # 租户平台后端服务实现提示词
+├── tenant-platform-initdata-prompt.md # 租户平台初始化数据实现提示词
+└── tenant-platform-frontend-prompt.md # 租户平台前端工程实现提示词
 ```
 
 ---
@@ -31,6 +34,9 @@
 | ADO 数据访问 | `ado-prompt.md` | 📝 提示词已优化 | 数据库访问层（连接池 + CRUD + DDL） |
 | 实体管理 | `entity-prompt.md` | 📝 提示词已优化 | 实体特性 + Source Generator（DAL/CRUD/描述） |
 | 国际化 | `i18n-prompt.md` | 📝 提示词已创建 | 多语言资源管理 + Source Generator（强类型键） |
+| 租户平台后端 | `tenant-platform-backend-prompt.md` | 📝 新增提示词 | 单体 WebAPI + 实体驱动 + Local Cache 权限判断 |
+| 租户平台初始化数据 | `tenant-platform-initdata-prompt.md` | 📝 新增提示词 | 实体列表 + 幂等初始化服务 |
+| 租户平台前端 | `tenant-platform-frontend-prompt.md` | 📝 新增提示词 | Vue 3 + TypeScript + devextreme-vue 平台前端 |
 
 后续新增模块时，按此格式命名：
 - `{module-name}-prompt.md`

@@ -1,33 +1,41 @@
-# SaaStenant 数据库字典
+# 租户平台实体数据字典
 
 > 本文档是 **AI 编程优先** 的数据库字典，不是建表 SQL。
 
 > 目标：让 AI 能基于本文档稳定生成实体类、枚举、关联关系和值对象，并在程序运行时由应用来维护数据库结构。
 
-## 1. 文档使用说明
+## 1. 文档定位
 
-- 本字典按“模块 -> 表 -> 字段”展开，适合直接提供给 AI 用于生成实体类。
-- 主键统一建议映射为 `Long`；时间字段统一建议映射为 `LocalDateTime` 或 `LocalDate`。
-- 所有 `*_status`、`*_type`、`*_mode`、`*_level`、`*_scope` 等字段，建议由 AI 生成强类型枚举。
-- 所有 `JSONB` 字段，建议映射为 `JsonNode`、`Map<String, Object>` 或独立值对象。
-- 若后续应用采用 JPA / MyBatis / MyBatis-Plus / EF Core / Prisma 等 ORM，请以“字段类型 + 是否可空 + 默认值 + 约束 + 关系说明”为准生成实体。
+- 本文档是**面向 YTStdEntity / YTStdEntity.Generator 的实体数据字典**，不是手写建表 SQL 文档。
+- 每个“表”章节本质上都应被理解为一个平台实体（`[Entity]`）的建模说明，应用启动后由现有框架生成 DAL、CRUD、索引与结构维护逻辑。
+- 本文档主要服务于三类生成任务：**实体定义生成**、**WebAPI/应用服务生成**、**初始化数据生成**。
+- 本文档中的字段、约束、索引说明，均应转译为实体属性、`[Column]`、`[Index]`、枚举和值对象，而不是直接输出独立 SQL 脚本。
 
-## 2. 全局建模约定
+## 2. 现有框架建模硬约束
 
 | 主题 | 约定 |
 | --- | --- |
-| 主键 | 统一为 `BIGSERIAL/BIGINT` 语义，建议实体类型使用 `Long` |
-| 时间 | `TIMESTAMP` -> `LocalDateTime`，`DATE` -> `LocalDate` |
-| 金额 | `DECIMAL(18,2)` / `DECIMAL(18,4)` -> `BigDecimal` |
-| JSON 配置 | `JSONB` -> `JsonNode` / `Map<String,Object>` / 独立值对象 |
-| 软删除 | 仅部分表包含 `deleted_at`，为空表示未删除 |
-| 审计字段 | 多数业务表包含 `created_at`、`updated_at`，建议抽取基类实体 |
-| 多租户 | 租户域数据通常直接持有 `tenant_id`；平台级字典表不持有 `tenant_id` |
+| 实体驱动 | 表结构由实体定义维护，优先生成 `[Entity]`、`[Column]`、`[Index]`、枚举和值对象，再由现有框架维护 DDL |
+| 主键 | 统一为 `BIGSERIAL/BIGINT` 语义，建议实体类型使用 `long` / `Long` |
+| 时间 | `TIMESTAMP` -> `DateTime` / `LocalDateTime`，`DATE` -> `DateOnly` / `LocalDate` |
+| 金额 | `DECIMAL(18,2)` / `DECIMAL(18,4)` -> `decimal` / `BigDecimal` |
+| JSON 配置 | `JSONB` -> `JsonNode` / 值对象，不直接暴露松散字典字段给外部 API |
+| 审计字段 | 多数业务表包含 `created_at`、`updated_at`，建议抽取统一实体基类或公共属性片段 |
+| 平台表租户关联 | **禁止**在租户平台实体中使用裸 `TenantId` 属性、`tenant_id` / `tenantid` 字段名；如需引用租户主档，统一使用具备业务语义的名称，如 `tenant_ref_id`、`owner_tenant_ref_id`、`source_tenant_ref_id`、`target_tenant_ref_id`，避免触发现有框架的租户分区/分区表语义 |
 | 安全字段 | 密码、密钥、密文类字段只保存摘要或密文，不应生成明文字段逻辑 |
+| 部署假设 | 后端采用单体主程序，不使用微服务与分布式缓存；权限判断相关高频数据使用 Local Cache（本地缓存） |
 
-## 3. 模块总览
+## 3. 实体生成与数据初始化约定
 
-| 模块 | 表数量 | 主要表 |
+- 每张表默认生成一个实体类，类名优先采用本文档中的“建议实体名”，属性命名采用 PascalCase，数据库列名采用 snake_case。
+- 对中间关系表（如 `platform_role_permissions`、`tenant_tag_bindings`）可直接生成轻量关系实体，不建议引入复杂领域行为。
+- `*_logs`、`*_stats`、`*_items`、`*_events`、`*_changes` 这类实体按追加型或统计型实体处理，通常不做强更新。
+- 平台基础数据（管理员、角色、权限、默认安全策略、默认套餐、通知模板等）应通过**实体列表 + 幂等初始化服务**生成，不应依赖一次性 SQL 文件。
+- 涉及权限、菜单、角色成员、功能开关的实体，在应用层默认需要配套 Local Cache（本地缓存）刷新/失效机制。
+
+## 4. 模块总览
+
+| 模块 | 表数量 | 主要实体/表 |
 | --- | ---: | --- |
 | 1. 平台管理体系 | 10 | `platform_users`, `platform_roles`, `platform_permissions`, `platform_role_permissions`, `platform_role_members` ... |
 | 2. 租户生命周期体系 | 4 | `tenants`, `tenant_initialization_tasks`, `tenant_lifecycle_events`, `tenant_data_jobs` |
@@ -44,13 +52,12 @@
 | 13. 文件与存储 | 3 | `storage_strategies`, `tenant_files`, `file_access_policies` |
 | 14. 技术基础设施 | 3 | `rate_limit_policies`, `data_isolation_policies`, `infrastructure_components` |
 
-## 4. AI 生成实体建议
+## 5. AI 生成实体建议
 
-- 建议每张表生成一个实体类，类名优先采用本文档中的“建议实体名”。
-- 对中间关系表（如 `platform_role_permissions`、`tenant_tag_bindings`）可直接生成轻量关系实体，不建议引入复杂领域行为。
-- `*_logs`、`*_stats`、`*_items`、`*_events`、`*_changes` 这类表建议作为追加型或统计型实体处理，通常不做强更新。
+- 读取本字典时，请优先生成实体类、枚举、索引配置、初始化数据清单与 WebAPI 输入输出模型，不要优先生成纯 SQL。
+- 对“关联 tenants 表”的字段，统一视为**平台主档引用字段**，不要将其解释为租户分区字段。
 - `current_plan_id`、`current_subscription_id` 这类“当前指针”字段应保留 nullable，避免实体初始化时出现循环依赖。
-- 建议为所有带 CHECK 枚举的字段额外生成枚举类型，并在实体注释中保留本文档的中文业务解释。
+- 需要生成实体注释时，保留本文档中的中文业务说明，便于后续维护与代码审查。
 
 ## 模块：1. 平台管理体系
 
@@ -321,14 +328,14 @@
 
 - **建议实体名**：`TenantInitializationTask`
 - **业务用途**：记录租户初始化数据库、配置、套餐和资源等异步任务。
-- **主要关系**：`tenant_id` -> `tenants`
+- **主要关系**：`tenant_ref_id` -> `tenants`
 - **表级约束**：无额外表级约束。
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `task_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(task_type IN ('database', 'config', 'plan', 'resource')) | 类型字段，建议生成枚举。 |
 | `task_status` | `VARCHAR(32)` | `String` | 否 | 'pending' | NOT NULL / CHECK(task_status IN ('pending', 'running', 'success', 'failed')) | 状态字段，建议生成枚举。 |
 | `details` | `JSONB` | `JsonNode/Map<String,Object>` | 是 | - | - | 业务字段。 |
@@ -340,14 +347,14 @@
 
 - **建议实体名**：`TenantLifecycleEvent`
 - **业务用途**：记录租户开通、启用、暂停、恢复、关闭和删除等状态迁移事件。
-- **主要关系**：`tenant_id` -> `tenants`；`operator_id` -> `platform_users`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`operator_id` -> `platform_users`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_tenant_lifecycle_events_tenant_time`（普通，字段：`tenant_id, occurred_at DESC`）
+- **索引说明**：`idx_tenant_lifecycle_events_tenant_time`（普通，字段：`tenant_ref_id, occurred_at DESC`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `event_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(event_type IN ('register', 'open', 'enable', 'suspend', 'resume', 'close', 'delete', 'expire')) | 类型字段，建议生成枚举。 |
 | `from_status` | `VARCHAR(32)` | `String` | 是 | - | - | 状态字段，建议生成枚举。 |
 | `to_status` | `VARCHAR(32)` | `String` | 是 | - | - | 状态字段，建议生成枚举。 |
@@ -360,14 +367,14 @@
 
 - **建议实体名**：`TenantDataJob`
 - **业务用途**：记录租户数据归档、备份、迁移、清理等后台作业。
-- **主要关系**：`tenant_id` -> `tenants`；`created_by` -> `platform_users`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`created_by` -> `platform_users`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_tenant_data_jobs_tenant_type`（普通，字段：`tenant_id, job_type`）
+- **索引说明**：`idx_tenant_data_jobs_tenant_type`（普通，字段：`tenant_ref_id, job_type`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `job_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(job_type IN ('archive', 'backup', 'migration', 'cleanup')) | 类型字段，建议生成枚举。 |
 | `job_status` | `VARCHAR(32)` | `String` | 否 | 'pending' | NOT NULL / CHECK(job_status IN ('pending', 'running', 'success', 'failed')) | 状态字段，建议生成枚举。 |
 | `storage_path` | `VARCHAR(255)` | `String` | 是 | - | - | 路径信息。 |
@@ -402,14 +409,14 @@
 
 - **建议实体名**：`TenantDomain`
 - **业务用途**：维护租户默认域名、子域名、自定义域名以及域名验证状态。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (domain)`；`UNIQUE (tenant_id, domain)`
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (domain)`；`UNIQUE (tenant_ref_id, domain)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `domain` | `VARCHAR(255)` | `String` | 否 | - | NOT NULL | 租户域名。 |
 | `domain_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(domain_type IN ('default', 'subdomain', 'custom')) | 域名类型：默认域名/子域名/自定义域名。 |
 | `is_primary` | `BOOLEAN` | `Boolean` | 否 | FALSE | NOT NULL | 是否主域名。 |
@@ -439,14 +446,14 @@
 
 - **建议实体名**：`TenantTagBinding`
 - **业务用途**：维护租户与标签的多对多关系。
-- **主要关系**：`tenant_id` -> `tenants`；`tag_id` -> `tenant_tags`
-- **表级约束**：`UNIQUE (tenant_id, tag_id)`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`tag_id` -> `tenant_tags`
+- **表级约束**：`UNIQUE (tenant_ref_id, tag_id)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `tag_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenant_tags | 关联 `tenant_tags` 表主键。 |
 | `created_at` | `TIMESTAMP` | `LocalDateTime` | 否 | CURRENT_TIMESTAMP | NOT NULL | 创建时间。建议实体类型使用 LocalDateTime/OffsetDateTime。 |
 
@@ -454,15 +461,15 @@
 
 - **建议实体名**：`TenantGroupMember`
 - **业务用途**：维护租户与分组的归类关系。
-- **主要关系**：`group_id` -> `tenant_groups`；`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (group_id, tenant_id)`
+- **主要关系**：`group_id` -> `tenant_groups`；`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (group_id, tenant_ref_id)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
 | `group_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenant_groups | 关联 `tenant_groups` 表主键。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `created_at` | `TIMESTAMP` | `LocalDateTime` | 否 | CURRENT_TIMESTAMP | NOT NULL | 创建时间。建议实体类型使用 LocalDateTime/OffsetDateTime。 |
 
 ## 模块：4. 租户资源管理
@@ -471,14 +478,14 @@
 
 - **建议实体名**：`TenantResourceQuota`
 - **业务用途**：定义用户数、API 调用、并发、存储、数据库容量、文件数量等资源配额。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id, quota_type)`
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id, quota_type)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `quota_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(quota_type IN ('user_count', 'api_calls', 'concurrent_requests', 'storage_size', 'database_size', 'file_count')) | 配额类型。应生成枚举。 |
 | `quota_limit` | `BIGINT` | `Long` | 否 | - | NOT NULL | 配额上限值。 |
 | `warning_threshold` | `BIGINT` | `Long` | 是 | - | - | 预警阈值。 |
@@ -492,14 +499,14 @@
 
 - **建议实体名**：`TenantResourceUsageStat`
 - **业务用途**：按天统计租户资源实际使用量，用于配额判断和运营分析。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id, metric_date)`
-- **索引说明**：`idx_usage_stats_tenant_date`（普通，字段：`tenant_id, metric_date DESC`）
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id, metric_date)`
+- **索引说明**：`idx_usage_stats_tenant_date`（普通，字段：`tenant_ref_id, metric_date DESC`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `metric_date` | `DATE` | `LocalDate` | 否 | - | NOT NULL | 统计日期。建议实体类型使用 LocalDate。 |
 | `user_count` | `INTEGER` | `Integer` | 否 | 0 | NOT NULL | 数量统计字段。 |
 | `api_call_count` | `BIGINT` | `Long` | 否 | 0 | NOT NULL | 数量统计字段。 |
@@ -515,14 +522,14 @@
 
 - **建议实体名**：`TenantSystemConfig`
 - **业务用途**：维护租户系统名称、Logo、主题、语言、时区等基础系统配置。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id)`
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `system_name` | `VARCHAR(128)` | `String` | 是 | - | - | 名称。 |
 | `logo_url` | `VARCHAR(255)` | `String` | 是 | - | - | URL 地址。 |
 | `system_theme` | `VARCHAR(64)` | `String` | 是 | - | - | 业务字段。 |
@@ -536,14 +543,14 @@
 
 - **建议实体名**：`TenantFeatureFlag`
 - **业务用途**：维护租户功能启停和灰度开关配置。 
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id, feature_key)`
-- **索引说明**：`idx_feature_flags_tenant_enabled`（普通，字段：`tenant_id, enabled`）
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id, feature_key)`
+- **索引说明**：`idx_feature_flags_tenant_enabled`（普通，字段：`tenant_ref_id, enabled`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `feature_key` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 功能标识 Key。 |
 | `feature_name` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 功能名称。 |
 | `enabled` | `BOOLEAN` | `Boolean` | 否 | FALSE | NOT NULL | 启用标记。建议实体类型使用 Boolean。 |
@@ -556,14 +563,14 @@
 
 - **建议实体名**：`TenantParameter`
 - **业务用途**：维护系统参数、扩展参数和自定义参数。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id, param_key)`
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id, param_key)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `param_key` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 参数键。 |
 | `param_name` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 参数名称。 |
 | `param_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(param_type IN ('system', 'extension', 'custom')) | 参数类型：系统/扩展/自定义。 |
@@ -576,14 +583,14 @@
 
 - **建议实体名**：`TenantUiBranding`
 - **业务用途**：维护品牌名称、登录页配置和 UI 主题等品牌化参数。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id)`
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `brand_name` | `VARCHAR(128)` | `String` | 是 | - | - | 名称。 |
 | `login_page_config` | `JSONB` | `JsonNode/Map<String,Object>` | 是 | - | - | 配置 JSON。 |
 | `ui_theme` | `JSONB` | `JsonNode/Map<String,Object>` | 是 | - | - | 业务字段。 |
@@ -663,14 +670,14 @@
 
 - **建议实体名**：`TenantSubscription`
 - **业务用途**：维护租户当前或历史套餐订阅记录。
-- **主要关系**：`tenant_id` -> `tenants`；`package_version_id` -> `saas_package_versions`；`created_by` -> `platform_users`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`package_version_id` -> `saas_package_versions`；`created_by` -> `platform_users`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_subscriptions_tenant_status`（普通，字段：`tenant_id, subscription_status`）
+- **索引说明**：`idx_subscriptions_tenant_status`（普通，字段：`tenant_ref_id, subscription_status`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `package_version_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->saas_package_versions | 关联 `saas_package_versions` 表主键。 |
 | `subscription_status` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(subscription_status IN ('active', 'expiring', 'expired', 'suspended', 'cancelled')) | 订阅状态。应生成枚举。 |
 | `subscription_type` | `VARCHAR(32)` | `String` | 否 | 'formal' | NOT NULL / CHECK(subscription_type IN ('trial', 'formal')) | 订阅类型：试用/正式。 |
@@ -686,14 +693,14 @@
 
 - **建议实体名**：`TenantTrial`
 - **业务用途**：维护试用开通、试用周期和转正式记录。
-- **主要关系**：`tenant_id` -> `tenants`；`package_version_id` -> `saas_package_versions`；`converted_subscription_id` -> `tenant_subscriptions`
-- **表级约束**：`UNIQUE (tenant_id, started_at)`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`package_version_id` -> `saas_package_versions`；`converted_subscription_id` -> `tenant_subscriptions`
+- **表级约束**：`UNIQUE (tenant_ref_id, started_at)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `package_version_id` | `BIGINT` | `Long` | 是 | - | FK->saas_package_versions | 关联 `saas_package_versions` 表主键。 |
 | `started_at` | `TIMESTAMP` | `LocalDateTime` | 否 | - | NOT NULL | 时间字段。 |
 | `expires_at` | `TIMESTAMP` | `LocalDateTime` | 否 | - | NOT NULL | 时间字段。 |
@@ -706,14 +713,14 @@
 
 - **建议实体名**：`TenantSubscriptionChange`
 - **业务用途**：记录订阅开通、升级、降级、续费、取消、试用转正式等动作。
-- **主要关系**：`tenant_id` -> `tenants`；`subscription_id` -> `tenant_subscriptions`；`from_package_version_id` -> `saas_package_versions`；`to_package_version_id` -> `saas_package_versions`；`created_by` -> `platform_users`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`subscription_id` -> `tenant_subscriptions`；`from_package_version_id` -> `saas_package_versions`；`to_package_version_id` -> `saas_package_versions`；`created_by` -> `platform_users`
 - **表级约束**：无额外表级约束。
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `subscription_id` | `BIGINT` | `Long` | 是 | - | FK->tenant_subscriptions | 关联 `tenant_subscriptions` 表主键。 |
 | `change_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(change_type IN ('subscribe', 'upgrade', 'downgrade', 'renew', 'cancel', 'trial_to_formal')) | 类型字段，建议生成枚举。 |
 | `from_package_version_id` | `BIGINT` | `Long` | 是 | - | FK->saas_package_versions | 关联 `saas_package_versions` 表主键。 |
@@ -729,15 +736,15 @@
 
 - **建议实体名**：`BillingInvoice`
 - **业务用途**：维护租户账单主单据和计费区间。
-- **主要关系**：`tenant_id` -> `tenants`；`subscription_id` -> `tenant_subscriptions`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`subscription_id` -> `tenant_subscriptions`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_invoices_tenant_status`（普通，字段：`tenant_id, invoice_status`）
+- **索引说明**：`idx_invoices_tenant_status`（普通，字段：`tenant_ref_id, invoice_status`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
 | `invoice_no` | `VARCHAR(64)` | `String` | 否 | - | UNIQUE / NOT NULL | 账单编号。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `subscription_id` | `BIGINT` | `Long` | 是 | - | FK->tenant_subscriptions | 关联 `tenant_subscriptions` 表主键。 |
 | `invoice_status` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(invoice_status IN ('pending', 'issued', 'paid', 'overdue', 'cancelled')) | 账单状态。 |
 | `billing_period_start` | `TIMESTAMP` | `LocalDateTime` | 否 | - | NOT NULL | 账单周期开始时间。 |
@@ -777,15 +784,15 @@
 
 - **建议实体名**：`PaymentOrder`
 - **业务用途**：维护账单对应的支付订单和第三方交易状态。
-- **主要关系**：`tenant_id` -> `tenants`；`invoice_id` -> `billing_invoices`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`invoice_id` -> `billing_invoices`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_payment_orders_tenant_status`（普通，字段：`tenant_id, payment_status`）
+- **索引说明**：`idx_payment_orders_tenant_status`（普通，字段：`tenant_ref_id, payment_status`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
 | `order_no` | `VARCHAR(64)` | `String` | 否 | - | UNIQUE / NOT NULL | 支付订单号。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `invoice_id` | `BIGINT` | `Long` | 是 | - | FK->billing_invoices | 关联 `billing_invoices` 表主键。 |
 | `payment_channel` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(payment_channel IN ('alipay', 'wechat', 'bank_transfer', 'offline', 'other')) | 支付渠道。 |
 | `payment_status` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(payment_status IN ('pending', 'paid', 'failed', 'cancelled', 'refunded', 'partial_refunded')) | 支付状态。 |
@@ -822,14 +829,14 @@
 
 - **建议实体名**：`TenantApiKey`
 - **业务用途**：维护租户 API Key、密钥摘要、配额和状态。
-- **主要关系**：`tenant_id` -> `tenants`；`created_by` -> `platform_users`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`created_by` -> `platform_users`
 - **表级约束**：无额外表级约束。
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `key_name` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 名称。 |
 | `access_key` | `VARCHAR(128)` | `String` | 否 | - | UNIQUE / NOT NULL | 公开访问 Key。 |
 | `secret_hash` | `VARCHAR(255)` | `String` | 否 | - | NOT NULL | 密钥摘要，不保存明文密钥。 |
@@ -846,14 +853,14 @@
 
 - **建议实体名**：`TenantApiUsageStat`
 - **业务用途**：按天和接口维度统计 API 调用次数、成功数、失败数和延迟。
-- **主要关系**：`tenant_id` -> `tenants`；`api_key_id` -> `tenant_api_keys`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`api_key_id` -> `tenant_api_keys`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_api_usage_tenant_date`（普通，字段：`tenant_id, stat_date DESC`）；`uq_api_usage_stats_with_key`（唯一，字段：`tenant_id, api_key_id, stat_date, api_path`，条件：`api_key_id IS NOT NULL`）；`uq_api_usage_stats_without_key`（唯一，字段：`tenant_id, stat_date, api_path`，条件：`api_key_id IS NULL`）
+- **索引说明**：`idx_api_usage_tenant_date`（普通，字段：`tenant_ref_id, stat_date DESC`）；`uq_api_usage_stats_with_key`（唯一，字段：`tenant_ref_id, api_key_id, stat_date, api_path`，条件：`api_key_id IS NOT NULL`）；`uq_api_usage_stats_without_key`（唯一，字段：`tenant_ref_id, stat_date, api_path`，条件：`api_key_id IS NULL`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `api_key_id` | `BIGINT` | `Long` | 是 | - | FK->tenant_api_keys | 关联 `tenant_api_keys` 表主键。 |
 | `stat_date` | `DATE` | `LocalDate` | 否 | - | NOT NULL | 统计日期。建议实体类型使用 LocalDate。 |
 | `api_path` | `VARCHAR(255)` | `String` | 否 | - | NOT NULL | 接口路径或业务 API 标识。 |
@@ -884,14 +891,14 @@
 
 - **建议实体名**：`TenantWebhook`
 - **业务用途**：维护租户注册的 Webhook 地址、状态和重试策略。
-- **主要关系**：`tenant_id` -> `tenants`
+- **主要关系**：`tenant_ref_id` -> `tenants`
 - **表级约束**：无额外表级约束。
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `webhook_name` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 名称。 |
 | `target_url` | `VARCHAR(500)` | `String` | 否 | - | NOT NULL | Webhook 目标地址。 |
 | `secret_token_hash` | `VARCHAR(255)` | `String` | 是 | - | - | Webhook 签名密钥摘要。 |
@@ -943,14 +950,14 @@
 
 - **建议实体名**：`TenantDailyStat`
 - **业务用途**：按天沉淀租户活跃、存储、资源评分等运营统计数据。
-- **主要关系**：`tenant_id` -> `tenants`
-- **表级约束**：`UNIQUE (tenant_id, stat_date)`
+- **主要关系**：`tenant_ref_id` -> `tenants`
+- **表级约束**：`UNIQUE (tenant_ref_id, stat_date)`
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `stat_date` | `DATE` | `LocalDate` | 否 | - | NOT NULL | 统计日期。建议实体类型使用 LocalDate。 |
 | `active_user_count` | `INTEGER` | `Integer` | 否 | 0 | NOT NULL | 活跃用户数。 |
 | `new_user_count` | `INTEGER` | `Integer` | 否 | 0 | NOT NULL | 新增用户数。 |
@@ -983,14 +990,14 @@
 
 - **建议实体名**：`OperationLog`
 - **业务用途**：记录平台用户、租户用户或系统触发的操作日志。
-- **主要关系**：`tenant_id` -> `tenants`
+- **主要关系**：`tenant_ref_id` -> `tenants`
 - **表级约束**：`CHECK ((operator_type = 'system' AND operator_id IS NULL) OR (operator_type IN ('platform_user', 'tenant_user') AND operator_id IS NOT NULL))`
-- **索引说明**：`idx_operation_logs_tenant_time`（普通，字段：`tenant_id, created_at DESC`）
+- **索引说明**：`idx_operation_logs_tenant_time`（普通，字段：`tenant_ref_id, created_at DESC`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
 | `operator_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(operator_type IN ('platform_user', 'tenant_user', 'system')) | 操作主体类型：平台用户/租户用户/系统。 |
 | `operator_id` | `BIGINT` | `Long` | 是 | - | - | 操作主体 ID。系统触发时为空。 |
 | `action` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 动作编码。 |
@@ -1007,14 +1014,14 @@
 
 - **建议实体名**：`AuditLog`
 - **业务用途**：记录审计事件、严重等级、合规标签和变更摘要。
-- **主要关系**：`tenant_id` -> `tenants`
+- **主要关系**：`tenant_ref_id` -> `tenants`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_audit_logs_tenant_time`（普通，字段：`tenant_id, created_at DESC`）
+- **索引说明**：`idx_audit_logs_tenant_time`（普通，字段：`tenant_ref_id, created_at DESC`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
 | `audit_type` | `VARCHAR(64)` | `String` | 否 | - | NOT NULL | 审计类型。 |
 | `severity` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(severity IN ('low', 'medium', 'high', 'critical')) | 风险等级。 |
 | `subject_type` | `VARCHAR(64)` | `String` | 是 | - | - | 审计对象类型。 |
@@ -1068,14 +1075,14 @@
 
 - **建议实体名**：`Notification`
 - **业务用途**：记录实际发送给租户或用户的通知。
-- **主要关系**：`tenant_id` -> `tenants`；`template_id` -> `notification_templates`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`template_id` -> `notification_templates`
 - **表级约束**：无额外表级约束。
-- **索引说明**：`idx_notifications_tenant_status`（普通，字段：`tenant_id, send_status`）
+- **索引说明**：`idx_notifications_tenant_status`（普通，字段：`tenant_ref_id, send_status`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
 | `template_id` | `BIGINT` | `Long` | 是 | - | FK->notification_templates | 关联 `notification_templates` 表主键。 |
 | `channel` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(channel IN ('email', 'sms', 'site_message')) | 业务字段。 |
 | `recipient` | `VARCHAR(255)` | `String` | 否 | - | NOT NULL | 接收人地址、手机号或用户标识。 |
@@ -1113,14 +1120,14 @@
 
 - **建议实体名**：`TenantFile`
 - **业务用途**：记录上传文件、所属租户、可见性、下载统计和校验信息。
-- **主要关系**：`tenant_id` -> `tenants`；`storage_strategy_id` -> `storage_strategies`
+- **主要关系**：`tenant_ref_id` -> `tenants`；`storage_strategy_id` -> `storage_strategies`
 - **表级约束**：`CHECK ((uploader_type = 'system' AND uploader_id IS NULL) OR (uploader_type IN ('platform_user', 'tenant_user') AND uploader_id IS NOT NULL))`
-- **索引说明**：`idx_tenant_files_tenant_visibility`（普通，字段：`tenant_id, visibility`）
+- **索引说明**：`idx_tenant_files_tenant_visibility`（普通，字段：`tenant_ref_id, visibility`）
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 否 | - | NOT NULL / FK->tenants | 关联 `tenants` 表主键。 |
 | `storage_strategy_id` | `BIGINT` | `Long` | 是 | - | FK->storage_strategies | 关联 `storage_strategies` 表主键。 |
 | `file_name` | `VARCHAR(255)` | `String` | 否 | - | NOT NULL | 原始文件名。 |
 | `file_path` | `VARCHAR(500)` | `String` | 否 | - | NOT NULL | 文件物理路径或对象 Key。 |
@@ -1179,15 +1186,16 @@
 
 - **建议实体名**：`DataIsolationPolicy`
 - **业务用途**：定义租户数据隔离、访问控制和安全策略。
-- **主要关系**：`tenant_id` -> `tenants`
+- **建模说明**：`isolation_type` 表示隔离策略类别，而不是具体字段名。为避免与平台表禁用裸 `tenant_id` 命名的约束冲突，这里统一使用 `tenant_isolation` 表示“按租户维度隔离”。
+- **主要关系**：`tenant_ref_id` -> `tenants`
 - **表级约束**：无额外表级约束。
 - **索引说明**：未在当前字典中定义额外索引。
 
 | 字段 | 数据类型 | 建议实体类型 | 可空 | 默认值 | 关键约束 | 字段说明 |
 | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `BIGSERIAL PRIMARY KEY` | `Long` | 否 | - | PK / NOT NULL | 主键 ID。建议实体类型使用 Long。 |
-| `tenant_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
-| `isolation_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(isolation_type IN ('tenant_id', 'access_control', 'security_policy')) | 隔离策略类型。 |
+| `tenant_ref_id` | `BIGINT` | `Long` | 是 | - | FK->tenants | 关联 `tenants` 表主键。 |
+| `isolation_type` | `VARCHAR(32)` | `String` | 否 | - | NOT NULL / CHECK(isolation_type IN ('tenant_isolation', 'access_control', 'security_policy')) | 隔离策略类型，建议枚举值使用 `tenant_isolation`、`access_control`、`security_policy`。 |
 | `policy_name` | `VARCHAR(128)` | `String` | 否 | - | NOT NULL | 策略名称。 |
 | `policy_config` | `JSONB` | `JsonNode/Map<String,Object>` | 否 | - | NOT NULL | 策略配置 JSON。 |
 | `status` | `VARCHAR(32)` | `String` | 否 | 'active' | NOT NULL / CHECK(status IN ('active', 'disabled')) | 业务状态字段。应根据 CHECK 约束生成枚举。 |
@@ -1197,7 +1205,7 @@
 ### infrastructure_components（基础设施组件）
 
 - **建议实体名**：`InfrastructureComponent`
-- **业务用途**：维护缓存、任务调度、配置中心、服务发现等基础组件。
+- **业务用途**：维护本地缓存、任务调度、配置中心、监控等基础组件。
 - **主要关系**：无直接外键，主要作为独立主档或日志表使用。
 - **表级约束**：`UNIQUE (component_type, component_name)`
 - **索引说明**：未在当前字典中定义额外索引。

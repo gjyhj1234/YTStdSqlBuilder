@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       execution_mode:
-        description: "执行模式：plan-only 仅生成分阶段任务包，external-ai-runner 会额外调用外部 AI 执行器"
+        description: "执行模式：plan-only 仅生成分阶段任务包，external-ai-runner 需要你自行提供外部 AI 执行器 URL/Token"
         required: true
         default: plan-only
         type: choice
@@ -209,6 +209,21 @@ jobs:
             "stages": packets,
           }
           (packet_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+          runner_guide_lines = [
+            "# Tenant Platform AI Runner Guide",
+            "",
+            "- `plan-only`：只生成 artifact，不会自动调用任何模型。",
+            "- `external-ai-runner`：仅适用于你已经自行部署 HTTP AI 执行器，并在仓库中配置 `vars.TENANT_PLATFORM_AI_RUNNER_URL` 与 `secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN` 的情况。",
+            "- 仅购买 GitHub Copilot 并不会向 GitHub Actions 工作流提供 Claude Opus 4.6 的原生 API 地址或 Token，因此不能直接把本 workflow 改成“自动调用 Claude Opus 4.6 官方 API”。",
+            "- 如果没有外部执行器，本 workflow 会保留分阶段任务包，并额外生成可直接交给 GitHub Agents / Copilot Chat 的阶段提示词文件。",
+            "",
+            "## 建议执行方式",
+            "",
+            "1. 先执行 `plan-only` 或直接运行当前 workflow 获取 artifact `tenant-platform-ai-packets`。",
+            "2. 按顺序将 `01-analysis-packet-github-agent-prompt.md`、`02-backend-packet-github-agent-prompt.md`、`03-initdata-packet-github-agent-prompt.md`、`04-frontend-packet-github-agent-prompt.md` 提交给 GitHub Agents / Copilot Chat。",
+            "3. 每完成一个阶段后，再把下一阶段提示词交给 Agent，避免一次性生成过大改动。",
+          ]
+          (packet_dir / "00-runner-guide.md").write_text("\n".join(runner_guide_lines), encoding="utf-8")
 
           for packet in packets:
             lines = [
@@ -238,6 +253,41 @@ jobs:
               lines.append("```")
               lines.append("")
             (packet_dir / packet["file"]).write_text("\n".join(lines), encoding="utf-8")
+
+            prompt_lines = [
+              f"# GitHub Agent 执行提示词：{packet['title']}",
+              "",
+              "```text",
+              f"你正在处理仓库 {os.environ['GITHUB_REPOSITORY_NAME']}，目标 ref 为 {os.environ['TARGET_REF']}。",
+              f"请执行“{packet['title']}”阶段，只完成当前阶段以及其交付物，不要提前实现后续阶段内容。",
+              "",
+              f"阶段依赖：{', '.join(packet['depends_on']) if packet['depends_on'] else '无'}。",
+              f"阶段目标：{packet['body']}",
+              "",
+              "必须先阅读以下上下文文件：",
+            ]
+            for item in packet["context_files"]:
+              prompt_lines.append(f"- {item}")
+            prompt_lines.extend([
+              "",
+              "本阶段交付物：",
+            ])
+            for item in packet["deliverables"]:
+              prompt_lines.append(f"- {item}")
+            prompt_lines.extend([
+              "",
+              "执行要求：",
+              "- 遵循仓库现有代码风格与目录结构。",
+              "- 优先做最小且完整的改动，不修改无关模块。",
+              "- 如涉及代码修改，完成后运行相关构建与测试。",
+              "- 输出时先给出计划，再分步骤实施，并说明验证结果。",
+              "```",
+              "",
+              "## 关联任务包",
+              "",
+              f"- 原始任务包：`{packet['file']}`",
+            ])
+            (packet_dir / packet["file"].replace(".md", "-github-agent-prompt.md")).write_text("\n".join(prompt_lines), encoding="utf-8")
           PY
           echo "packet_dir=$packet_dir" >> "$GITHUB_OUTPUT"
 
@@ -260,6 +310,7 @@ jobs:
             echo "- 前端阶段：\`${{ github.event.inputs.run_frontend }}\`"
             echo
             echo "本次 workflow 会先生成分阶段任务包；若配置外部 AI 执行器，则后续阶段会按顺序自动调用。"
+            echo "若未配置外部执行器，则可直接使用 artifact 内的 \`*-github-agent-prompt.md\` 分阶段交给 GitHub Agents / Copilot Chat。"
           } >> "$GITHUB_STEP_SUMMARY"
 
   backend:
@@ -284,8 +335,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${AI_RUNNER_URL:-}" || -z "${AI_RUNNER_TOKEN:-}" ]]; then
-            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，无法执行 external-ai-runner 模式。" >&2
-            exit 1
+            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，跳过外部 AI 执行器调用；请改用 artifact 中的 GitHub Agent 阶段提示词。" >&2
+            exit 0
           fi
           if [[ ! -f artifacts/tenant-platform-ai/02-backend-packet.md ]]; then
             echo "缺少后端阶段任务包 artifacts/tenant-platform-ai/02-backend-packet.md" >&2
@@ -308,15 +359,24 @@ jobs:
 
       - name: Summarize backend stage
         shell: bash
+        env:
+          AI_RUNNER_URL: ${{ vars.TENANT_PLATFORM_AI_RUNNER_URL }}
+          AI_RUNNER_TOKEN: ${{ secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN }}
         run: |
           {
             echo "## Backend stage"
             echo
             echo "- 已生成并上传后端阶段任务包"
             if [[ "${{ github.event.inputs.execution_mode }}" == "external-ai-runner" ]]; then
-              echo "- 已尝试调用外部 AI 执行器"
+              if [[ -n "${AI_RUNNER_URL:-}" && -n "${AI_RUNNER_TOKEN:-}" ]]; then
+                echo "- 已尝试调用外部 AI 执行器"
+              else
+                echo "- 未配置 external runner，已自动退化为手动执行模式"
+                echo "- 请使用 \`02-backend-packet-github-agent-prompt.md\` 交给 GitHub Agents / Copilot Chat"
+              fi
             else
               echo "- 当前为 plan-only，仅输出后端执行任务包"
+              echo "- 可直接使用 \`02-backend-packet-github-agent-prompt.md\` 交给 GitHub Agents / Copilot Chat"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -344,8 +404,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${AI_RUNNER_URL:-}" || -z "${AI_RUNNER_TOKEN:-}" ]]; then
-            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，无法执行 external-ai-runner 模式。" >&2
-            exit 1
+            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，跳过外部 AI 执行器调用；请改用 artifact 中的 GitHub Agent 阶段提示词。" >&2
+            exit 0
           fi
           if [[ ! -f artifacts/tenant-platform-ai/03-initdata-packet.md ]]; then
             echo "缺少初始化数据阶段任务包 artifacts/tenant-platform-ai/03-initdata-packet.md" >&2
@@ -368,15 +428,24 @@ jobs:
 
       - name: Summarize initdata stage
         shell: bash
+        env:
+          AI_RUNNER_URL: ${{ vars.TENANT_PLATFORM_AI_RUNNER_URL }}
+          AI_RUNNER_TOKEN: ${{ secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN }}
         run: |
           {
             echo "## Initdata stage"
             echo
             echo "- 已生成并上传初始化数据阶段任务包"
             if [[ "${{ github.event.inputs.execution_mode }}" == "external-ai-runner" ]]; then
-              echo "- 已尝试调用外部 AI 执行器"
+              if [[ -n "${AI_RUNNER_URL:-}" && -n "${AI_RUNNER_TOKEN:-}" ]]; then
+                echo "- 已尝试调用外部 AI 执行器"
+              else
+                echo "- 未配置 external runner，已自动退化为手动执行模式"
+                echo "- 请使用 \`03-initdata-packet-github-agent-prompt.md\` 交给 GitHub Agents / Copilot Chat"
+              fi
             else
               echo "- 当前为 plan-only，仅输出初始化数据执行任务包"
+              echo "- 可直接使用 \`03-initdata-packet-github-agent-prompt.md\` 交给 GitHub Agents / Copilot Chat"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -405,8 +474,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${AI_RUNNER_URL:-}" || -z "${AI_RUNNER_TOKEN:-}" ]]; then
-            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，无法执行 external-ai-runner 模式。" >&2
-            exit 1
+            echo "缺少 TENANT_PLATFORM_AI_RUNNER_URL 或 TENANT_PLATFORM_AI_RUNNER_TOKEN，跳过外部 AI 执行器调用；请改用 artifact 中的 GitHub Agent 阶段提示词。" >&2
+            exit 0
           fi
           if [[ ! -f artifacts/tenant-platform-ai/04-frontend-packet.md ]]; then
             echo "缺少前端阶段任务包 artifacts/tenant-platform-ai/04-frontend-packet.md" >&2
@@ -429,15 +498,24 @@ jobs:
 
       - name: Summarize frontend stage
         shell: bash
+        env:
+          AI_RUNNER_URL: ${{ vars.TENANT_PLATFORM_AI_RUNNER_URL }}
+          AI_RUNNER_TOKEN: ${{ secrets.TENANT_PLATFORM_AI_RUNNER_TOKEN }}
         run: |
           {
             echo "## Frontend stage"
             echo
             echo "- 已生成并上传前端阶段任务包"
             if [[ "${{ github.event.inputs.execution_mode }}" == "external-ai-runner" ]]; then
-              echo "- 已尝试调用外部 AI 执行器"
+              if [[ -n "${AI_RUNNER_URL:-}" && -n "${AI_RUNNER_TOKEN:-}" ]]; then
+                echo "- 已尝试调用外部 AI 执行器"
+              else
+                echo "- 未配置 external runner，已自动退化为手动执行模式"
+                echo "- 请使用 \`04-frontend-packet-github-agent-prompt.md\` 交给 GitHub Agents / Copilot Chat"
+              fi
             else
               echo "- 当前为 plan-only，仅输出前端执行任务包"
+              echo "- 可直接使用 \`04-frontend-packet-github-agent-prompt.md\` 交给 GitHub Agents / Copilot Chat"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -461,5 +539,6 @@ jobs:
             echo "- initdata：\`${{ needs.initdata.result || 'skipped' }}\`"
             echo "- frontend：\`${{ needs.frontend.result || 'skipped' }}\`"
             echo
-            echo "如果当前为 \`plan-only\` 模式，请从 artifact \`tenant-platform-ai-packets\` 下载分阶段任务包后交给 AI 执行器。"
+            echo "请从 artifact \`tenant-platform-ai-packets\` 下载分阶段任务包。"
+            echo "如果没有外部 AI 执行器，请优先使用其中的 \`00-runner-guide.md\` 和 \`*-github-agent-prompt.md\`，按阶段交给 GitHub Agents / Copilot Chat。"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -173,6 +173,23 @@ src/YTStdTenantPlatform/
 6. **WebAPI 与中间件实现**：再实现应用服务、Endpoints、中间件和接口测试。
 7. **接口测试补齐**：至少覆盖实体主流程、初始化流程、权限流程、关键中间件和核心 API。
 
+### 4.1.2 GitHub Agents 分阶段执行建议
+
+如果当前不使用外部 AI runner，而是使用 GitHub Agents / Copilot 分阶段执行，
+建议不要一次性把本提示词完整交给 Agent，而是按以下顺序配合分阶段提示词执行：
+
+1. `tenant-platform-staged-plan-prompt.md`
+2. `tenant-platform-stage-01-analysis-prompt.md`
+3. `tenant-platform-stage-02-entity-modeling-prompt.md`
+4. `tenant-platform-stage-03-initdata-bootstrap-prompt.md`
+5. `tenant-platform-stage-04-backend-infrastructure-prompt.md`
+6. `tenant-platform-stage-05-backend-api-core-prompt.md`
+7. `tenant-platform-stage-06-backend-api-extended-prompt.md`
+8. `tenant-platform-stage-09-final-validation-prompt.md`
+
+本文件仍然是“后端总要求”的权威提示词；
+分阶段提示词只是把本文件中的大任务拆成更适合单次 Agent 执行的小阶段。
+
 ### 4.2 WebAPI 设计
 
 - API 必须按模块分组，例如：

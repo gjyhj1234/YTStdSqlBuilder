@@ -18,7 +18,17 @@
 ├── i18n-prompt.md               # 国际化语言支持实现提示词
 ├── tenant-platform-backend-prompt.md  # 租户平台后端服务实现提示词
 ├── tenant-platform-initdata-prompt.md # 租户平台初始化数据实现提示词
-└── tenant-platform-frontend-prompt.md # 租户平台前端工程实现提示词
+├── tenant-platform-frontend-prompt.md # 租户平台前端工程实现提示词
+├── tenant-platform-staged-plan-prompt.md # 租户平台分阶段执行总提示词
+├── tenant-platform-stage-01-analysis-prompt.md # 阶段 01：整体分析与任务拆分
+├── tenant-platform-stage-02-entity-modeling-prompt.md # 阶段 02：实体建模与首次编译
+├── tenant-platform-stage-03-initdata-bootstrap-prompt.md # 阶段 03：初始化数据与启动引导
+├── tenant-platform-stage-04-backend-infrastructure-prompt.md # 阶段 04：后端基础设施与中间件
+├── tenant-platform-stage-05-backend-api-core-prompt.md # 阶段 05：核心后端 API
+├── tenant-platform-stage-06-backend-api-extended-prompt.md # 阶段 06：扩展后端 API 与接口测试
+├── tenant-platform-stage-07-frontend-foundation-prompt.md # 阶段 07：前端工程骨架
+├── tenant-platform-stage-08-frontend-modules-prompt.md # 阶段 08：前端业务模块
+└── tenant-platform-stage-09-final-validation-prompt.md # 阶段 09：最终校验与交付整理
 ```
 
 ---
@@ -37,6 +47,16 @@
 | 租户平台后端 | `tenant-platform-backend-prompt.md` | 📝 新增提示词 | 单体 WebAPI + 实体驱动 + Local Cache 权限判断 |
 | 租户平台初始化数据 | `tenant-platform-initdata-prompt.md` | 📝 新增提示词 | 实体列表 + 幂等初始化服务 |
 | 租户平台前端 | `tenant-platform-frontend-prompt.md` | 📝 新增提示词 | Vue 3 + TypeScript + devextreme-vue 平台前端 |
+| 租户平台分阶段执行总览 | `tenant-platform-staged-plan-prompt.md` | 📝 新增提示词 | GitHub Agents 分阶段执行总入口与顺序说明 |
+| 租户平台阶段 01 | `tenant-platform-stage-01-analysis-prompt.md` | 📝 新增提示词 | 整体分析、实体/API/中间件/测试拆分 |
+| 租户平台阶段 02 | `tenant-platform-stage-02-entity-modeling-prompt.md` | 📝 新增提示词 | 实体建模、枚举、首次编译触发生成器 |
+| 租户平台阶段 03 | `tenant-platform-stage-03-initdata-bootstrap-prompt.md` | 📝 新增提示词 | 初始化数据、建表引导、缓存预热 |
+| 租户平台阶段 04 | `tenant-platform-stage-04-backend-infrastructure-prompt.md` | 📝 新增提示词 | 后端主程序骨架、中间件、缓存、后台任务 |
+| 租户平台阶段 05 | `tenant-platform-stage-05-backend-api-core-prompt.md` | 📝 新增提示词 | 平台管理 / 租户核心域 API 与服务 |
+| 租户平台阶段 06 | `tenant-platform-stage-06-backend-api-extended-prompt.md` | 📝 新增提示词 | 扩展业务域 API 与接口测试 |
+| 租户平台阶段 07 | `tenant-platform-stage-07-frontend-foundation-prompt.md` | 📝 新增提示词 | 前端脚手架、登录鉴权、布局、帮助组件 |
+| 租户平台阶段 08 | `tenant-platform-stage-08-frontend-modules-prompt.md` | 📝 新增提示词 | 前端业务模块、API 对接、操作指引 |
+| 租户平台阶段 09 | `tenant-platform-stage-09-final-validation-prompt.md` | 📝 新增提示词 | 全量校验、补漏、统一测试与交付说明 |
 
 后续新增模块时，按此格式命名：
 - `{module-name}-prompt.md`
@@ -166,6 +186,20 @@ Logger.Debug(tenantId, userId, () => $"[方法名] SQL: {sql}");
 - 确保生成代码可编译（`dotnet build`）
 - 确保测试通过（`dotnet test`）
 - 确保符合仓库的命名规范和架构规范
+
+### 租户平台大任务的推荐执行方式
+
+对于租户平台这类跨实体、初始化、后端、前端的大任务，不建议一次性把
+`tenant-platform-backend-prompt.md`、`tenant-platform-initdata-prompt.md`、
+`tenant-platform-frontend-prompt.md` 整体直接丢给 Agent 执行。
+
+推荐顺序：
+
+1. 先使用 `tenant-platform-staged-plan-prompt.md`
+2. 再按 `tenant-platform-stage-01` 到 `tenant-platform-stage-09` 分阶段执行
+3. 每个阶段完成后先验证构建/测试，再进入下一阶段
+
+这样更适合 GitHub Agents / Copilot 的单次执行时长限制，也更容易控制改动范围与回滚成本。
 
 ---
 

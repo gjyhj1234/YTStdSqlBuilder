@@ -129,6 +129,22 @@ Infrastructure/Initialization/
 - Workflow 执行顺序必须是：**实体建模 → 编译触发生成器 → 数据库建表 → 初始化数据填充 → 缓存预热 → 初始化测试**。
 - 初始化阶段要能够被后端启动引导器直接调用，避免生成一次性临时脚本。
 
+### 5.1 GitHub Agents 分阶段执行建议
+
+如果使用 GitHub Agents / Copilot 分阶段执行，请将本提示词作为“初始化阶段总约束”，
+并优先结合以下阶段提示词：
+
+1. `tenant-platform-stage-02-entity-modeling-prompt.md`
+2. `tenant-platform-stage-03-initdata-bootstrap-prompt.md`
+3. `tenant-platform-stage-04-backend-infrastructure-prompt.md`
+4. `tenant-platform-stage-09-final-validation-prompt.md`
+
+其中：
+- 阶段 02 负责实体与首次编译；
+- 阶段 03 负责初始化数据、建表引导、缓存预热与初始化测试；
+- 阶段 04 负责把启动初始化链路挂接到主程序；
+- 阶段 09 负责做最终补漏与统一验证。
+
 ---
 
 ## 6. 幂等策略

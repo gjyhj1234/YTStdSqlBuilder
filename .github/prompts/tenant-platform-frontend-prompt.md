@@ -170,6 +170,20 @@ web/tenant-platform-web/
 - 新增/编辑/状态流转/授权操作统一封装为明确方法，不要在页面中散落 URL 字符串。
 - 只有在后端接口注释、DTO 注释和路由清单稳定后，前端阶段才开始批量生成页面，以减少接口语义漂移。
 
+### 6.1 GitHub Agents 分阶段执行建议
+
+如果当前使用 GitHub Agents / Copilot 分阶段推进，而不是一次性生成整个前端工程，
+建议按以下顺序配合执行：
+
+1. `tenant-platform-stage-07-frontend-foundation-prompt.md`
+2. `tenant-platform-stage-08-frontend-modules-prompt.md`
+3. `tenant-platform-stage-09-final-validation-prompt.md`
+
+其中：
+- 阶段 07 负责前端工程骨架、登录鉴权、布局、帮助组件和少量示例页；
+- 阶段 08 负责业务模块页面、API 对接、“功能说明 / 操作指引”能力；
+- 阶段 09 负责统一构建、测试、补漏与交付说明。
+
 ---
 
 ## 7. 设计风格要求

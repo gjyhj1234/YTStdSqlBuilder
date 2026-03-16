@@ -1,36 +1,40 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/YTStdSqlBuilder/YTStdSqlBuilder.csproj" />
-    <Project Path="src/YTStdSqlBuilder.Generator/YTStdSqlBuilder.Generator.csproj" />
     <Project Path="src/YTStdAdo/YTStdAdo.csproj" />
-    <Project Path="src/YTStdLogger/YTStdLogger.csproj" />
-    <Project Path="src/YTStdEntity/YTStdEntity.csproj" />
     <Project Path="src/YTStdEntity.Generator/YTStdEntity.Generator.csproj" />
-    <Project Path="src/YTStdI18n/YTStdI18n.csproj" />
+    <Project Path="src/YTStdEntity/YTStdEntity.csproj" />
     <Project Path="src/YTStdI18n.Generator/YTStdI18n.Generator.csproj" />
+    <Project Path="src/YTStdI18n/YTStdI18n.csproj" />
+    <Project Path="src/YTStdLogger/YTStdLogger.csproj" />
+    <Project Path="src/YTStdSqlBuilder.Generator/YTStdSqlBuilder.Generator.csproj" />
+    <Project Path="src/YTStdSqlBuilder/YTStdSqlBuilder.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/YTStdSqlBuilder.Tests/YTStdSqlBuilder.Tests.csproj" />
-    <Project Path="tests/YTStdSqlBuilder.Generator.Tests/YTStdSqlBuilder.Generator.Tests.csproj" />
     <Project Path="tests/YTStdAdo.Tests/YTStdAdo.Tests.csproj" />
-    <Project Path="tests/YTStdEntity.Tests/YTStdEntity.Tests.csproj" />
     <Project Path="tests/YTStdEntity.Generator.Tests/YTStdEntity.Generator.Tests.csproj" />
+    <Project Path="tests/YTStdEntity.Tests/YTStdEntity.Tests.csproj" />
     <Project Path="tests/YTStdI18n.Tests/YTStdI18n.Tests.csproj" />
+    <Project Path="tests/YTStdSqlBuilder.Generator.Tests/YTStdSqlBuilder.Generator.Tests.csproj" />
+    <Project Path="tests/YTStdSqlBuilder.Tests/YTStdSqlBuilder.Tests.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/YTStdSqlBuilder.Benchmarks/YTStdSqlBuilder.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/samples/">
-    <Project Path="samples/YTStdSqlBuilder.Sample/YTStdSqlBuilder.Sample.csproj" />
+    <Project Path="samples/YTStdAdo.Sample/YTStdAdo.Sample.csproj" />
     <Project Path="samples/YTStdEntity.Sample/YTStdEntity.Sample.csproj" />
     <Project Path="samples/YTStdI18n.Sample/YTStdI18n.Sample.csproj" />
-    <Project Path="samples/YTStdAdo.Sample/YTStdAdo.Sample.csproj" />
     <Project Path="samples/YTStdLogger.Sample/YTStdLogger.Sample.csproj" />
+    <Project Path="samples/YTStdSqlBuilder.Sample/YTStdSqlBuilder.Sample.csproj" />
   </Folder>
   <Folder Name="/docs/">
     <File Path="docs/architecture.md" />
     <File Path="docs/existing-projects-reference.md" />
     <File Path="docs/prompt-authoring-guide.md" />
+  </Folder>
+  <Folder Name="/docs/TenantPlatform/">
+    <File Path="architecture.md" />
+    <File Path="D:/edgedown下载2/database_dictionary.md" />
   </Folder>
   <Folder Name="/prompts/">
     <File Path=".github/prompts/README.md" />

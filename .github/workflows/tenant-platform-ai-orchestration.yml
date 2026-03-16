@@ -115,7 +115,7 @@ jobs:
           repository_name = os.environ.get("GITHUB_REPOSITORY", "")
           target_ref = os.environ.get("TARGET_REF", "main")
           if not repository_name:
-            raise RuntimeError("缺少 GITHUB_REPOSITORY 环境变量，无法生成 AI 阶段任务包。")
+            raise RuntimeError("严重错误：GITHUB_REPOSITORY 环境变量在 GitHub Actions 中应始终存在但当前缺失，无法生成 AI 阶段任务包。")
 
           def read_text(path: str) -> str:
             return (repo / path).read_text(encoding="utf-8")

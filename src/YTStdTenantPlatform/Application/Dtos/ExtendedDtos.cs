@@ -419,6 +419,17 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime? ExpiresAt { get; set; }
     }
 
+    /// <summary>API 密钥创建结果（包含仅在创建时返回的密钥明文）</summary>
+    public sealed class ApiKeyCreatedResult
+    {
+        /// <summary>密钥 ID</summary>
+        public long Id { get; set; }
+        /// <summary>Access Key</summary>
+        public string AccessKey { get; set; } = "";
+        /// <summary>Secret Key（仅创建时返回一次，后续不可查看）</summary>
+        public string SecretKey { get; set; } = "";
+    }
+
     /// <summary>租户 API 用量统计列表项</summary>
     public sealed class TenantApiUsageStatDto
     {

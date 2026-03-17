@@ -45,11 +45,11 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>创建 API 密钥</summary>
-        public static async ValueTask<ApiResult<long>> CreateApiKeyAsync(
+        public static async ValueTask<ApiResult<ApiKeyCreatedResult>> CreateApiKeyAsync(
             int tenantId, long operatorId, CreateApiKeyRequest req)
         {
             if (string.IsNullOrWhiteSpace(req.KeyName))
-                return ApiResult<long>.Fail("密钥名称不能为空");
+                return ApiResult<ApiKeyCreatedResult>.Fail("密钥名称不能为空");
 
             var accessKey = "ak_" + Guid.NewGuid().ToString("N");
             var rawSecret = Guid.NewGuid().ToString("N");
@@ -71,11 +71,16 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantApiKeyCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建 API 密钥失败: " + insResult.ErrorMessage);
+                return ApiResult<ApiKeyCreatedResult>.Fail("创建 API 密钥失败: " + insResult.ErrorMessage);
 
             Logger.Info(tenantId, operatorId,
                 "[ApiIntegrationAppService] 创建 API 密钥: " + req.KeyName);
-            return ApiResult<long>.Ok(insResult.Id);
+            return ApiResult<ApiKeyCreatedResult>.Ok(new ApiKeyCreatedResult
+            {
+                Id = insResult.Id,
+                AccessKey = accessKey,
+                SecretKey = rawSecret
+            });
         }
 
         /// <summary>禁用 API 密钥</summary>

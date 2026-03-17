@@ -265,6 +265,20 @@ namespace YTStdTenantPlatform.Tests
         }
 
         [Fact]
+        public void ApiKeyCreatedResult_HasExpectedProperties()
+        {
+            var result = new ApiKeyCreatedResult
+            {
+                Id = 1,
+                AccessKey = "ak_abc123",
+                SecretKey = "secret123"
+            };
+            Assert.Equal(1, result.Id);
+            Assert.Equal("ak_abc123", result.AccessKey);
+            Assert.Equal("secret123", result.SecretKey);
+        }
+
+        [Fact]
         public void TenantApiUsageStatDto_HasExpectedProperties()
         {
             var dto = new TenantApiUsageStatDto

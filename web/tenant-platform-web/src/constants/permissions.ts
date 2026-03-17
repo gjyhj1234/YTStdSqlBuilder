@@ -43,12 +43,18 @@ export const TENANT_TAG_VIEW = 'tenant:tag:view'
 export const TENANT_TAG_CREATE = 'tenant:tag:create'
 export const TENANT_TAG_UPDATE = 'tenant:tag:update'
 export const TENANT_TAG_DELETE = 'tenant:tag:delete'
+export const TENANT_TAG_BIND = 'tenant:tag:bind'
 
 export const TENANT_DOMAIN_VIEW = 'tenant:domain:view'
 export const TENANT_DOMAIN_CREATE = 'tenant:domain:create'
 export const TENANT_DOMAIN_UPDATE = 'tenant:domain:update'
 export const TENANT_DOMAIN_DELETE = 'tenant:domain:delete'
 export const TENANT_DOMAIN_VERIFY = 'tenant:domain:verify'
+
+export const TENANT_RESOURCE_VIEW = 'tenant:resource:view'
+export const TENANT_RESOURCE_CREATE = 'tenant:resource:create'
+export const TENANT_RESOURCE_UPDATE = 'tenant:resource:update'
+export const TENANT_RESOURCE_DELETE = 'tenant:resource:delete'
 
 export const TENANT_CONFIG_VIEW = 'tenant:config:view'
 export const TENANT_CONFIG_CREATE = 'tenant:config:create'

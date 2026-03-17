@@ -164,7 +164,6 @@ import {
   type CreatePlatformUserRequest,
 } from '@/api/platformUsers'
 import {
-  PLATFORM_USER_VIEW,
   PLATFORM_USER_CREATE,
   PLATFORM_USER_UPDATE,
   PLATFORM_USER_LOCK,
@@ -240,9 +239,6 @@ async function onDisable(id: number) {
     // 错误由 http 层统一处理
   }
 }
-
-// 抑制未使用变量警告
-void PLATFORM_USER_VIEW
 
 const guideSteps = [
   '点击【新增用户】按钮创建管理员账号',

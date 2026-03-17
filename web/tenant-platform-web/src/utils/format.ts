@@ -15,8 +15,12 @@ export function formatDate(value: string | Date | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-/** 金额格式化 */
-export function formatAmount(value: number | null | undefined, currency = '¥'): string {
+/** 金额格式化（locale-aware） */
+export function formatAmount(value: number | null | undefined, currency = 'CNY'): string {
   if (value == null) return '-'
-  return `${currency} ${value.toFixed(2)}`
+  try {
+    return new Intl.NumberFormat('zh-CN', { style: 'currency', currency }).format(value)
+  } catch {
+    return `¥ ${value.toFixed(2)}`
+  }
 }

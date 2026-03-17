@@ -13,6 +13,8 @@ export const PLATFORM_ROLE_VIEW = 'platform:role:view'
 export const PLATFORM_ROLE_CREATE = 'platform:role:create'
 export const PLATFORM_ROLE_UPDATE = 'platform:role:update'
 export const PLATFORM_ROLE_DELETE = 'platform:role:delete'
+export const PLATFORM_ROLE_ENABLE = 'platform:role:enable'
+export const PLATFORM_ROLE_DISABLE = 'platform:role:disable'
 export const PLATFORM_ROLE_ASSIGN_PERMISSION = 'platform:role:assign_permission'
 export const PLATFORM_ROLE_ASSIGN_MEMBER = 'platform:role:assign_member'
 

@@ -11,7 +11,7 @@
 - `.github/prompts/tenant-platform-frontend-prompt.md`
 - `docs/TenantPlatform/architecture.md`
 - 已完成的后端 API 路由 / DTO 注释
-- 阶段 07 已完成的前端骨架代码
+- 阶段 07 `tenant-platform-stage-07-frontend-foundation-prompt.md` 已完成的前端骨架代码
 
 ---
 

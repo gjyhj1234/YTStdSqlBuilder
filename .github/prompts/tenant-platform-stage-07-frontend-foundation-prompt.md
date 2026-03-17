@@ -6,7 +6,7 @@
 
 1. `web/tenant-platform-web/` 工程
 2. Vite + Vue 3 + TypeScript + devextreme-vue 基础配置
-3. 路由、布局、Pinia、HTTP 层、登录鉴权
+3. 路由、布局、Pinia、HTTP 层、登录鉴权、国际化多语言支持
 4. 菜单与权限显隐骨架
 5. “功能说明 / 操作指引”统一组件体系
 6. 首页 / 仪表盘 / 登录页 / 少量核心模块示例页
@@ -63,7 +63,7 @@ web/tenant-platform-web/
 
 ## 特别要求
 
-- 必须使用 `devextreme-vue`，不要换 UI 栈。
+- 必须使用 `devextreme-vue`，不要换 UI 栈，本仓库中的MCP`dxdocs`为它的使用帮助。
 - 前端权限码必须和后端保持一致。
 - 每个页面模板都要预留“功能说明”和“操作指引”入口。
 - 页面结构要为后续模块批量扩展做好统一模板。

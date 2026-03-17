@@ -8,6 +8,7 @@
     <Project Path="src/YTStdLogger/YTStdLogger.csproj" />
     <Project Path="src/YTStdSqlBuilder.Generator/YTStdSqlBuilder.Generator.csproj" />
     <Project Path="src/YTStdSqlBuilder/YTStdSqlBuilder.csproj" />
+    <Project Path="src/YTStdTenantPlatform/YTStdTenantPlatform.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/YTStdAdo.Tests/YTStdAdo.Tests.csproj" />
@@ -16,6 +17,7 @@
     <Project Path="tests/YTStdI18n.Tests/YTStdI18n.Tests.csproj" />
     <Project Path="tests/YTStdSqlBuilder.Generator.Tests/YTStdSqlBuilder.Generator.Tests.csproj" />
     <Project Path="tests/YTStdSqlBuilder.Tests/YTStdSqlBuilder.Tests.csproj" />
+    <Project Path="tests/YTStdTenantPlatform.Tests/YTStdTenantPlatform.Tests.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/YTStdSqlBuilder.Benchmarks/YTStdSqlBuilder.Benchmarks.csproj" />

@@ -5,7 +5,7 @@
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
         <DxButton
-          v-if="perm.has(APIKEY_CREATE)"
+          v-if="perm.has(INFRA_APIKEY_CREATE)"
           text="创建密钥"
           icon="add"
           type="default"
@@ -49,7 +49,7 @@
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(APIKEY_DISABLE)"
+            v-if="cellData.data.status === 'Active' && perm.has(INFRA_APIKEY_DISABLE)"
             text="禁用"
             styling-mode="text"
             type="danger"
@@ -140,10 +140,10 @@ import {
   type CreateApiKeyRequest,
   type ApiKeyCreatedResult,
 } from '@/api/apiIntegration'
-
-const APIKEY_VIEW = 'infra:apikey:view'
-const APIKEY_CREATE = 'infra:apikey:create'
-const APIKEY_DISABLE = 'infra:apikey:disable'
+import {
+  INFRA_APIKEY_CREATE,
+  INFRA_APIKEY_DISABLE,
+} from '@/constants/permissions'
 
 const perm = usePermission()
 const showGuide = ref(false)

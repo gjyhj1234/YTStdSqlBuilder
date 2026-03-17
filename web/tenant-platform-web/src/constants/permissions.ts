@@ -111,6 +111,27 @@ export const LOG_AUDIT_VIEW = 'log:audit:view'
 export const LOG_AUDIT_EXPORT = 'log:audit:export'
 export const LOG_SYSTEM_VIEW = 'log:system:view'
 
+// ── API 与集成 ──
+export const INFRA_APIKEY_VIEW = 'infra:apikey:view'
+export const INFRA_APIKEY_CREATE = 'infra:apikey:create'
+export const INFRA_APIKEY_DISABLE = 'infra:apikey:disable'
+
+export const INFRA_WEBHOOK_VIEW = 'infra:webhook:view'
+export const INFRA_WEBHOOK_CREATE = 'infra:webhook:create'
+export const INFRA_WEBHOOK_UPDATE = 'infra:webhook:update'
+export const INFRA_WEBHOOK_ENABLE = 'infra:webhook:enable'
+export const INFRA_WEBHOOK_DISABLE = 'infra:webhook:disable'
+
+// ── 平台运营 ──
+export const OPS_STAT_VIEW = 'ops:stat:view'
+export const OPS_MONITOR_VIEW = 'ops:monitor:view'
+
+// ── 文件与存储 ──
+export const INFRA_STORAGE_VIEW = 'infra:storage:view'
+export const INFRA_STORAGE_CREATE = 'infra:storage:create'
+export const INFRA_STORAGE_UPDATE = 'infra:storage:update'
+export const INFRA_STORAGE_DELETE = 'infra:storage:delete'
+
 // ── 基础设施 ──
 export const INFRA_RATELIMIT_VIEW = 'infra:ratelimit:view'
 export const INFRA_RATELIMIT_CREATE = 'infra:ratelimit:create'

@@ -148,7 +148,6 @@ import {
   type SaveTenantParameterRequest,
 } from '@/api/tenantConfig'
 import {
-  TENANT_CONFIG_VIEW,
   TENANT_CONFIG_UPDATE,
   TENANT_CONFIG_DELETE,
 } from '@/constants/permissions'

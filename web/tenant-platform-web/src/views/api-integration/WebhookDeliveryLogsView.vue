@@ -72,16 +72,12 @@ import StatusTag from '@/components/StatusTag.vue'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
 import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
 import PageHelpEntry from '@/components/help/PageHelpEntry.vue'
-import { usePermission } from '@/composables/usePermission'
 import { formatDateTime } from '@/utils/format'
 import {
   getWebhookDeliveryLogs,
   type WebhookDeliveryLogDto,
 } from '@/api/apiIntegration'
 
-const WEBHOOK_VIEW = 'infra:webhook:view'
-
-const perm = usePermission()
 const showGuide = ref(false)
 const filterWebhookId = ref<number | undefined>(undefined)
 

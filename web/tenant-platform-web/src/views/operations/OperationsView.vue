@@ -99,7 +99,6 @@ import { DxNumberBox } from 'devextreme-vue/number-box'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
 import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
 import PageHelpEntry from '@/components/help/PageHelpEntry.vue'
-import { usePermission } from '@/composables/usePermission'
 import { formatDateTime, formatDate } from '@/utils/format'
 import {
   getDailyStats,
@@ -108,10 +107,6 @@ import {
   type PlatformMonitorMetricDto,
 } from '@/api/operations'
 
-const STAT_VIEW = 'ops:stat:view'
-const MONITOR_VIEW = 'ops:monitor:view'
-
-const perm = usePermission()
 const showGuide = ref(false)
 const filterTenantRefId = ref<number | undefined>(undefined)
 

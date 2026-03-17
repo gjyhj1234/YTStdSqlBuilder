@@ -5,7 +5,7 @@
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
         <DxButton
-          v-if="perm.has(WEBHOOK_CREATE)"
+          v-if="perm.has(INFRA_WEBHOOK_CREATE)"
           text="创建 Webhook"
           icon="add"
           type="default"
@@ -45,20 +45,20 @@
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
-            v-if="perm.has(WEBHOOK_UPDATE)"
+            v-if="perm.has(INFRA_WEBHOOK_UPDATE)"
             text="编辑"
             styling-mode="text"
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(WEBHOOK_UPDATE)"
+            v-if="cellData.data.status === 'Active' && perm.has(INFRA_WEBHOOK_UPDATE)"
             text="禁用"
             styling-mode="text"
             type="danger"
             @click="onDisable(cellData.data.id)"
           />
           <DxButton
-            v-if="cellData.data.status !== 'Active' && perm.has(WEBHOOK_UPDATE)"
+            v-if="cellData.data.status !== 'Active' && perm.has(INFRA_WEBHOOK_UPDATE)"
             text="启用"
             styling-mode="text"
             type="success"
@@ -158,10 +158,10 @@ import {
   type CreateWebhookRequest,
   type UpdateWebhookRequest,
 } from '@/api/apiIntegration'
-
-const WEBHOOK_VIEW = 'infra:webhook:view'
-const WEBHOOK_CREATE = 'infra:webhook:create'
-const WEBHOOK_UPDATE = 'infra:webhook:update'
+import {
+  INFRA_WEBHOOK_CREATE,
+  INFRA_WEBHOOK_UPDATE,
+} from '@/constants/permissions'
 
 const perm = usePermission()
 const showGuide = ref(false)

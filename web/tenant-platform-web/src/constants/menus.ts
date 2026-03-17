@@ -44,6 +44,7 @@ export const menuItems: MenuItem[] = [
       { key: 'tenant-groups', label: '租户分组', path: '/tenant-groups', permissions: [P.TENANT_GROUP_VIEW] },
       { key: 'tenant-domains', label: '域名管理', path: '/tenant-domains', permissions: [P.TENANT_DOMAIN_VIEW] },
       { key: 'tenant-tags', label: '标签管理', path: '/tenant-tags', permissions: [P.TENANT_TAG_VIEW] },
+      { key: 'tenant-resources', label: '资源配额', path: '/tenant-resources', permissions: [P.TENANT_RESOURCE_VIEW] },
     ],
   },
   {
@@ -81,6 +82,7 @@ export const menuItems: MenuItem[] = [
     children: [
       { key: 'billing-invoices', label: '账单管理', path: '/billing-invoices', permissions: [P.BILLING_INVOICE_VIEW] },
       { key: 'payment-orders', label: '支付单', path: '/payment-orders', permissions: [P.BILLING_PAYMENT_VIEW] },
+      { key: 'payment-refunds', label: '退款管理', path: '/payment-refunds', permissions: [P.BILLING_PAYMENT_REFUND] },
     ],
   },
   {
@@ -88,8 +90,9 @@ export const menuItems: MenuItem[] = [
     label: 'API 与集成平台',
     icon: 'key',
     children: [
-      { key: 'api-keys', label: 'API Key 管理', path: '/api-keys' },
-      { key: 'webhooks', label: 'Webhook 管理', path: '/webhooks' },
+      { key: 'api-keys', label: 'API Key 管理', path: '/api-keys', permissions: [P.INFRA_APIKEY_VIEW] },
+      { key: 'webhooks', label: 'Webhook 管理', path: '/webhooks', permissions: [P.INFRA_WEBHOOK_VIEW] },
+      { key: 'webhook-delivery-logs', label: '推送日志', path: '/webhook-delivery-logs', permissions: [P.INFRA_WEBHOOK_VIEW] },
     ],
   },
   {
@@ -97,6 +100,7 @@ export const menuItems: MenuItem[] = [
     label: '平台运营体系',
     icon: 'chart',
     path: '/operations',
+    permissions: [P.OPS_STAT_VIEW],
   },
   {
     key: 'logs',
@@ -122,8 +126,8 @@ export const menuItems: MenuItem[] = [
     label: '文件与存储',
     icon: 'folder',
     children: [
-      { key: 'storage-strategies', label: '存储策略', path: '/storage-strategies' },
-      { key: 'tenant-files', label: '文件管理', path: '/tenant-files' },
+      { key: 'storage-strategies', label: '存储策略', path: '/storage-strategies', permissions: [P.INFRA_STORAGE_VIEW] },
+      { key: 'tenant-files', label: '文件管理', path: '/tenant-files', permissions: [P.INFRA_STORAGE_VIEW] },
     ],
   },
   {

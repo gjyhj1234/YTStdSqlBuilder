@@ -9,6 +9,7 @@ obj/
 ## NuGet
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
+!web/**/packages/**
 *.nupkg
 **/[Pp]ackages/*.config
 project.lock.json

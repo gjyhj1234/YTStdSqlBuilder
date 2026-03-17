@@ -79,7 +79,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'storage-strategies', name: 'StorageStrategies', component: () => import('@/views/storage/StorageStrategiesView.vue'), meta: { title: '存储策略', permissions: ['infra:storage:view'] } },
       { path: 'tenant-files', name: 'TenantFiles', component: () => import('@/views/storage/TenantFilesView.vue'), meta: { title: '文件管理', permissions: ['infra:storage:view'] } },
       // ── 技术基础设施 ──
-      { path: 'rate-limit-policies', name: 'RateLimitPolicies', component: () => import('@/views/PlaceholderView.vue'), meta: { title: '限流策略', permissions: ['infra:ratelimit:view'] } },
+      { path: 'rate-limit-policies', name: 'RateLimitPolicies', component: () => import('@/views/infrastructure/RateLimitPoliciesView.vue'), meta: { title: '限流策略', permissions: ['infra:ratelimit:view'] } },
       { path: 'infra-components', name: 'InfraComponents', component: () => import('@/views/infrastructure/InfrastructureView.vue'), meta: { title: '基础设施组件', permissions: ['infra:component:view'] } },
     ],
   },

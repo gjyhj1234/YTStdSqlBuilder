@@ -49,3 +49,10 @@ BenchmarkDotNet.Artifacts/
 
 ## Source Generator output
 **/Generated/
+
+## Node.js / Frontend
+node_modules/
+dist/
+.env.local
+.env.*.local
+*.tsbuildinfo

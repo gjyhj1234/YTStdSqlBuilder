@@ -4,7 +4,7 @@
 
 为 `web/tenant-platform-web/` 前端项目接入完整的国际化支持，覆盖：
 
-1. **语言切换**：支持简体中文 (zh-CN)、英语 (en-US)、日语 (ja-JP)、繁体中文 (zh-TW)
+1. **语言切换**：支持简体中文 (zh-CN)、英语 (en-US)、马来语 (ms-MY)、繁体中文 (zh-TW)
 2. **时间/日期格式化**：根据 locale 自动调整日期时间显示格式
 3. **数字格式化**：根据 locale 调整千位分隔、小数点符号
 4. **货币格式化**：根据 locale 调整货币符号与位置
@@ -16,7 +16,7 @@
 ## 前提依赖
 
 - 后端已有 `YTStdI18n` + `YTStdI18n.Generator` 提供后端多语言支持
-- 后端 `Lang` 枚举支持 `ZhCn=0, En=1, Ja=2, ZhTw=3`
+- 后端 `Lang` 枚举支持 `ZhCn=0, En=1, Ja=2, ZhTw=3,MsMY=4`
 - 前端使用 Vue 3 + TypeScript + Vite + DevExtreme Vue
 
 ---
@@ -38,7 +38,7 @@ npm install vue-i18n@next
 src/locales/
 ├── zh-CN.json    # 简体中文（基准语言）
 ├── en-US.json    # 英语
-├── ja-JP.json    # 日语
+├── ms-MY.json    # 马来语
 ├── zh-TW.json    # 繁体中文
 └── index.ts      # i18n 实例创建与导出
 ```

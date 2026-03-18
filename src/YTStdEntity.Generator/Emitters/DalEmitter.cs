@@ -118,35 +118,40 @@ internal static class DalEmitter
 
     private static void EmitCreateLogTableSql(StringBuilder sb, EntityModel model, string indent)
     {
-        var tableName = model.TableName;
-        var logTable = tableName + "_log";
+        EmitCreateLogTableSql(sb, model, indent, model.TableName, model.TableName + "_log", !model.NeedAuditTable);
+    }
+
+    private static void EmitCreateLogTableSql(StringBuilder sb, EntityModel model, string indent, string sourceTableName, string logTableName, bool emitTrigger)
+    {
         var className = model.ClassName;
 
         sb.AppendLine($"{indent}var createLogTableSql =");
-        sb.AppendLine($"{indent}    \"CREATE TABLE IF NOT EXISTS \\\"{logTable}\\\" (\" +");
+        sb.AppendLine($"{indent}    \"CREATE TABLE IF NOT EXISTS \\\"{logTableName}\\\" (\" +");
         sb.AppendLine($"{indent}    \"logid BIGSERIAL PRIMARY KEY, \" +");
         sb.AppendLine($"{indent}    \"id BIGINT NOT NULL, \" +");
         sb.AppendLine($"{indent}    \"opt CHAR(1) NOT NULL\" +");
         sb.AppendLine($"{indent}    \");\";");
         sb.AppendLine();
         sb.AppendLine($"{indent}Logger.Info(tenantId, userId, $\"[{className}DAL.CreateTableIfNotExists] 日志表SQL: {{createLogTableSql}}\");");
-        sb.AppendLine($"{indent}await DB.CreateTable(\"{Esc(logTable)}\", createLogTableSql);");
-        sb.AppendLine($"{indent}Logger.Info(tenantId, userId, \"[{className}DAL.CreateTableIfNotExists] 日志表创建成功: {logTable}\");");
+        sb.AppendLine($"{indent}await DB.CreateTable(\"{Esc(logTableName)}\", createLogTableSql);");
+        sb.AppendLine($"{indent}Logger.Info(tenantId, userId, \"[{className}DAL.CreateTableIfNotExists] 日志表创建成功: {logTableName}\");");
         sb.AppendLine();
 
-        // Log trigger (standalone, only when no audit table or audit table handles it separately)
-        if (!model.NeedAuditTable)
+        if (emitTrigger)
         {
-            EmitLogTriggerSql(sb, model, indent);
+            EmitLogTriggerSql(sb, model, indent, sourceTableName, logTableName);
         }
     }
 
     private static void EmitLogTriggerSql(StringBuilder sb, EntityModel model, string indent)
     {
-        var tableName = model.TableName;
-        var logTable = tableName + "_log";
-        var triggerFunc = tableName + "_log_trigger_func";
-        var trigger = tableName + "_log_trigger";
+        EmitLogTriggerSql(sb, model, indent, model.TableName, model.TableName + "_log");
+    }
+
+    private static void EmitLogTriggerSql(StringBuilder sb, EntityModel model, string indent, string sourceTableName, string logTableName)
+    {
+        var triggerFunc = sourceTableName + "_log_trigger_func";
+        var trigger = sourceTableName + "_log_trigger";
         var className = model.ClassName;
 
         sb.AppendLine($"{indent}var createLogTriggerFuncSql =");
@@ -154,11 +159,11 @@ internal static class DalEmitter
         sb.AppendLine($"{indent}    \"RETURNS TRIGGER AS $$ \" +");
         sb.AppendLine($"{indent}    \"BEGIN \" +");
         sb.AppendLine($"{indent}    \"IF TG_OP = 'INSERT' THEN \" +");
-        sb.AppendLine($"{indent}    \"INSERT INTO \\\"{logTable}\\\" (id, opt) VALUES (NEW.id, 'I'); RETURN NEW; \" +");
+        sb.AppendLine($"{indent}    \"INSERT INTO \\\"{logTableName}\\\" (id, opt) VALUES (NEW.id, 'I'); RETURN NEW; \" +");
         sb.AppendLine($"{indent}    \"ELSIF TG_OP = 'UPDATE' THEN \" +");
-        sb.AppendLine($"{indent}    \"INSERT INTO \\\"{logTable}\\\" (id, opt) VALUES (NEW.id, 'U'); RETURN NEW; \" +");
+        sb.AppendLine($"{indent}    \"INSERT INTO \\\"{logTableName}\\\" (id, opt) VALUES (NEW.id, 'U'); RETURN NEW; \" +");
         sb.AppendLine($"{indent}    \"ELSIF TG_OP = 'DELETE' THEN \" +");
-        sb.AppendLine($"{indent}    \"INSERT INTO \\\"{logTable}\\\" (id, opt) VALUES (OLD.id, 'D'); RETURN OLD; \" +");
+        sb.AppendLine($"{indent}    \"INSERT INTO \\\"{logTableName}\\\" (id, opt) VALUES (OLD.id, 'D'); RETURN OLD; \" +");
         sb.AppendLine($"{indent}    \"END IF; RETURN NULL; \" +");
         sb.AppendLine($"{indent}    \"END; $$ LANGUAGE plpgsql;\";");
         sb.AppendLine();
@@ -173,7 +178,7 @@ internal static class DalEmitter
 
         sb.AppendLine($"{indent}var createLogTriggerSql =");
         sb.AppendLine($"{indent}    \"CREATE TRIGGER \\\"{trigger}\\\" \" +");
-        sb.AppendLine($"{indent}    \"AFTER INSERT OR UPDATE OR DELETE ON \\\"{tableName}\\\" \" +");
+        sb.AppendLine($"{indent}    \"AFTER INSERT OR UPDATE OR DELETE ON \\\"{sourceTableName}\\\" \" +");
         sb.AppendLine($"{indent}    \"FOR EACH ROW EXECUTE FUNCTION \\\"{triggerFunc}\\\"();\";");
         sb.AppendLine();
         sb.AppendLine($"{indent}var conn2 = DB.GetConnection();");
@@ -217,6 +222,12 @@ internal static class DalEmitter
         sb.AppendLine($"{indent}Logger.Info(tenantId, userId, \"[{className}DAL.CreateTableIfNotExists] 审计表创建成功: {auditTable}\");");
         sb.AppendLine();
 
+        sb.AppendLine($"{indent}if (createLogTable)");
+        sb.AppendLine($"{indent}{{");
+        EmitCreateLogTableSql(sb, model, indent + "    ", auditTable, auditTable + "_log", true);
+        sb.AppendLine($"{indent}}}");
+        sb.AppendLine();
+
         // Index on audit table for main table id
         sb.AppendLine($"{indent}// 审计表主表id索引");
         sb.AppendLine($"{indent}await DB.CreateIndex(\"idx_{auditTable}_id\", \"{Esc(auditTable)}\", \"id\", false);");
@@ -231,6 +242,11 @@ internal static class DalEmitter
         var tenantNewVals = model.IsTenantTable ? ", NEW.tenant_id" : "";
         var tenantOldVals = model.IsTenantTable ? ", OLD.tenant_id" : "";
 
+        sb.AppendLine($"{indent}var auditInsertLogSql = createLogTable ? \"INSERT INTO \\\"{logTable}\\\" (id, opt) VALUES (NEW.id, 'I'); \" : string.Empty;");
+        sb.AppendLine($"{indent}var auditUpdateLogSql = createLogTable ? \"INSERT INTO \\\"{logTable}\\\" (id, opt) VALUES (NEW.id, 'U'); \" : string.Empty;");
+        sb.AppendLine($"{indent}var auditDeleteLogSql = createLogTable ? \"INSERT INTO \\\"{logTable}\\\" (id, opt) VALUES (OLD.id, 'D'); \" : string.Empty;");
+        sb.AppendLine();
+
         sb.AppendLine($"{indent}var createAuditTriggerFuncSql =");
         sb.AppendLine($"{indent}    \"CREATE OR REPLACE FUNCTION \\\"{triggerFunc}\\\"() \" +");
         sb.AppendLine($"{indent}    \"RETURNS TRIGGER AS $$ \" +");
@@ -240,14 +256,17 @@ internal static class DalEmitter
         sb.AppendLine($"{indent}    \"IF TG_OP = 'INSERT' THEN \" +");
         sb.AppendLine($"{indent}    \"INSERT INTO \\\"{auditTable}\\\" (id, opt, operator_id{tenantInsertCols}, snapshot) \" +");
         sb.AppendLine($"{indent}    \"VALUES (NEW.id, 'I', v_operator_id{tenantNewVals}, to_jsonb(NEW)); \" +");
+        sb.AppendLine($"{indent}    auditInsertLogSql +");
         sb.AppendLine($"{indent}    \"RETURN NEW; \" +");
         sb.AppendLine($"{indent}    \"ELSIF TG_OP = 'UPDATE' THEN \" +");
         sb.AppendLine($"{indent}    \"INSERT INTO \\\"{auditTable}\\\" (id, opt, operator_id{tenantInsertCols}, snapshot) \" +");
         sb.AppendLine($"{indent}    \"VALUES (NEW.id, 'U', v_operator_id{tenantNewVals}, to_jsonb(OLD)); \" +");
+        sb.AppendLine($"{indent}    auditUpdateLogSql +");
         sb.AppendLine($"{indent}    \"RETURN NEW; \" +");
         sb.AppendLine($"{indent}    \"ELSIF TG_OP = 'DELETE' THEN \" +");
         sb.AppendLine($"{indent}    \"INSERT INTO \\\"{auditTable}\\\" (id, opt, operator_id{tenantInsertCols}, snapshot) \" +");
         sb.AppendLine($"{indent}    \"VALUES (OLD.id, 'D', v_operator_id{tenantOldVals}, to_jsonb(OLD)); \" +");
+        sb.AppendLine($"{indent}    auditDeleteLogSql +");
         sb.AppendLine($"{indent}    \"RETURN OLD; \" +");
         sb.AppendLine($"{indent}    \"END IF; RETURN NULL; \" +");
         sb.AppendLine($"{indent}    \"END; $$ LANGUAGE plpgsql;\";");

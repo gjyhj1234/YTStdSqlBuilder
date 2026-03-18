@@ -97,7 +97,7 @@ internal static class CrudEmitter
         var tn = model.TableName;
         var pk = model.PrimaryKey;
 
-        // Build column and parameter lists (excluding auto-generated PK)
+        // Build column and parameter lists
         var insertCols = model.Columns;
         var colNames = string.Join(",\\n                ", insertCols.Select(c => "\\\"" + c.ColumnName + "\\\""));
         var paramNames = string.Join(",\\n                ", insertCols.Select(c => "@" + c.ColumnName));
@@ -122,8 +122,9 @@ internal static class CrudEmitter
             sb.AppendLine($"                \")\";");
 
         sb.AppendLine();
-        sb.AppendLine($"            Logger.Debug(tenantId, userId, () => $\"[{cn}CRUD.InsertAsync] SQL={{sql}}\");");
+        sb.AppendLine("            Logger.Debug(tenantId, userId, () => $\"[" + cn + "CRUD.InsertAsync] SQL={sql}\");");
         sb.AppendLine();
+     
 
         // Build params
         sb.AppendLine($"            var parameters = new PgSqlParam[{insertCols.Count}];");
@@ -155,11 +156,11 @@ internal static class CrudEmitter
     {
         var cn = model.ClassName;
         var tn = model.TableName;
-        var insertCols = model.Columns;
         var pk = model.PrimaryKey;
+        var insertCols = model.Columns;
 
         sb.AppendLine($"        /// <summary>插入 {cn}（事务变体，不提交）</summary>");
-        sb.AppendLine($"        public static ValueTask<DbInsResult> InsertTxAsync(");
+        sb.AppendLine($"        public static async ValueTask<DbInsResult> InsertTxAsync(");
         sb.AppendLine($"            NpgsqlBatch batch, int tenantId, long userId, {cn} entity)");
         sb.AppendLine("        {");
         sb.AppendLine($"            Logger.Debug(tenantId, userId, () => \"[{cn}CRUD.InsertTxAsync] 进入方法\");");
@@ -177,6 +178,9 @@ internal static class CrudEmitter
             sb.AppendLine($"                \")\";");
 
         sb.AppendLine();
+        EmitPrimaryKeyAssignment(sb, pk, "            ");
+        if (SupportsGeneratedPrimaryKey(pk))
+            sb.AppendLine();
 
         sb.AppendLine($"            var parameters = new PgSqlParam[{insertCols.Count}];");
         for (int i = 0; i < insertCols.Count; i++)
@@ -189,7 +193,7 @@ internal static class CrudEmitter
         }
         sb.AppendLine();
 
-        sb.AppendLine("            return DB.InsertTxAsync(batch, sql, parameters, tenantId, userId);");
+        sb.AppendLine("            return await DB.InsertTxAsync(batch, sql, parameters, tenantId, userId);");
         sb.AppendLine("        }");
     }
 
@@ -482,7 +486,7 @@ internal static class CrudEmitter
     {
         if (EntityGenerator.NeedsGenericReader(col))
         {
-            return $"reader.GetFieldValue<{EntityGenerator.GetClrTypeForCode(col)}>({ordinal})";
+            return "reader.GetFieldValue<" + EntityGenerator.GetClrTypeForCode(col) + ">(" + ordinal + ")";
         }
         return $"reader.{EntityGenerator.GetReaderMethod(col)}({ordinal})";
     }
@@ -519,9 +523,29 @@ internal static class CrudEmitter
     {
         if (EntityGenerator.NeedsGenericReader(col))
         {
-            return $"reader.GetFieldValue<{EntityGenerator.GetClrTypeForCode(col)}>(i)";
+            return "reader.GetFieldValue<" + EntityGenerator.GetClrTypeForCode(col) + ">(i)";
         }
         return $"reader.{EntityGenerator.GetReaderMethod(col)}(i)";
+    }
+
+    private static bool SupportsGeneratedPrimaryKey(ColumnModel? pk)
+    {
+        return pk is not null && (pk.ClrTypeName == "int" || pk.ClrTypeName == "long");
+    }
+
+    private static void EmitPrimaryKeyAssignment(StringBuilder sb, ColumnModel? pk, string indent)
+    {
+        if (pk is null)
+            return;
+
+        if (pk.ClrTypeName == "int")
+        {
+            sb.AppendLine($"{indent}entity.{pk.PropertyName} = await DB.GetNextIntIdAsync();");
+        }
+        else if (pk.ClrTypeName == "long")
+        {
+            sb.AppendLine($"{indent}entity.{pk.PropertyName} = await DB.GetNextLongIdAsync();");
+        }
     }
 
     private static void EmitUpdateFieldsAsync(StringBuilder sb, EntityModel model)

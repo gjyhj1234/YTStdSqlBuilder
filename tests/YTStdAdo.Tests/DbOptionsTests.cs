@@ -38,6 +38,7 @@ public class DbOptionsTests
         Assert.Equal(20, options.MaxPoolSize);
         Assert.Equal(30, options.ConnectionTimeoutSeconds);
         Assert.Equal(3, options.RetryCount);
+        Assert.Equal(1, options.MachineCode);
         Assert.Equal(300, options.IdleTimeoutSeconds);
     }
 }

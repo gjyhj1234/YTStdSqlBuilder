@@ -322,7 +322,7 @@ public sealed class EntityGenerator : IIncrementalGenerator
         // Auto-map NpgsqlDbType
         if (string.IsNullOrEmpty(col.NpgsqlDbTypeName))
         {
-            col.NpgsqlDbTypeName = GetNpgsqlDbTypeName(clrTypeName, isArray, elementTypeName);
+            col.NpgsqlDbTypeName = GetNpgsqlDbTypeName(col.PgType, clrTypeName, isArray, elementTypeName);
         }
 
         // Primary keys are always NOT NULL
@@ -384,7 +384,7 @@ public sealed class EntityGenerator : IIncrementalGenerator
         }
     }
 
-    private static string GetNpgsqlDbTypeName(string clrTypeName, bool isArray, string elementTypeName)
+    private static string GetNpgsqlDbTypeName(string pgType, string clrTypeName, bool isArray, string elementTypeName)
     {
         if (isArray)
         {
@@ -395,6 +395,22 @@ public sealed class EntityGenerator : IIncrementalGenerator
                 case "string": return "Array | NpgsqlDbType.Text";
                 default: return "Array | NpgsqlDbType.Text";
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(pgType))
+        {
+            var normalizedPgType = pgType.Trim().ToLowerInvariant();
+            if (normalizedPgType.StartsWith("jsonb")) return "Jsonb";
+            if (normalizedPgType.StartsWith("json")) return "Json";
+            if (normalizedPgType.StartsWith("bigint")) return "Bigint";
+            if (normalizedPgType.StartsWith("int") || normalizedPgType.StartsWith("integer")) return "Integer";
+            if (normalizedPgType.StartsWith("decimal") || normalizedPgType.StartsWith("numeric")) return "Numeric";
+            if (normalizedPgType.StartsWith("timestamp with time zone") || normalizedPgType.StartsWith("timestamptz")) return "TimestampTz";
+            if (normalizedPgType.StartsWith("timestamp")) return "Timestamp";
+            if (normalizedPgType.StartsWith("time")) return "Time";
+            if (normalizedPgType.StartsWith("date")) return "Date";
+            if (normalizedPgType.StartsWith("boolean") || normalizedPgType.StartsWith("bool")) return "Boolean";
+            if (normalizedPgType.StartsWith("uuid")) return "Uuid";
         }
 
         switch (clrTypeName)

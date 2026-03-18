@@ -35,6 +35,9 @@ public sealed class DbOptions
     /// <summary>连接重试次数</summary>
     public int RetryCount { get; init; } = 3;
 
+    /// <summary>机器码，范围 0-99，用于 long 主键前缀</summary>
+    public int MachineCode { get; init; } = 1;
+
     /// <summary>连接池中空闲连接的注销时间（秒）</summary>
     public int IdleTimeoutSeconds { get; init; } = 300;
 

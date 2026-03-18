@@ -688,7 +688,9 @@ $$ LANGUAGE plpgsql;
 - 若原表为租户表 → 审计表也包含 `tenant_id` 并按其分区
 - 审计表自身也需要 `{Entity}_Audit_Log` 表（结构与 `{Entity}_Log` 一致）
 - 审计表需要 `{Entity}_Audit_Log_Trigger` 触发器（逻辑与日志表触发器一致）
-
+**重要规则**：
+- 当 `createLogTable == true` 且 `NeedAuditTable == true` 时，日志表的触发器逻辑**合并到** `{Entity}_Audit_Trigger` 中，不创建两个独立触发器。
+- 当 `createLogTable == true` 且 `NeedAuditTable == true` 时，该`{Entity}_Audit`必须创建`{Entity}_audit_log`表，且同样逻辑需要给`{Entity}_audit`创建触发器记录日志。
 #### 6.1.3 日志记录规范
 
 ```csharp

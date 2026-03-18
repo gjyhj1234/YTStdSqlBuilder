@@ -4,12 +4,12 @@ using System;
 using System.Threading.Tasks;
 using YTStdAdo;
 using YTStdLogger.Core;
+using YTStdLogger.Logging;
 using YTStdTenantPlatform.Bootstrap;
 
 // 启动日志
 Logger.Init(new YTStdLogger.Logging.LogOptions
 {
-    RootPath = root,
     MinimumLevel = LogLevel.Debug,
     QueueCapacity = 1024,
     BatchSize = 64,

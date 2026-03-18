@@ -16,11 +16,22 @@ namespace YTStdAdo;
 /// </summary>
 public static partial class DB
 {
+    private const string IdTableName = "ids";
+    private const long LongIdRuntimeMultiplier = 10_000_000_000L;
+    private const long LongIdMachineMultiplier = 10_000_000_000_000_000L;
+    private const long LongIdBusinessMax = 9_999_999_999L;
+
     private static readonly ConcurrentQueue<NpgsqlConnection> _pool = new();
+    private static readonly object _idInitSync = new();
     private static string _connectionString = "";
     private static int _maxPoolSize;
     private static int _retryCount;
     private static int _poolCount;
+    private static int _machineCode;
+    private static int _startupRuntime;
+    private static int _idStoreInitialized;
+    private static long _nextLongId;
+    private static long _nextLongIdLimit;
 
     #region 连接池管理
 
@@ -31,6 +42,11 @@ public static partial class DB
         _maxPoolSize = options.MaxPoolSize;
         _retryCount = options.RetryCount;
         _poolCount = 0;
+        _machineCode = ValidateMachineCode(options.MachineCode);
+        _startupRuntime = 0;
+        _idStoreInitialized = 0;
+        _nextLongId = 0;
+        _nextLongIdLimit = 0;
 
         for (int i = 0; i < options.MinPoolSize; i++)
         {
@@ -49,6 +65,8 @@ public static partial class DB
             vsb.Append(options.MaxPoolSize);
             return vsb.ToString();
         });
+
+        EnsureIdStoreInitialized();
     }
 
     /// <summary>优雅关闭连接池</summary>
@@ -140,6 +158,63 @@ public static partial class DB
         {
             try { conn.Dispose(); } catch { }
             System.Threading.Interlocked.Decrement(ref _poolCount);
+        }
+    }
+
+    #endregion
+
+    #region ID 生成
+
+    /// <summary>获取下一个 long 主键值。每调用一次都会递增一次。</summary>
+    public static ValueTask<long> GetNextLongIdAsync()
+    {
+        EnsureIdStoreInitialized();
+
+        long nextId = System.Threading.Interlocked.Increment(ref _nextLongId) - 1;
+        long limit = System.Threading.Volatile.Read(ref _nextLongIdLimit);
+        if (nextId >= limit)
+        {
+            throw new OverflowException("[DB.GetNextLongIdAsync] long 主键业务段已耗尽，请增加机器码或重置运行实例。");
+        }
+
+        return new ValueTask<long>(nextId);
+    }
+
+    /// <summary>获取下一个 int 主键值。每调用一次都会递增一次。</summary>
+    public static async ValueTask<int> GetNextIntIdAsync()
+    {
+        EnsureIdStoreInitialized();
+
+        const string sql = "UPDATE \"ids\" SET \"intid\" = \"intid\" + 1 RETURNING \"intid\" - 1";
+        NpgsqlConnection? conn = null;
+
+        try
+        {
+            conn = GetConnection();
+            await using var cmd = new NpgsqlCommand(sql, conn);
+            var result = await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+            if (result is null || result is DBNull)
+            {
+                throw new InvalidOperationException("[DB.GetNextIntIdAsync] 未能从 ids 表获取 int 主键值。");
+            }
+
+            int nextId = Convert.ToInt32(result);
+            if (nextId < 0)
+            {
+                throw new OverflowException("[DB.GetNextIntIdAsync] int 主键已超出有效范围。");
+            }
+
+            return nextId;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(0, 0, () => BuildExceptionLog("DB.GetNextIntIdAsync", ex, sql));
+            throw;
+        }
+        finally
+        {
+            if (conn is not null)
+                ReturnConnection(conn);
         }
     }
 
@@ -298,26 +373,14 @@ public static partial class DB
         }
         catch (Exception ex)
         {
-            Logger.Error(tenantId, userId, () =>
-            {
-                var vsb = new ValueStringBuilder(128);
-                vsb.Append("[DB.InsertAsync] 插入异常: ");
-                vsb.Append(ex.Message);
-                return vsb.ToString();
-            });
+            Logger.Error(tenantId, userId, () => BuildExceptionLog("DB.InsertAsync", ex, sql, parameters));
 
             if (batch?.Transaction is not null)
             {
                 try { await batch.Transaction.RollbackAsync().ConfigureAwait(false); }
                 catch (Exception rbEx)
                 {
-                    Logger.Error(tenantId, userId, () =>
-                    {
-                        var vsb = new ValueStringBuilder(128);
-                        vsb.Append("[DB.InsertAsync] 回滚异常: ");
-                        vsb.Append(rbEx.Message);
-                        return vsb.ToString();
-                    });
+                    Logger.Error(tenantId, userId, () => BuildExceptionLog("DB.InsertAsync", rbEx));
                 }
             }
 
@@ -1367,6 +1430,52 @@ public static partial class DB
         return value.ToString() ?? "NULL";
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static string BuildExceptionLog(string methodName, Exception ex, string? sql = null, PgSqlParam[]? parameters = null)
+    {
+        var vsb = new ValueStringBuilder(1024);
+        vsb.Append('[');
+        vsb.Append(methodName);
+        vsb.Append("] 异常: ");
+        vsb.Append(ex.ToString());
+
+        if (!string.IsNullOrEmpty(sql))
+        {
+            vsb.Append("\nSQL: ");
+            vsb.Append(sql);
+        }
+
+        if (parameters is { Length: > 0 })
+        {
+            vsb.Append("\n参数: ");
+            AppendParameterSnapshot(ref vsb, parameters);
+        }
+
+        return vsb.ToString();
+    }
+
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static void AppendParameterSnapshot(ref ValueStringBuilder vsb, PgSqlParam[] parameters)
+    {
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            if (i > 0)
+                vsb.Append("; ");
+
+            var p = parameters[i];
+            vsb.Append(p.Name);
+            vsb.Append('=');
+            vsb.Append(FormatParamValue(p.Value));
+
+            if (p.DbType.HasValue)
+            {
+                vsb.Append(" (");
+                vsb.Append(p.DbType.Value.ToString());
+                vsb.Append(')');
+            }
+        }
+    }
+
     /// <summary>构建可执行的调试SQL（参数替换）</summary>
     private static string BuildDebugInfo(string sql, PgSqlParam[] parameters, int tenantId, long userId, long elapsedMs)
     {
@@ -1428,6 +1537,127 @@ public static partial class DB
             return vsb.ToString();
         }
         return dataType;
+    }
+
+    private static int ValidateMachineCode(int machineCode)
+    {
+        if ((uint)machineCode > 99U)
+        {
+            throw new ArgumentOutOfRangeException(nameof(machineCode), machineCode, "MachineCode 必须在 0-99 范围内。");
+        }
+
+        return machineCode;
+    }
+
+    private static void EnsureIdStoreInitialized()
+    {
+        if (System.Threading.Volatile.Read(ref _idStoreInitialized) != 0)
+            return;
+
+        lock (_idInitSync)
+        {
+            if (System.Threading.Volatile.Read(ref _idStoreInitialized) != 0)
+                return;
+
+            NpgsqlConnection? conn = null;
+            NpgsqlTransaction? tx = null;
+
+            try
+            {
+                conn = GetConnection();
+                tx = conn.BeginTransaction();
+
+                const string createSql =
+                    "CREATE TABLE IF NOT EXISTS \"ids\" (" +
+                    "\"mcode\" integer NOT NULL, " +
+                    "\"runtimes\" integer NOT NULL, " +
+                    "\"intid\" integer NOT NULL" +
+                    ");";
+                using (var createCmd = new NpgsqlCommand(createSql, conn, tx))
+                {
+                    createCmd.ExecuteNonQuery();
+                }
+
+                using (var lockCmd = new NpgsqlCommand($"LOCK TABLE \"{IdTableName}\" IN EXCLUSIVE MODE", conn, tx))
+                {
+                    lockCmd.ExecuteNonQuery();
+                }
+
+                int rowCount;
+                using (var countCmd = new NpgsqlCommand($"SELECT COUNT(*) FROM \"{IdTableName}\"", conn, tx))
+                {
+                    rowCount = Convert.ToInt32(countCmd.ExecuteScalar());
+                }
+
+                if (rowCount == 0)
+                {
+                    using var insertCmd = new NpgsqlCommand(
+                        $"INSERT INTO \"{IdTableName}\" (\"mcode\", \"runtimes\", \"intid\") VALUES (@mcode, 0, 1)", conn, tx);
+                    insertCmd.Parameters.AddWithValue("mcode", _machineCode);
+                    insertCmd.ExecuteNonQuery();
+                }
+                else if (rowCount > 1)
+                {
+                    throw new InvalidOperationException("[DB.EnsureIdStoreInitialized] ids 表存在多条记录，无法保证主键唯一性。");
+                }
+
+                int runtime;
+                using (var updateCmd = new NpgsqlCommand(
+                    $"UPDATE \"{IdTableName}\" SET \"mcode\" = @mcode, \"runtimes\" = \"runtimes\" + 1 RETURNING \"runtimes\"", conn, tx))
+                {
+                    updateCmd.Parameters.AddWithValue("mcode", _machineCode);
+                    runtime = Convert.ToInt32(updateCmd.ExecuteScalar());
+                }
+
+                tx.Commit();
+                tx = null;
+
+                _startupRuntime = runtime;
+                long longIdBase = BuildLongIdBase(_machineCode, runtime);
+                System.Threading.Interlocked.Exchange(ref _nextLongId, longIdBase);
+                System.Threading.Interlocked.Exchange(ref _nextLongIdLimit, longIdBase + LongIdBusinessMax + 1);
+                System.Threading.Volatile.Write(ref _idStoreInitialized, 1);
+
+                Logger.Info(0, 0, () =>
+                {
+                    var vsb = new ValueStringBuilder(128);
+                    vsb.Append("[DB.EnsureIdStoreInitialized] ids 表初始化完成，mcode=");
+                    vsb.Append(_machineCode);
+                    vsb.Append("，runtimes=");
+                    vsb.Append(_startupRuntime);
+                    vsb.Append("，nextLongId=");
+                    vsb.Append(longIdBase);
+                    return vsb.ToString();
+                });
+            }
+            catch (Exception ex)
+            {
+                if (tx is not null)
+                {
+                    try { tx.Rollback(); }
+                    catch { }
+                }
+
+                Logger.Fatal(0, 0, BuildExceptionLog("DB.EnsureIdStoreInitialized", ex));
+                throw;
+            }
+            finally
+            {
+                tx?.Dispose();
+                if (conn is not null)
+                    ReturnConnection(conn);
+            }
+        }
+    }
+
+    private static long BuildLongIdBase(int machineCode, int runtime)
+    {
+        if ((uint)runtime > 999_999U)
+        {
+            throw new OverflowException("[DB.BuildLongIdBase] runtimes 超出 6 位预留范围。");
+        }
+
+        return ((long)machineCode * LongIdMachineMultiplier) + ((long)runtime * LongIdRuntimeMultiplier);
     }
 
     #endregion

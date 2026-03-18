@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { translateText } from '@/locales'
 
 const props = defineProps<{
   status: string
@@ -11,20 +12,21 @@ const props = defineProps<{
 }>()
 
 const defaultLabels: Record<string, string> = {
-  Active: '正常',
-  Disabled: '已禁用',
-  Locked: '已锁定',
-  Trial: '试用中',
-  Expiring: '即将到期',
-  Expired: '已过期',
-  Suspended: '已暂停',
-  Closed: '已关闭',
-  Pending: '待处理',
+  Active: 'i18n:status.Active',
+  Disabled: 'i18n:status.Disabled',
+  Locked: 'i18n:status.Locked',
+  Trial: 'i18n:status.Trial',
+  Expiring: 'i18n:status.Expiring',
+  Expired: 'i18n:status.Expired',
+  Suspended: 'i18n:status.Suspended',
+  Closed: 'i18n:status.Closed',
+  Pending: 'i18n:status.Pending',
+  Cancelled: 'i18n:status.Cancelled',
 }
 
 const displayText = computed(() => {
   const map = { ...defaultLabels, ...props.labelMap }
-  return map[props.status] || props.status
+  return translateText(map[props.status] || props.status)
 })
 
 const statusClass = computed(() => {

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>权限管理</h2>
+      <h2>{{ $t('route.platformPermissions') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
       </div>
@@ -19,7 +19,7 @@
       <div class="filter-bar">
         <DxTextBox
           v-model:value="filterKeyword"
-          placeholder="搜索权限编码 / 名称"
+          :placeholder="$t('搜索权限编码 / 名称')"
           :width="260"
           mode="search"
           value-change-event="input"
@@ -38,12 +38,12 @@
         :filter-mode="'fullBranch'"
         :search-panel="{ visible: false }"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="code" caption="权限编码" />
-        <DxColumn data-field="name" caption="权限名称" />
-        <DxColumn data-field="permissionType" caption="权限类型" cell-template="typeCell" :width="120" />
-        <DxColumn data-field="path" caption="路径" />
-        <DxColumn data-field="method" caption="HTTP方法" :width="100" />
+        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="code" :caption="$t('权限编码')" />
+        <DxColumn data-field="name" :caption="$t('权限名称')" />
+        <DxColumn data-field="permissionType" :caption="$t('权限类型')" cell-template="typeCell" :width="120" />
+        <DxColumn data-field="path" :caption="$t('路径')" />
+        <DxColumn data-field="method" :caption="$t('HTTP方法')" :width="100" />
         <template #typeCell="{ data: cellData }">
           <span class="permission-type-tag" :class="permissionTypeClass(cellData.value)">
             {{ permissionTypeLabel(cellData.value) }}
@@ -65,6 +65,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { DxTreeList, DxColumn } from 'devextreme-vue/tree-list'
 import { DxTextBox } from 'devextreme-vue/text-box'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
@@ -87,6 +88,7 @@ interface FlatPermission {
 
 const filterKeyword = ref('')
 const showGuide = ref(false)
+const { t } = useI18n()
 
 const allData = ref<FlatPermission[]>([])
 const treeData = ref<FlatPermission[]>([])
@@ -110,19 +112,34 @@ function flattenTree(nodes: PlatformPermissionDto[]): FlatPermission[] {
   return result
 }
 
-const permissionTypeMap: Record<string, { label: string; cssClass: string }> = {
-  Menu: { label: '菜单权限', cssClass: 'menu' },
-  Api: { label: 'API权限', cssClass: 'api' },
-  Operation: { label: '操作权限', cssClass: 'operation' },
-  Data: { label: '数据权限', cssClass: 'data' },
-}
-
 function permissionTypeLabel(type: string): string {
-  return permissionTypeMap[type]?.label || type
+  switch (type) {
+    case 'Menu':
+      return t('菜单权限')
+    case 'Api':
+      return t('API权限')
+    case 'Operation':
+      return t('操作权限')
+    case 'Data':
+      return t('数据权限')
+    default:
+      return type
+  }
 }
 
 function permissionTypeClass(type: string): string {
-  return permissionTypeMap[type]?.cssClass || ''
+  switch (type) {
+    case 'Menu':
+      return 'menu'
+    case 'Api':
+      return 'api'
+    case 'Operation':
+      return 'operation'
+    case 'Data':
+      return 'data'
+    default:
+      return ''
+  }
 }
 
 function onFilterChanged() {

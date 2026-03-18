@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>套餐管理</h2>
+      <h2>{{ $t('route.saasPackages') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
         <DxButton
           v-if="perm.has(PACKAGE_LIST_CREATE)"
-          text="新增套餐"
+          :text="$t('新增套餐')"
           icon="add"
           type="default"
           @click="showCreatePopup = true"
@@ -26,12 +26,12 @@
       <div class="filter-bar">
         <DxTextBox
           v-model:value="filterKeyword"
-          placeholder="搜索套餐编码 / 套餐名称"
+          :placeholder="$t('搜索套餐编码 / 套餐名称')"
           :width="260"
           mode="search"
           value-change-event="input"
         />
-        <DxButton text="查询" icon="search" @click="loadData" />
+        <DxButton :text="$t('查询')" icon="search" @click="loadData" />
       </div>
 
       <DxDataGrid
@@ -41,13 +41,13 @@
         :hover-state-enabled="true"
         key-expr="id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="packageCode" caption="套餐编码" :width="120" />
-        <DxColumn data-field="packageName" caption="套餐名称" :width="160" />
-        <DxColumn data-field="description" caption="描述" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" :width="160" />
-        <DxColumn caption="操作" cell-template="actionCell" :width="160" />
+        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="packageCode" :caption="$t('套餐编码')" :width="120" />
+        <DxColumn data-field="packageName" :caption="$t('套餐名称')" :width="160" />
+        <DxColumn data-field="description" :caption="$t('common.description')" />
+        <DxColumn data-field="status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" :width="160" />
+        <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="160" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -57,21 +57,21 @@
         <template #actionCell="{ data: cellData }">
           <DxButton
             v-if="perm.has(PACKAGE_LIST_UPDATE)"
-            text="编辑"
+            :text="$t('编辑')"
             styling-mode="text"
             type="default"
             @click="openEdit(cellData.data)"
           />
           <DxButton
             v-if="cellData.data.status === 'Active' && perm.has(PACKAGE_LIST_UPDATE)"
-            text="禁用"
+            :text="$t('common.disable')"
             styling-mode="text"
             type="danger"
             @click="onDisable(cellData.data.id)"
           />
           <DxButton
             v-if="cellData.data.status === 'Disabled' && perm.has(PACKAGE_LIST_UPDATE)"
-            text="启用"
+            :text="$t('common.enable')"
             styling-mode="text"
             type="success"
             @click="onEnable(cellData.data.id)"
@@ -85,7 +85,7 @@
     <!-- 新增套餐弹窗 -->
     <DxPopup
       :visible="showCreatePopup"
-      title="新增套餐"
+      :title="$t('新增套餐')"
       :width="480"
       :height="'auto'"
       :show-close-button="true"
@@ -97,16 +97,16 @@
         label-mode="floating"
       >
         <DxSimpleItem data-field="packageCode" editor-type="dxTextBox">
-          <DxLabel text="套餐编码" />
+          <DxLabel :text="$t('套餐编码')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="packageName" editor-type="dxTextBox">
-          <DxLabel text="套餐名称" />
+          <DxLabel :text="$t('套餐名称')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="description" editor-type="dxTextArea">
-          <DxLabel text="描述" />
+          <DxLabel :text="$t('common.description')" />
         </DxSimpleItem>
         <DxButtonItem>
-          <DxButtonOptions text="提交" type="default" :use-submit-behavior="false" @click="handleCreate" />
+          <DxButtonOptions :text="$t('提交')" type="default" :use-submit-behavior="false" @click="handleCreate" />
         </DxButtonItem>
       </DxForm>
     </DxPopup>
@@ -114,7 +114,7 @@
     <!-- 编辑套餐弹窗 -->
     <DxPopup
       :visible="showEditPopup"
-      title="编辑套餐"
+      :title="$t('编辑套餐')"
       :width="480"
       :height="'auto'"
       :show-close-button="true"
@@ -126,13 +126,13 @@
         label-mode="floating"
       >
         <DxSimpleItem data-field="packageName" editor-type="dxTextBox">
-          <DxLabel text="套餐名称" />
+          <DxLabel :text="$t('套餐名称')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="description" editor-type="dxTextArea">
-          <DxLabel text="描述" />
+          <DxLabel :text="$t('common.description')" />
         </DxSimpleItem>
         <DxButtonItem>
-          <DxButtonOptions text="保存" type="default" :use-submit-behavior="false" @click="handleEdit" />
+          <DxButtonOptions :text="$t('保存')" type="default" :use-submit-behavior="false" @click="handleEdit" />
         </DxButtonItem>
       </DxForm>
     </DxPopup>

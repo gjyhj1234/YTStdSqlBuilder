@@ -1,16 +1,21 @@
 <template>
   <span class="help-entry" @click="$emit('click')">
     <i class="dx-icon dx-icon-help" />
-    <span>{{ label }}</span>
+    <span>{{ resolvedLabel }}</span>
   </span>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
+import { computed } from 'vue'
+import { translateText } from '@/locales'
+
+const props = withDefaults(defineProps<{
   label?: string
 }>(), {
-  label: '操作指引',
+  label: 'i18n:components.helpEntry',
 })
+
+const resolvedLabel = computed(() => translateText(props.label))
 
 defineEmits<{
   click: []

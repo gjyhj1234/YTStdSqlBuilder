@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>仪表盘</h2>
+      <h2>{{ $t('route.dashboard') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
       </div>
@@ -17,38 +17,38 @@
     <div class="dashboard-stats">
       <div class="stat-card">
         <div class="stat-value">{{ stats.totalTenants }}</div>
-        <div class="stat-label">总租户数</div>
+        <div class="stat-label">{{ $t('总租户数') }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.activeTenants }}</div>
-        <div class="stat-label">活跃租户</div>
+        <div class="stat-label">{{ $t('活跃租户') }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.totalSubscriptions }}</div>
-        <div class="stat-label">有效订阅</div>
+        <div class="stat-label">{{ $t('有效订阅') }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.totalUsers }}</div>
-        <div class="stat-label">平台用户</div>
+        <div class="stat-label">{{ $t('平台用户') }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.expiringTenants }}</div>
-        <div class="stat-label">即将到期</div>
+        <div class="stat-label">{{ $t('即将到期') }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.trialTenants }}</div>
-        <div class="stat-label">试用中</div>
+        <div class="stat-label">{{ $t('试用中') }}</div>
       </div>
     </div>
 
     <div class="card">
-      <h3 style="margin-bottom: 12px">快捷入口</h3>
+      <h3 style="margin-bottom: 12px">{{ $t('快捷入口') }}</h3>
       <div style="display: flex; gap: 12px; flex-wrap: wrap">
-        <DxButton text="租户管理" icon="globe" @click="router.push('/tenants')" />
-        <DxButton text="用户管理" icon="group" @click="router.push('/platform-users')" />
-        <DxButton text="套餐管理" icon="box" @click="router.push('/saas-packages')" />
-        <DxButton text="订阅管理" icon="clock" @click="router.push('/subscriptions')" />
-        <DxButton text="操作日志" icon="textdocument" @click="router.push('/operation-logs')" />
+        <DxButton :text="$t('menu.tenants')" icon="globe" @click="router.push('/tenants')" />
+        <DxButton :text="$t('menu.platformUsers')" icon="group" @click="router.push('/platform-users')" />
+        <DxButton :text="$t('menu.packages')" icon="box" @click="router.push('/saas-packages')" />
+        <DxButton :text="$t('menu.subscriptionList')" icon="clock" @click="router.push('/subscriptions')" />
+        <DxButton :text="$t('menu.operationLogs')" icon="textdocument" @click="router.push('/operation-logs')" />
       </div>
     </div>
 

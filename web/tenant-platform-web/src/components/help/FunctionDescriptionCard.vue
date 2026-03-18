@@ -3,37 +3,41 @@
     <div class="func-card-header">
       <h4>
         <i class="dx-icon dx-icon-info" />
-        功能说明
+        {{ t('components.functionDescription.title') }}
       </h4>
       <button v-if="collapsible" class="func-card-toggle" @click="collapsed = !collapsed">
-        {{ collapsed ? '展开' : '收起' }}
+        {{ collapsed ? t('components.functionDescription.expand') : t('components.functionDescription.collapse') }}
       </button>
     </div>
     <div v-show="!collapsed" class="func-card-body">
       <div v-if="purpose" class="func-section">
-        <strong>模块用途：</strong>
-        <span>{{ purpose }}</span>
+        <strong>{{ t('components.functionDescription.purpose') }}</strong>
+        <span>{{ resolvedPurpose }}</span>
       </div>
       <div v-if="dataScope" class="func-section">
-        <strong>关键数据范围：</strong>
-        <span>{{ dataScope }}</span>
+        <strong>{{ t('components.functionDescription.dataScope') }}</strong>
+        <span>{{ resolvedDataScope }}</span>
       </div>
       <div v-if="permissionNote" class="func-section">
-        <strong>权限要求：</strong>
-        <span>{{ permissionNote }}</span>
+        <strong>{{ t('components.functionDescription.permissionNote') }}</strong>
+        <span>{{ resolvedPermissionNote }}</span>
       </div>
       <div v-if="riskNote" class="func-section func-risk">
-        <strong>⚠ 风险提示：</strong>
-        <span>{{ riskNote }}</span>
+        <strong>{{ t('components.functionDescription.riskNote') }}</strong>
+        <span>{{ resolvedRiskNote }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { translateText } from '@/locales'
 
-defineProps<{
+const { t } = useI18n()
+
+const props = defineProps<{
   purpose?: string
   dataScope?: string
   permissionNote?: string
@@ -42,6 +46,10 @@ defineProps<{
 }>()
 
 const collapsed = ref(false)
+const resolvedPurpose = computed(() => translateText(props.purpose))
+const resolvedDataScope = computed(() => translateText(props.dataScope))
+const resolvedPermissionNote = computed(() => translateText(props.permissionNote))
+const resolvedRiskNote = computed(() => translateText(props.riskNote))
 </script>
 
 <style scoped>

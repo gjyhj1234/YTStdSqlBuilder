@@ -4,7 +4,7 @@ import * as P from './permissions'
 export interface MenuItem {
   /** 菜单标识 */
   key: string
-  /** 显示名称 */
+  /** i18n key */
   label: string
   /** 图标（dx-icon 名称） */
   icon?: string
@@ -20,123 +20,123 @@ export interface MenuItem {
 export const menuItems: MenuItem[] = [
   {
     key: 'dashboard',
-    label: '仪表盘',
+    label: 'menu.dashboard',
     icon: 'home',
     path: '/dashboard',
   },
   {
     key: 'platform-management',
-    label: '平台管理体系',
+    label: 'menu.platformManagement',
     icon: 'group',
     children: [
-      { key: 'platform-users', label: '用户管理', path: '/platform-users', permissions: [P.PLATFORM_USER_VIEW] },
-      { key: 'platform-roles', label: '角色管理', path: '/platform-roles', permissions: [P.PLATFORM_ROLE_VIEW] },
-      { key: 'platform-permissions', label: '权限管理', path: '/platform-permissions', permissions: [P.PLATFORM_PERMISSION_VIEW] },
-      { key: 'platform-security', label: '安全设置', path: '/platform-security', permissions: [P.PLATFORM_SECURITY_VIEW] },
+      { key: 'platform-users', label: 'menu.platformUsers', path: '/platform-users', permissions: [P.PLATFORM_USER_VIEW] },
+      { key: 'platform-roles', label: 'menu.platformRoles', path: '/platform-roles', permissions: [P.PLATFORM_ROLE_VIEW] },
+      { key: 'platform-permissions', label: 'menu.platformPermissions', path: '/platform-permissions', permissions: [P.PLATFORM_PERMISSION_VIEW] },
+      { key: 'platform-security', label: 'menu.platformSecurity', path: '/platform-security', permissions: [P.PLATFORM_SECURITY_VIEW] },
     ],
   },
   {
     key: 'tenant-lifecycle',
-    label: '租户生命周期体系',
+    label: 'menu.tenantLifecycle',
     icon: 'globe',
     children: [
-      { key: 'tenants', label: '租户管理', path: '/tenants', permissions: [P.TENANT_LIST_VIEW] },
-      { key: 'tenant-groups', label: '租户分组', path: '/tenant-groups', permissions: [P.TENANT_GROUP_VIEW] },
-      { key: 'tenant-domains', label: '域名管理', path: '/tenant-domains', permissions: [P.TENANT_DOMAIN_VIEW] },
-      { key: 'tenant-tags', label: '标签管理', path: '/tenant-tags', permissions: [P.TENANT_TAG_VIEW] },
-      { key: 'tenant-resources', label: '资源配额', path: '/tenant-resources', permissions: [P.TENANT_RESOURCE_VIEW] },
+      { key: 'tenants', label: 'menu.tenants', path: '/tenants', permissions: [P.TENANT_LIST_VIEW] },
+      { key: 'tenant-groups', label: 'menu.tenantGroups', path: '/tenant-groups', permissions: [P.TENANT_GROUP_VIEW] },
+      { key: 'tenant-domains', label: 'menu.tenantDomains', path: '/tenant-domains', permissions: [P.TENANT_DOMAIN_VIEW] },
+      { key: 'tenant-tags', label: 'menu.tenantTags', path: '/tenant-tags', permissions: [P.TENANT_TAG_VIEW] },
+      { key: 'tenant-resources', label: 'menu.tenantResources', path: '/tenant-resources', permissions: [P.TENANT_RESOURCE_VIEW] },
     ],
   },
   {
     key: 'tenant-config',
-    label: '租户配置中心',
+    label: 'menu.tenantConfig',
     icon: 'preferences',
     children: [
-      { key: 'tenant-system-configs', label: '系统配置', path: '/tenant-system-configs', permissions: [P.TENANT_CONFIG_VIEW] },
-      { key: 'tenant-feature-flags', label: '功能开关', path: '/tenant-feature-flags', permissions: [P.TENANT_CONFIG_VIEW] },
-      { key: 'tenant-parameters', label: '参数管理', path: '/tenant-parameters', permissions: [P.TENANT_CONFIG_VIEW] },
+      { key: 'tenant-system-configs', label: 'menu.tenantSystemConfigs', path: '/tenant-system-configs', permissions: [P.TENANT_CONFIG_VIEW] },
+      { key: 'tenant-feature-flags', label: 'menu.tenantFeatureFlags', path: '/tenant-feature-flags', permissions: [P.TENANT_CONFIG_VIEW] },
+      { key: 'tenant-parameters', label: 'menu.tenantParameters', path: '/tenant-parameters', permissions: [P.TENANT_CONFIG_VIEW] },
     ],
   },
   {
     key: 'saas-packages',
-    label: 'SaaS 套餐系统',
+    label: 'menu.saasPackages',
     icon: 'box',
     children: [
-      { key: 'packages', label: '套餐管理', path: '/saas-packages', permissions: [P.PACKAGE_LIST_VIEW] },
-      { key: 'package-versions', label: '版本管理', path: '/saas-package-versions', permissions: [P.PACKAGE_VERSION_VIEW] },
+      { key: 'packages', label: 'menu.packages', path: '/saas-packages', permissions: [P.PACKAGE_LIST_VIEW] },
+      { key: 'package-versions', label: 'menu.packageVersions', path: '/saas-package-versions', permissions: [P.PACKAGE_VERSION_VIEW] },
     ],
   },
   {
     key: 'subscriptions',
-    label: '订阅系统',
+    label: 'menu.subscriptions',
     icon: 'clock',
     children: [
-      { key: 'subscription-list', label: '订阅管理', path: '/subscriptions', permissions: [P.SUBSCRIPTION_LIST_VIEW] },
-      { key: 'subscription-trials', label: '试用管理', path: '/subscription-trials', permissions: [P.SUBSCRIPTION_TRIAL_VIEW] },
+      { key: 'subscription-list', label: 'menu.subscriptionList', path: '/subscriptions', permissions: [P.SUBSCRIPTION_LIST_VIEW] },
+      { key: 'subscription-trials', label: 'menu.subscriptionTrials', path: '/subscription-trials', permissions: [P.SUBSCRIPTION_TRIAL_VIEW] },
     ],
   },
   {
     key: 'billing',
-    label: '计费与账单系统',
+    label: 'menu.billing',
     icon: 'money',
     children: [
-      { key: 'billing-invoices', label: '账单管理', path: '/billing-invoices', permissions: [P.BILLING_INVOICE_VIEW] },
-      { key: 'payment-orders', label: '支付单', path: '/payment-orders', permissions: [P.BILLING_PAYMENT_VIEW] },
-      { key: 'payment-refunds', label: '退款管理', path: '/payment-refunds', permissions: [P.BILLING_PAYMENT_REFUND] },
+      { key: 'billing-invoices', label: 'menu.billingInvoices', path: '/billing-invoices', permissions: [P.BILLING_INVOICE_VIEW] },
+      { key: 'payment-orders', label: 'menu.paymentOrders', path: '/payment-orders', permissions: [P.BILLING_PAYMENT_VIEW] },
+      { key: 'payment-refunds', label: 'menu.paymentRefunds', path: '/payment-refunds', permissions: [P.BILLING_PAYMENT_REFUND] },
     ],
   },
   {
     key: 'api-integration',
-    label: 'API 与集成平台',
+    label: 'menu.apiIntegration',
     icon: 'key',
     children: [
-      { key: 'api-keys', label: 'API Key 管理', path: '/api-keys', permissions: [P.INFRA_APIKEY_VIEW] },
-      { key: 'webhooks', label: 'Webhook 管理', path: '/webhooks', permissions: [P.INFRA_WEBHOOK_VIEW] },
-      { key: 'webhook-delivery-logs', label: '推送日志', path: '/webhook-delivery-logs', permissions: [P.INFRA_WEBHOOK_VIEW] },
+      { key: 'api-keys', label: 'menu.apiKeys', path: '/api-keys', permissions: [P.INFRA_APIKEY_VIEW] },
+      { key: 'webhooks', label: 'menu.webhooks', path: '/webhooks', permissions: [P.INFRA_WEBHOOK_VIEW] },
+      { key: 'webhook-delivery-logs', label: 'menu.webhookDeliveryLogs', path: '/webhook-delivery-logs', permissions: [P.INFRA_WEBHOOK_VIEW] },
     ],
   },
   {
     key: 'operations',
-    label: '平台运营体系',
+    label: 'menu.operations',
     icon: 'chart',
     path: '/operations',
     permissions: [P.OPS_STAT_VIEW],
   },
   {
     key: 'logs',
-    label: '日志与审计',
+    label: 'menu.logs',
     icon: 'textdocument',
     children: [
-      { key: 'operation-logs', label: '操作日志', path: '/operation-logs', permissions: [P.LOG_OPERATION_VIEW] },
-      { key: 'audit-logs', label: '审计日志', path: '/audit-logs', permissions: [P.LOG_AUDIT_VIEW] },
-      { key: 'system-logs', label: '系统日志', path: '/system-logs', permissions: [P.LOG_SYSTEM_VIEW] },
+      { key: 'operation-logs', label: 'menu.operationLogs', path: '/operation-logs', permissions: [P.LOG_OPERATION_VIEW] },
+      { key: 'audit-logs', label: 'menu.auditLogs', path: '/audit-logs', permissions: [P.LOG_AUDIT_VIEW] },
+      { key: 'system-logs', label: 'menu.systemLogs', path: '/system-logs', permissions: [P.LOG_SYSTEM_VIEW] },
     ],
   },
   {
     key: 'notifications',
-    label: '通知系统',
+    label: 'menu.notifications',
     icon: 'bell',
     children: [
-      { key: 'notification-templates', label: '消息模板', path: '/notification-templates', permissions: [P.NOTIFICATION_TEMPLATE_VIEW] },
-      { key: 'notification-records', label: '通知记录', path: '/notification-records', permissions: [P.NOTIFICATION_RECORD_VIEW] },
+      { key: 'notification-templates', label: 'menu.notificationTemplates', path: '/notification-templates', permissions: [P.NOTIFICATION_TEMPLATE_VIEW] },
+      { key: 'notification-records', label: 'menu.notificationRecords', path: '/notification-records', permissions: [P.NOTIFICATION_RECORD_VIEW] },
     ],
   },
   {
     key: 'files',
-    label: '文件与存储',
+    label: 'menu.files',
     icon: 'folder',
     children: [
-      { key: 'storage-strategies', label: '存储策略', path: '/storage-strategies', permissions: [P.INFRA_STORAGE_VIEW] },
-      { key: 'tenant-files', label: '文件管理', path: '/tenant-files', permissions: [P.INFRA_STORAGE_VIEW] },
+      { key: 'storage-strategies', label: 'menu.storageStrategies', path: '/storage-strategies', permissions: [P.INFRA_STORAGE_VIEW] },
+      { key: 'tenant-files', label: 'menu.tenantFiles', path: '/tenant-files', permissions: [P.INFRA_STORAGE_VIEW] },
     ],
   },
   {
     key: 'infrastructure',
-    label: '技术基础设施',
+    label: 'menu.infrastructure',
     icon: 'toolbox',
     children: [
-      { key: 'rate-limit-policies', label: '限流策略', path: '/rate-limit-policies', permissions: [P.INFRA_RATELIMIT_VIEW] },
-      { key: 'infra-components', label: '基础设施组件', path: '/infra-components', permissions: [P.INFRA_COMPONENT_VIEW] },
+      { key: 'rate-limit-policies', label: 'menu.rateLimitPolicies', path: '/rate-limit-policies', permissions: [P.INFRA_RATELIMIT_VIEW] },
+      { key: 'infra-components', label: 'menu.infraComponents', path: '/infra-components', permissions: [P.INFRA_COMPONENT_VIEW] },
     ],
   },
 ]

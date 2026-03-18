@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>租户管理</h2>
+      <h2>{{ $t('租户管理') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
         <DxButton
           v-if="perm.has(TENANT_LIST_CREATE)"
-          text="新增租户"
+          :text="$t('新增租户')"
           icon="add"
           type="default"
           @click="showCreatePopup = true"
@@ -26,7 +26,7 @@
       <div class="filter-bar">
         <DxTextBox
           v-model:value="filterKeyword"
-          placeholder="搜索租户编码 / 名称 / 企业名"
+          :placeholder="$t('搜索租户编码 / 名称 / 企业名')"
           :width="280"
           mode="search"
           value-change-event="input"
@@ -36,11 +36,11 @@
           :items="statusOptions"
           display-expr="text"
           value-expr="value"
-          placeholder="状态筛选"
+          :placeholder="$t('状态筛选')"
           :width="140"
           :show-clear-button="true"
         />
-        <DxButton text="查询" icon="search" @click="loadData" />
+        <DxButton :text="$t('查询')" icon="search" @click="loadData" />
       </div>
 
       <DxDataGrid
@@ -50,17 +50,17 @@
         :hover-state-enabled="true"
         key-expr="id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantCode" caption="租户编码" />
-        <DxColumn data-field="tenantName" caption="租户名称" />
-        <DxColumn data-field="enterpriseName" caption="企业名称" />
-        <DxColumn data-field="contactName" caption="联系人" />
-        <DxColumn data-field="contactEmail" caption="联系邮箱" />
-        <DxColumn data-field="lifecycleStatus" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="isolationMode" caption="隔离模式" :width="120" />
-        <DxColumn data-field="openedAt" caption="开通时间" cell-template="dateCell" />
-        <DxColumn data-field="expiresAt" caption="到期时间" cell-template="dateCell" />
-        <DxColumn caption="操作" cell-template="actionCell" :width="200" />
+        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="tenantCode" :caption="$t('common.tenantCode')" />
+        <DxColumn data-field="tenantName" :caption="$t('common.tenantName')" />
+        <DxColumn data-field="enterpriseName" :caption="$t('common.enterpriseName')" />
+        <DxColumn data-field="contactName" :caption="$t('common.contactName')" />
+        <DxColumn data-field="contactEmail" :caption="$t('common.contactEmail')" />
+        <DxColumn data-field="lifecycleStatus" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="isolationMode" :caption="$t('common.isolationMode')" :width="120" />
+        <DxColumn data-field="openedAt" :caption="$t('common.openedAt')" cell-template="dateCell" />
+        <DxColumn data-field="expiresAt" :caption="$t('common.expiresAt')" cell-template="dateCell" />
+        <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="200" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -70,27 +70,27 @@
         <template #actionCell="{ data: cellData }">
           <DxButton
             v-if="perm.has(TENANT_LIST_UPDATE)"
-            text="编辑"
+            :text="$t('编辑')"
             styling-mode="text"
             @click="onEdit(cellData.data)"
           />
           <DxButton
             v-if="cellData.data.lifecycleStatus === 'Trial' && perm.has(TENANT_LIST_ACTIVATE)"
-            text="激活"
+            :text="$t('激活')"
             styling-mode="text"
             type="success"
             @click="onStatusChange(cellData.data.id, 'Active', '激活租户')"
           />
           <DxButton
             v-if="cellData.data.lifecycleStatus === 'Active' && perm.has(TENANT_LIST_SUSPEND)"
-            text="暂停"
+            :text="$t('暂停')"
             styling-mode="text"
             type="danger"
             @click="onStatusChange(cellData.data.id, 'Suspended', '暂停租户服务')"
           />
           <DxButton
             v-if="perm.has(TENANT_LIST_CLOSE) && !['Closed'].includes(cellData.data.lifecycleStatus)"
-            text="关闭"
+            :text="$t('关闭')"
             styling-mode="text"
             type="danger"
             @click="onStatusChange(cellData.data.id, 'Closed', '关闭租户')"
@@ -104,7 +104,7 @@
     <!-- 新增租户弹窗 -->
     <DxPopup
       :visible="showCreatePopup"
-      title="新增租户"
+      :title="$t('新增租户')"
       :width="560"
       :height="'auto'"
       :show-close-button="true"
@@ -116,33 +116,33 @@
         label-mode="floating"
       >
         <DxSimpleItem data-field="tenantCode">
-          <DxLabel text="租户编码" />
+          <DxLabel :text="$t('租户编码')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="tenantName">
-          <DxLabel text="租户名称" />
+          <DxLabel :text="$t('租户名称')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="enterpriseName" :col-span="2">
-          <DxLabel text="企业名称" />
+          <DxLabel :text="$t('企业名称')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="contactName">
-          <DxLabel text="联系人" />
+          <DxLabel :text="$t('联系人')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="contactPhone">
-          <DxLabel text="联系电话" />
+          <DxLabel :text="$t('联系电话')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="contactEmail" :col-span="2">
-          <DxLabel text="联系邮箱" />
+          <DxLabel :text="$t('联系邮箱')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="sourceType" editor-type="dxSelectBox"
           :editor-options="{ items: sourceTypes, displayExpr: 'text', valueExpr: 'value' }">
-          <DxLabel text="来源" />
+          <DxLabel :text="$t('来源')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="isolationMode" editor-type="dxSelectBox"
           :editor-options="{ items: isolationModes, displayExpr: 'text', valueExpr: 'value' }">
-          <DxLabel text="隔离模式" />
+          <DxLabel :text="$t('隔离模式')" />
         </DxSimpleItem>
         <DxButtonItem :col-span="2">
-          <DxButtonOptions text="提交" type="default" :use-submit-behavior="false" @click="handleCreate" />
+          <DxButtonOptions :text="$t('提交')" type="default" :use-submit-behavior="false" @click="handleCreate" />
         </DxButtonItem>
       </DxForm>
     </DxPopup>
@@ -159,13 +159,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { DxDataGrid, DxColumn, DxPaging, DxPager } from 'devextreme-vue/data-grid'
 import { DxButton } from 'devextreme-vue/button'
 import { DxTextBox } from 'devextreme-vue/text-box'
 import { DxSelectBox } from 'devextreme-vue/select-box'
 import { DxPopup } from 'devextreme-vue/popup'
 import { DxForm, DxSimpleItem, DxLabel, DxButtonItem, DxButtonOptions } from 'devextreme-vue/form'
+import { useI18n } from 'vue-i18n'
 import StatusTag from '@/components/StatusTag.vue'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
 import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
@@ -188,32 +189,33 @@ import {
 } from '@/constants/permissions'
 
 const perm = usePermission()
+const { t } = useI18n()
 const showGuide = ref(false)
 const showCreatePopup = ref(false)
 const filterKeyword = ref('')
 const filterStatus = ref<string | undefined>(undefined)
 
-const statusOptions = [
-  { text: '试用中', value: 'Trial' },
-  { text: '正常', value: 'Active' },
-  { text: '即将到期', value: 'Expiring' },
-  { text: '已过期', value: 'Expired' },
-  { text: '已暂停', value: 'Suspended' },
-  { text: '已关闭', value: 'Closed' },
-]
+const statusOptions = computed(() => [
+  { text: t('status.Trial'), value: 'Trial' },
+  { text: t('status.Active'), value: 'Active' },
+  { text: t('status.Expiring'), value: 'Expiring' },
+  { text: t('status.Expired'), value: 'Expired' },
+  { text: t('status.Suspended'), value: 'Suspended' },
+  { text: t('status.Closed'), value: 'Closed' },
+])
 
-const sourceTypes = [
-  { text: '自助注册', value: 'SelfService' },
-  { text: '管理员创建', value: 'Admin' },
-  { text: 'API 创建', value: 'Api' },
-]
+const sourceTypes = computed(() => [
+  { text: t('enum.sourceType.SelfService'), value: 'SelfService' },
+  { text: t('enum.sourceType.Admin'), value: 'Admin' },
+  { text: t('enum.sourceType.Api'), value: 'Api' },
+])
 
-const isolationModes = [
-  { text: '共享数据库', value: 'SharedDatabase' },
-  { text: 'Schema 隔离', value: 'SchemaIsolated' },
-  { text: '独立数据库', value: 'DatabaseIsolated' },
-  { text: '混合模式', value: 'Hybrid' },
-]
+const isolationModes = computed(() => [
+  { text: t('enum.isolationMode.SharedDatabase'), value: 'SharedDatabase' },
+  { text: t('enum.isolationMode.SchemaIsolated'), value: 'SchemaIsolated' },
+  { text: t('enum.isolationMode.DatabaseIsolated'), value: 'DatabaseIsolated' },
+  { text: t('enum.isolationMode.Hybrid'), value: 'Hybrid' },
+])
 
 const gridData = ref<TenantDto[]>([])
 

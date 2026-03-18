@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>订阅管理</h2>
+      <h2>{{ $t('route.subscriptions') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
         <DxButton
           v-if="perm.has(SUBSCRIPTION_LIST_CREATE)"
-          text="新增订阅"
+          :text="$t('新增订阅')"
           icon="add"
           type="default"
           @click="showCreatePopup = true"
@@ -26,7 +26,7 @@
       <div class="filter-bar">
         <DxTextBox
           v-model:value="filterKeyword"
-          placeholder="搜索租户ID / 套餐版本ID"
+          :placeholder="$t('搜索租户ID / 套餐版本ID')"
           :width="260"
           mode="search"
           value-change-event="input"
@@ -36,11 +36,11 @@
           :items="statusOptions"
           display-expr="text"
           value-expr="value"
-          placeholder="状态筛选"
+          :placeholder="$t('状态筛选')"
           :width="140"
           :show-clear-button="true"
         />
-        <DxButton text="查询" icon="search" @click="loadData" />
+        <DxButton :text="$t('查询')" icon="search" @click="loadData" />
       </div>
 
       <DxDataGrid
@@ -50,17 +50,17 @@
         :hover-state-enabled="true"
         key-expr="id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="packageVersionId" caption="套餐版本ID" :width="100" />
-        <DxColumn data-field="subscriptionStatus" caption="订阅状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="subscriptionType" caption="订阅类型" :width="100" />
-        <DxColumn data-field="startedAt" caption="开始时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="expiresAt" caption="到期时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="autoRenew" caption="自动续费" cell-template="booleanCell" :width="80" />
-        <DxColumn data-field="cancelledAt" caption="取消时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" />
-        <DxColumn caption="操作" cell-template="actionCell" :width="100" />
+        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="tenantRefId" :caption="$t('common.tenantId')" :width="80" />
+        <DxColumn data-field="packageVersionId" :caption="$t('套餐版本ID')" :width="100" />
+        <DxColumn data-field="subscriptionStatus" :caption="$t('订阅状态')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="subscriptionType" :caption="$t('订阅类型')" :width="100" />
+        <DxColumn data-field="startedAt" :caption="$t('开始时间')" cell-template="dateTimeCell" />
+        <DxColumn data-field="expiresAt" :caption="$t('common.expiresAt')" cell-template="dateTimeCell" />
+        <DxColumn data-field="autoRenew" :caption="$t('自动续费')" cell-template="booleanCell" :width="80" />
+        <DxColumn data-field="cancelledAt" :caption="$t('取消时间')" cell-template="dateTimeCell" />
+        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" />
+        <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="100" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -68,12 +68,12 @@
           <span>{{ formatDateTime(cellData.value) }}</span>
         </template>
         <template #booleanCell="{ data: cellData }">
-          <span>{{ cellData.value ? '是' : '否' }}</span>
+          <span>{{ cellData.value ? $t('common.yes') : $t('common.no') }}</span>
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
             v-if="cellData.data.subscriptionStatus === 'Active' && perm.has(SUBSCRIPTION_LIST_CANCEL)"
-            text="取消"
+            :text="$t('取消')"
             styling-mode="text"
             type="danger"
             @click="onCancel(cellData.data.id)"
@@ -87,7 +87,7 @@
     <!-- 新增订阅弹窗 -->
     <DxPopup
       :visible="showCreatePopup"
-      title="新增订阅"
+      :title="$t('新增订阅')"
       :width="480"
       :height="'auto'"
       :show-close-button="true"
@@ -99,20 +99,20 @@
         label-mode="floating"
       >
         <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
-          <DxLabel text="租户ID" />
+          <DxLabel :text="$t('common.tenantId')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="packageVersionId" editor-type="dxNumberBox">
-          <DxLabel text="套餐版本ID" />
+          <DxLabel :text="$t('套餐版本ID')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="subscriptionType" editor-type="dxSelectBox"
           :editor-options="{ items: subscriptionTypes, displayExpr: 'text', valueExpr: 'value' }">
-          <DxLabel text="订阅类型" />
+          <DxLabel :text="$t('订阅类型')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="autoRenew" editor-type="dxCheckBox">
-          <DxLabel text="自动续费" />
+          <DxLabel :text="$t('自动续费')" />
         </DxSimpleItem>
         <DxButtonItem>
-          <DxButtonOptions text="提交" type="default" :use-submit-behavior="false" @click="handleCreate" />
+          <DxButtonOptions :text="$t('提交')" type="default" :use-submit-behavior="false" @click="handleCreate" />
         </DxButtonItem>
       </DxForm>
     </DxPopup>
@@ -129,13 +129,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { DxDataGrid, DxColumn, DxPaging, DxPager } from 'devextreme-vue/data-grid'
 import { DxButton } from 'devextreme-vue/button'
 import { DxTextBox } from 'devextreme-vue/text-box'
 import { DxSelectBox } from 'devextreme-vue/select-box'
 import { DxPopup } from 'devextreme-vue/popup'
 import { DxForm, DxSimpleItem, DxLabel, DxButtonItem, DxButtonOptions } from 'devextreme-vue/form'
+import { useI18n } from 'vue-i18n'
 import StatusTag from '@/components/StatusTag.vue'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
 import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
@@ -155,24 +156,25 @@ import {
 } from '@/constants/permissions'
 
 const perm = usePermission()
+const { t } = useI18n()
 const showGuide = ref(false)
 const showCreatePopup = ref(false)
 const filterKeyword = ref('')
 const filterStatus = ref<string | undefined>(undefined)
 
-const statusOptions = [
-  { text: '生效中', value: 'Active' },
-  { text: '已过期', value: 'Expired' },
-  { text: '已取消', value: 'Cancelled' },
-  { text: '待生效', value: 'Pending' },
-]
+const statusOptions = computed(() => [
+  { text: t('生效中'), value: 'Active' },
+  { text: t('已过期'), value: 'Expired' },
+  { text: t('已取消'), value: 'Cancelled' },
+  { text: t('待生效'), value: 'Pending' },
+])
 
-const subscriptionTypes = [
-  { text: '新订阅', value: 'New' },
-  { text: '升级', value: 'Upgrade' },
-  { text: '降级', value: 'Downgrade' },
-  { text: '续费', value: 'Renewal' },
-]
+const subscriptionTypes = computed(() => [
+  { text: t('新订阅'), value: 'New' },
+  { text: t('升级'), value: 'Upgrade' },
+  { text: t('降级'), value: 'Downgrade' },
+  { text: t('续费'), value: 'Renewal' },
+])
 
 const gridData = ref<TenantSubscriptionDto[]>([])
 

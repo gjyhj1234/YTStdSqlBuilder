@@ -1,14 +1,12 @@
 <template>
   <div class="app-layout">
-    <!-- 侧边栏 -->
     <aside class="app-sidebar" :class="{ collapsed: appStore.sidebarCollapsed }">
       <div class="sidebar-logo">
-        <template v-if="!appStore.sidebarCollapsed">租户管理平台</template>
-        <template v-else>TP</template>
+        <template v-if="!appStore.sidebarCollapsed">{{ t('app.title') }}</template>
+        <template v-else>{{ t('app.shortTitle') }}</template>
       </div>
       <nav class="sidebar-menu">
         <template v-for="item in visibleMenuItems" :key="item.key">
-          <!-- 无子菜单 -->
           <router-link
             v-if="!item.children && item.path"
             :to="item.path"
@@ -16,17 +14,16 @@
             :class="{ active: isMenuActive(item) }"
           >
             <i v-if="item.icon" :class="`dx-icon dx-icon-${item.icon}`" />
-            <span v-if="!appStore.sidebarCollapsed" class="menu-item-text">{{ item.label }}</span>
+            <span v-if="!appStore.sidebarCollapsed" class="menu-item-text">{{ t(item.label) }}</span>
           </router-link>
 
-          <!-- 有子菜单 -->
           <template v-else-if="item.children">
             <div
               class="menu-toggle"
               @click="toggleGroup(item.key)"
             >
               <i v-if="item.icon" :class="`dx-icon dx-icon-${item.icon}`" />
-              <span v-if="!appStore.sidebarCollapsed" class="menu-item-text">{{ item.label }}</span>
+              <span v-if="!appStore.sidebarCollapsed" class="menu-item-text">{{ t(item.label) }}</span>
               <span
                 v-if="!appStore.sidebarCollapsed"
                 class="menu-toggle-arrow"
@@ -41,7 +38,7 @@
                 class="menu-item"
                 :class="{ active: isMenuActive(child) }"
               >
-                <span class="menu-item-text">{{ child.label }}</span>
+                <span class="menu-item-text">{{ t(child.label) }}</span>
               </router-link>
             </div>
           </template>
@@ -49,7 +46,6 @@
       </nav>
     </aside>
 
-    <!-- 主内容区 -->
     <div class="app-main">
       <header class="app-header">
         <div class="header-left">
@@ -59,8 +55,17 @@
           <span class="breadcrumb">{{ currentTitle }}</span>
         </div>
         <div class="header-right">
+          <DxSelectBox
+            :items="languageOptions"
+            display-expr="label"
+            value-expr="value"
+            :value="appStore.locale"
+            :width="140"
+            :input-attr="{ 'aria-label': t('app.language') }"
+            @value-changed="onLocaleChange"
+          />
           <span class="user-info">{{ authStore.displayName }}</span>
-          <button class="logout-btn" @click="handleLogout">退出</button>
+          <button class="logout-btn" @click="handleLogout">{{ t('app.logout') }}</button>
         </div>
       </header>
       <main class="app-content">
@@ -72,17 +77,29 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { DxSelectBox } from 'devextreme-vue/select-box'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/store/app'
 import { useAuthStore } from '@/store/auth'
 import { menuItems, type MenuItem } from '@/constants/menus'
+import { localeOptions, type LocaleCode } from '@/locales'
 
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 
 const openGroups = ref<Set<string>>(new Set(['platform-management', 'tenant-lifecycle']))
+
+const languageOptions = computed(() => {
+  locale.value
+  return localeOptions.map(item => ({
+    value: item.value,
+    label: t(item.labelKey),
+  }))
+})
 
 function toggleGroup(key: string) {
   if (openGroups.value.has(key)) {
@@ -116,8 +133,14 @@ function isMenuActive(item: MenuItem): boolean {
 }
 
 const currentTitle = computed(() => {
-  return (route.meta.title as string) || '仪表盘'
+  return t((route.meta.title as string) || 'route.dashboard')
 })
+
+function onLocaleChange(event: { value?: unknown }) {
+  if (event.value) {
+    appStore.updateLocale(event.value as LocaleCode)
+  }
+}
 
 function handleLogout() {
   authStore.logout()

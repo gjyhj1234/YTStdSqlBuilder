@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>操作日志</h2>
+      <h2>{{ $t('route.operationLogs') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
       </div>
@@ -19,7 +19,7 @@
       <div class="filter-bar">
         <DxTextBox
           v-model:value="filterKeyword"
-          placeholder="搜索操作类型 / 资源类型 / IP"
+          :placeholder="$t('搜索操作类型 / 资源类型 / IP')"
           :width="280"
           mode="search"
           value-change-event="input"
@@ -29,11 +29,11 @@
           :items="resultOptions"
           display-expr="text"
           value-expr="value"
-          placeholder="操作结果"
+          :placeholder="$t('操作结果')"
           :width="140"
           :show-clear-button="true"
         />
-        <DxButton text="查询" icon="search" @click="loadData" />
+        <DxButton :text="$t('查询')" icon="search" @click="loadData" />
       </div>
 
       <DxDataGrid
@@ -44,16 +44,16 @@
         key-expr="id"
         @row-click="onRowClick"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="operatorType" caption="操作者类型" />
-        <DxColumn data-field="operatorId" caption="操作者ID" :width="90" />
-        <DxColumn data-field="action" caption="操作" />
-        <DxColumn data-field="resourceType" caption="资源类型" />
-        <DxColumn data-field="resourceId" caption="资源ID" />
-        <DxColumn data-field="ipAddress" caption="IP 地址" />
-        <DxColumn data-field="operationResult" caption="操作结果" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="tenantRefId" :caption="$t('common.tenantId')" :width="80" />
+        <DxColumn data-field="operatorType" :caption="$t('操作者类型')" />
+        <DxColumn data-field="operatorId" :caption="$t('操作者ID')" :width="90" />
+        <DxColumn data-field="action" :caption="$t('common.actions')" />
+        <DxColumn data-field="resourceType" :caption="$t('资源类型')" />
+        <DxColumn data-field="resourceId" :caption="$t('资源ID')" />
+        <DxColumn data-field="ipAddress" :caption="$t('IP 地址')" />
+        <DxColumn data-field="operationResult" :caption="$t('操作结果')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -68,23 +68,23 @@
     <!-- 详情弹窗 -->
     <DxPopup
       :visible="showDetail"
-      title="操作日志详情"
+      :title="$t('操作日志详情')"
       :width="520"
       :height="'auto'"
       :show-close-button="true"
       @hiding="showDetail = false"
     >
       <div v-if="detailData" class="detail-grid">
-        <p><strong>ID：</strong>{{ detailData.id }}</p>
-        <p><strong>租户ID：</strong>{{ detailData.tenantRefId }}</p>
-        <p><strong>操作者类型：</strong>{{ detailData.operatorType }}</p>
-        <p><strong>操作者ID：</strong>{{ detailData.operatorId }}</p>
-        <p><strong>操作：</strong>{{ detailData.action }}</p>
-        <p><strong>资源类型：</strong>{{ detailData.resourceType }}</p>
-        <p><strong>资源ID：</strong>{{ detailData.resourceId }}</p>
-        <p><strong>IP 地址：</strong>{{ detailData.ipAddress }}</p>
-        <p><strong>操作结果：</strong><StatusTag :status="detailData.operationResult" /></p>
-        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.createdAt) }}</p>
+        <p><strong>{{ $t('common.id') }}：</strong>{{ detailData.id }}</p>
+        <p><strong>{{ $t('common.tenantId') }}：</strong>{{ detailData.tenantRefId }}</p>
+        <p><strong>{{ $t('操作者类型') }}：</strong>{{ detailData.operatorType }}</p>
+        <p><strong>{{ $t('操作者ID') }}：</strong>{{ detailData.operatorId }}</p>
+        <p><strong>{{ $t('common.actions') }}：</strong>{{ detailData.action }}</p>
+        <p><strong>{{ $t('资源类型') }}：</strong>{{ detailData.resourceType }}</p>
+        <p><strong>{{ $t('资源ID') }}：</strong>{{ detailData.resourceId }}</p>
+        <p><strong>{{ $t('IP 地址') }}：</strong>{{ detailData.ipAddress }}</p>
+        <p><strong>{{ $t('操作结果') }}：</strong><StatusTag :status="detailData.operationResult" :label-map="resultLabelMap" /></p>
+        <p><strong>{{ $t('common.createdAt') }}：</strong>{{ formatDateTime(detailData.createdAt) }}</p>
       </div>
     </DxPopup>
 
@@ -100,12 +100,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { DxDataGrid, DxColumn, DxPaging, DxPager } from 'devextreme-vue/data-grid'
 import { DxButton } from 'devextreme-vue/button'
 import { DxTextBox } from 'devextreme-vue/text-box'
 import { DxSelectBox } from 'devextreme-vue/select-box'
 import { DxPopup } from 'devextreme-vue/popup'
+import { useI18n } from 'vue-i18n'
 import StatusTag from '@/components/StatusTag.vue'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
 import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
@@ -122,11 +123,17 @@ const showDetail = ref(false)
 const filterKeyword = ref('')
 const filterResult = ref<string | undefined>(undefined)
 const detailData = ref<OperationLogDto | null>(null)
+const { t } = useI18n()
 
-const resultOptions = [
-  { text: '成功', value: 'Success' },
-  { text: '失败', value: 'Failure' },
-]
+const resultOptions = computed(() => [
+  { text: t('成功'), value: 'Success' },
+  { text: t('失败'), value: 'Failure' },
+])
+
+const resultLabelMap = computed(() => ({
+  Success: t('成功'),
+  Failure: t('失败'),
+}))
 
 const gridData = ref<OperationLogDto[]>([])
 

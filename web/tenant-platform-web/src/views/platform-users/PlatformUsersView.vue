@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>平台用户管理</h2>
+      <h2>{{ $t('平台用户管理') }}</h2>
       <div class="page-header-actions">
         <PageHelpEntry @click="showGuide = true" />
         <DxButton
           v-if="perm.has(PLATFORM_USER_CREATE)"
-          text="新增用户"
+          :text="$t('新增用户')"
           icon="add"
           type="default"
           @click="showCreatePopup = true"
@@ -26,7 +26,7 @@
       <div class="filter-bar">
         <DxTextBox
           v-model:value="filterKeyword"
-          placeholder="搜索用户名 / 邮箱 / 姓名"
+          :placeholder="$t('搜索用户名 / 邮箱 / 姓名')"
           :width="260"
           mode="search"
           value-change-event="input"
@@ -36,11 +36,11 @@
           :items="statusOptions"
           display-expr="text"
           value-expr="value"
-          placeholder="状态筛选"
+          :placeholder="$t('状态筛选')"
           :width="140"
           :show-clear-button="true"
         />
-        <DxButton text="查询" icon="search" @click="loadData" />
+        <DxButton :text="$t('查询')" icon="search" @click="loadData" />
       </div>
 
       <DxDataGrid
@@ -50,15 +50,15 @@
         :hover-state-enabled="true"
         key-expr="id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="username" caption="用户名" />
-        <DxColumn data-field="displayName" caption="显示名称" />
-        <DxColumn data-field="email" caption="邮箱" />
-        <DxColumn data-field="phone" caption="手机" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="lastLoginAt" caption="最后登录" cell-template="dateCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
-        <DxColumn caption="操作" cell-template="actionCell" :width="160" />
+        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="username" :caption="$t('common.username')" />
+        <DxColumn data-field="displayName" :caption="$t('common.displayName')" />
+        <DxColumn data-field="email" :caption="$t('common.email')" />
+        <DxColumn data-field="phone" :caption="$t('common.phone')" />
+        <DxColumn data-field="status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="lastLoginAt" :caption="$t('common.lastLoginAt')" cell-template="dateCell" />
+        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
+        <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="160" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -68,20 +68,20 @@
         <template #actionCell="{ data: cellData }">
           <DxButton
             v-if="perm.has(PLATFORM_USER_UPDATE)"
-            text="编辑"
+            :text="$t('编辑')"
             styling-mode="text"
             @click="onEdit(cellData.data)"
           />
           <DxButton
             v-if="cellData.data.status === 'Active' && perm.has(PLATFORM_USER_LOCK)"
-            text="禁用"
+            :text="$t('common.disable')"
             styling-mode="text"
             type="danger"
             @click="onDisable(cellData.data.id)"
           />
           <DxButton
             v-if="cellData.data.status !== 'Active' && perm.has(PLATFORM_USER_UNLOCK)"
-            text="启用"
+            :text="$t('common.enable')"
             styling-mode="text"
             type="success"
             @click="onEnable(cellData.data.id)"
@@ -95,7 +95,7 @@
     <!-- 新增用户弹窗 -->
     <DxPopup
       :visible="showCreatePopup"
-      title="新增平台用户"
+      :title="$t('新增平台用户')"
       :width="480"
       :height="'auto'"
       :show-close-button="true"
@@ -107,25 +107,25 @@
         label-mode="floating"
       >
         <DxSimpleItem data-field="username">
-          <DxLabel text="用户名" />
+          <DxLabel :text="$t('用户名')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="displayName">
-          <DxLabel text="显示名称" />
+          <DxLabel :text="$t('显示名称')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="email">
-          <DxLabel text="邮箱" />
+          <DxLabel :text="$t('邮箱')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="phone">
-          <DxLabel text="手机号" />
+          <DxLabel :text="$t('手机号')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="password" :editor-options="{ mode: 'password' }">
-          <DxLabel text="密码" />
+          <DxLabel :text="$t('密码')" />
         </DxSimpleItem>
         <DxSimpleItem data-field="remark" editor-type="dxTextArea">
-          <DxLabel text="备注" />
+          <DxLabel :text="$t('备注')" />
         </DxSimpleItem>
         <DxButtonItem>
-          <DxButtonOptions text="提交" type="default" :use-submit-behavior="false" @click="handleCreate" />
+          <DxButtonOptions :text="$t('提交')" type="default" :use-submit-behavior="false" @click="handleCreate" />
         </DxButtonItem>
       </DxForm>
     </DxPopup>
@@ -142,13 +142,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { DxDataGrid, DxColumn, DxPaging, DxPager } from 'devextreme-vue/data-grid'
 import { DxButton } from 'devextreme-vue/button'
 import { DxTextBox } from 'devextreme-vue/text-box'
 import { DxSelectBox } from 'devextreme-vue/select-box'
 import { DxPopup } from 'devextreme-vue/popup'
 import { DxForm, DxSimpleItem, DxLabel, DxButtonItem, DxButtonOptions } from 'devextreme-vue/form'
+import { useI18n } from 'vue-i18n'
 import StatusTag from '@/components/StatusTag.vue'
 import FunctionDescriptionCard from '@/components/help/FunctionDescriptionCard.vue'
 import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
@@ -171,16 +172,17 @@ import {
 } from '@/constants/permissions'
 
 const perm = usePermission()
+const { t } = useI18n()
 const showGuide = ref(false)
 const showCreatePopup = ref(false)
 const filterKeyword = ref('')
 const filterStatus = ref<string | undefined>(undefined)
 
-const statusOptions = [
-  { text: '正常', value: 'Active' },
-  { text: '已禁用', value: 'Disabled' },
-  { text: '已锁定', value: 'Locked' },
-]
+const statusOptions = computed(() => [
+  { text: t('status.Active'), value: 'Active' },
+  { text: t('status.Disabled'), value: 'Disabled' },
+  { text: t('status.Locked'), value: 'Locked' },
+])
 
 const gridData = ref<PlatformUserDto[]>([])
 

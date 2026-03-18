@@ -1,3 +1,5 @@
+import { getCurrentLocale } from '@/locales'
+
 /** HTTP 请求封装层 — 统一 Token 注入、错误处理、响应解包 */
 
 /** 后端标准响应格式 */
@@ -36,6 +38,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<ApiRe
   const token = getToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Accept-Language': getCurrentLocale(),
     ...(options.headers as Record<string, string> || {}),
   }
   if (token) {

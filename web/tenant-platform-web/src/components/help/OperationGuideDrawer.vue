@@ -2,7 +2,7 @@
   <div>
     <DxPopup
       :visible="visible"
-      :title="title || '操作指引'"
+      :title="resolvedTitle"
       :width="520"
       :height="'auto'"
       :show-close-button="true"
@@ -11,25 +11,25 @@
     >
       <div class="guide-content">
         <div v-if="entryPath" class="guide-section">
-          <h5>📍 进入路径</h5>
-          <p>{{ entryPath }}</p>
+          <h5>{{ t('components.operationGuide.entryPath') }}</h5>
+          <p>{{ resolvedEntryPath }}</p>
         </div>
         <div v-if="steps.length > 0" class="guide-section">
-          <h5>📋 操作步骤</h5>
+          <h5>{{ t('components.operationGuide.steps') }}</h5>
           <ol class="guide-steps">
-            <li v-for="(step, idx) in steps" :key="idx">{{ step }}</li>
+            <li v-for="(step, idx) in resolvedSteps" :key="idx">{{ step }}</li>
           </ol>
         </div>
         <div v-if="fieldNotes.length > 0" class="guide-section">
-          <h5>📝 字段说明</h5>
+          <h5>{{ t('components.operationGuide.fieldNotes') }}</h5>
           <ul class="guide-fields">
-            <li v-for="(note, idx) in fieldNotes" :key="idx">{{ note }}</li>
+            <li v-for="(note, idx) in resolvedFieldNotes" :key="idx">{{ note }}</li>
           </ul>
         </div>
         <div v-if="errorNotes.length > 0" class="guide-section">
-          <h5>⚠ 常见错误</h5>
+          <h5>{{ t('components.operationGuide.errorNotes') }}</h5>
           <ul class="guide-errors">
-            <li v-for="(note, idx) in errorNotes" :key="idx">{{ note }}</li>
+            <li v-for="(note, idx) in resolvedErrorNotes" :key="idx">{{ note }}</li>
           </ul>
         </div>
       </div>
@@ -38,9 +38,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { DxPopup } from 'devextreme-vue/popup'
+import { useI18n } from 'vue-i18n'
+import { translateList, translateText } from '@/locales'
 
-withDefaults(defineProps<{
+const { t } = useI18n()
+
+const props = withDefaults(defineProps<{
   visible: boolean
   title?: string
   entryPath?: string
@@ -52,6 +57,12 @@ withDefaults(defineProps<{
   fieldNotes: () => [],
   errorNotes: () => [],
 })
+
+const resolvedTitle = computed(() => translateText(props.title) || t('components.operationGuide.title'))
+const resolvedEntryPath = computed(() => translateText(props.entryPath))
+const resolvedSteps = computed(() => translateList(props.steps))
+const resolvedFieldNotes = computed(() => translateList(props.fieldNotes))
+const resolvedErrorNotes = computed(() => translateList(props.errorNotes))
 
 defineEmits<{
   'update:visible': [value: boolean]

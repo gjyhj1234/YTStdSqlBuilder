@@ -46,6 +46,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                user.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await PlatformUserCRUD.InsertAsync(tid, uid, user);
                 if (ins.Success)
                 {

@@ -67,6 +67,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     }
                 }
 
+                perm.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await PlatformPermissionCRUD.InsertAsync(tid, uid, perm);
                 if (ins.Success)
                 {

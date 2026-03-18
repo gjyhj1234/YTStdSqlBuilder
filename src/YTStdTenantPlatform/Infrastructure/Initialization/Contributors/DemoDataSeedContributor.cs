@@ -54,6 +54,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                tenant.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await TenantCRUD.InsertAsync(tid, uid, tenant);
                 if (ins.Success)
                 {
@@ -96,6 +97,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                 }
 
                 dSeed.Domain.TenantRefId = tenantId;
+                dSeed.Domain.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await TenantDomainCRUD.InsertAsync(tid, uid, dSeed.Domain);
                 if (ins.Success)
                 {

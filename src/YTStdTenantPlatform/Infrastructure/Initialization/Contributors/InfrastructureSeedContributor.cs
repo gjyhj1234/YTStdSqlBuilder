@@ -47,6 +47,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                rl.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await RateLimitPolicyCRUD.InsertAsync(tid, uid, rl);
                 if (ins.Success)
                 {
@@ -82,6 +83,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                di.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await DataIsolationPolicyCRUD.InsertAsync(tid, uid, di);
                 if (ins.Success)
                 {
@@ -117,6 +119,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                comp.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await InfrastructureComponentCRUD.InsertAsync(tid, uid, comp);
                 if (ins.Success)
                 {

@@ -45,6 +45,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                template.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await NotificationTemplateCRUD.InsertAsync(tid, uid, template);
                 if (ins.Success)
                 {

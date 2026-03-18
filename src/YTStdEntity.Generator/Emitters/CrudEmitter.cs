@@ -122,9 +122,6 @@ internal static class CrudEmitter
             sb.AppendLine($"                \")\";");
 
         sb.AppendLine();
-        sb.AppendLine("            Logger.Debug(tenantId, userId, () => $\"[" + cn + "CRUD.InsertAsync] SQL={sql}\");");
-        sb.AppendLine();
-     
 
         // Build params
         sb.AppendLine($"            var parameters = new PgSqlParam[{insertCols.Count}];");
@@ -178,9 +175,6 @@ internal static class CrudEmitter
             sb.AppendLine($"                \")\";");
 
         sb.AppendLine();
-        EmitPrimaryKeyAssignment(sb, pk, "            ");
-        if (SupportsGeneratedPrimaryKey(pk))
-            sb.AppendLine();
 
         sb.AppendLine($"            var parameters = new PgSqlParam[{insertCols.Count}];");
         for (int i = 0; i < insertCols.Count; i++)
@@ -526,26 +520,6 @@ internal static class CrudEmitter
             return "reader.GetFieldValue<" + EntityGenerator.GetClrTypeForCode(col) + ">(i)";
         }
         return $"reader.{EntityGenerator.GetReaderMethod(col)}(i)";
-    }
-
-    private static bool SupportsGeneratedPrimaryKey(ColumnModel? pk)
-    {
-        return pk is not null && (pk.ClrTypeName == "int" || pk.ClrTypeName == "long");
-    }
-
-    private static void EmitPrimaryKeyAssignment(StringBuilder sb, ColumnModel? pk, string indent)
-    {
-        if (pk is null)
-            return;
-
-        if (pk.ClrTypeName == "int")
-        {
-            sb.AppendLine($"{indent}entity.{pk.PropertyName} = await DB.GetNextIntIdAsync();");
-        }
-        else if (pk.ClrTypeName == "long")
-        {
-            sb.AppendLine($"{indent}entity.{pk.PropertyName} = await DB.GetNextLongIdAsync();");
-        }
     }
 
     private static void EmitUpdateFieldsAsync(StringBuilder sb, EntityModel model)

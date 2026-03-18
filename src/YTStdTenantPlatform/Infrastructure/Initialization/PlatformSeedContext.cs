@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using YTStdAdo;
 
 namespace YTStdTenantPlatform.Infrastructure.Initialization;
 
@@ -37,5 +39,11 @@ public sealed class PlatformSeedContext
     public void Log(string message)
     {
         Logs.Add($"[{DateTime.UtcNow:HH:mm:ss.fff}] {message}");
+    }
+
+    /// <summary>为初始化业务显式分配 long 主键</summary>
+    public async ValueTask<long> GetNextLongIdAsync()
+    {
+        return await DB.GetNextLongIdAsync();
     }
 }

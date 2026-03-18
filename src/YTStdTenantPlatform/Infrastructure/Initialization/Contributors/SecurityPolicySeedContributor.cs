@@ -47,6 +47,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                policy.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await PlatformPasswordPolicyCRUD.InsertAsync(tid, uid, policy);
                 if (ins.Success)
                 {
@@ -82,6 +83,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                policy.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await PlatformSecurityPolicyCRUD.InsertAsync(tid, uid, policy);
                 if (ins.Success)
                 {

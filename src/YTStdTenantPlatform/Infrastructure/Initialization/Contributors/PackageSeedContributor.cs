@@ -47,6 +47,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                pkg.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await SaasPackageCRUD.InsertAsync(tid, uid, pkg);
                 if (ins.Success)
                 {
@@ -93,6 +94,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                 }
 
                 vSeed.Version.PackageId = packageId;
+                vSeed.Version.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await SaasPackageVersionCRUD.InsertAsync(tid, uid, vSeed.Version);
                 if (ins.Success)
                 {
@@ -135,6 +137,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                 }
 
                 cSeed.Capability.PackageVersionId = versionId;
+                cSeed.Capability.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await SaasPackageCapabilityCRUD.InsertAsync(tid, uid, cSeed.Capability);
                 if (ins.Success)
                 {

@@ -47,6 +47,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
                     continue;
                 }
 
+                role.Id = await context.GetNextLongIdAsync();
                 DbInsResult ins = await PlatformRoleCRUD.InsertAsync(tid, uid, role);
                 if (ins.Success)
                 {
@@ -92,6 +93,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
 
                 var rpEntity = new PlatformRolePermission
                 {
+                    Id = await context.GetNextLongIdAsync(),
                     RoleId = roleId,
                     PermissionId = permId,
                     GrantedBy = uid,
@@ -146,6 +148,7 @@ namespace YTStdTenantPlatform.Infrastructure.Initialization.Contributors
 
                 var rmEntity = new PlatformRoleMember
                 {
+                    Id = await context.GetNextLongIdAsync(),
                     RoleId = roleId,
                     UserId = userId,
                     AssignedBy = uid,

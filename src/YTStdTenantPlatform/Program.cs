@@ -43,7 +43,7 @@ InitializeAuthSettings();
 // ──────────────────────────────────────────────────────────────
 
 var builder = WebApplication.CreateSlimBuilder(args);
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
+builder.WebHost.UseUrls("http://127.0.0.1:5000");
 // 服务注册
 ServiceRegistration.ConfigureServices(builder);
 

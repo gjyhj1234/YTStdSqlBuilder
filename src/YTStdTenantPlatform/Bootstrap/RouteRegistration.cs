@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using YTStdAdo;
 using YTStdLogger.Core;
+using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Endpoints;
 using YTStdTenantPlatform.Entity.TenantPlatform;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -108,25 +109,31 @@ namespace YTStdTenantPlatform.Bootstrap
             group.MapGet("/", async (HttpContext ctx) =>
             {
                 var result = await HealthCheck.CheckAllAsync();
-                ctx.Response.ContentType = "application/json; charset=utf-8";
-                ctx.Response.StatusCode = result.IsHealthy ? 200 : 503;
-                await WriteHealthJsonAsync(ctx, result.IsHealthy, result.Message);
+                var statusCode = result.IsHealthy ? 200 : 503;
+                var apiResult = result.IsHealthy
+                    ? ApiResult.Ok(result.Message)
+                    : ApiResult.Fail(result.Message);
+                await TenantPlatformJsonResponseWriter.WriteAsync(ctx, apiResult, statusCode);
             }).WithSummary("综合健康检查");
 
             group.MapGet("/db", async (HttpContext ctx) =>
             {
                 var result = await HealthCheck.CheckDatabaseAsync();
-                ctx.Response.ContentType = "application/json; charset=utf-8";
-                ctx.Response.StatusCode = result.IsHealthy ? 200 : 503;
-                await WriteHealthJsonAsync(ctx, result.IsHealthy, result.Message);
+                var statusCode = result.IsHealthy ? 200 : 503;
+                var apiResult = result.IsHealthy
+                    ? ApiResult.Ok(result.Message)
+                    : ApiResult.Fail(result.Message);
+                await TenantPlatformJsonResponseWriter.WriteAsync(ctx, apiResult, statusCode);
             }).WithSummary("数据库健康检查");
 
             group.MapGet("/cache", async (HttpContext ctx) =>
             {
                 var result = HealthCheck.CheckCache();
-                ctx.Response.ContentType = "application/json; charset=utf-8";
-                ctx.Response.StatusCode = result.IsHealthy ? 200 : 503;
-                await WriteHealthJsonAsync(ctx, result.IsHealthy, result.Message);
+                var statusCode = result.IsHealthy ? 200 : 503;
+                var apiResult = result.IsHealthy
+                    ? ApiResult.Ok(result.Message)
+                    : ApiResult.Fail(result.Message);
+                await TenantPlatformJsonResponseWriter.WriteAsync(ctx, apiResult, statusCode);
             }).WithSummary("缓存健康检查");
         }
 
@@ -319,30 +326,6 @@ namespace YTStdTenantPlatform.Bootstrap
                     },
                     context.RequestAborted);
             }).WithSummary("获取当前登录用户信息");
-        }
-
-        /// <summary>转义 JSON 字符串中的特殊字符</summary>
-        private static string EscapeJson(string value)
-        {
-            if (string.IsNullOrEmpty(value)) return string.Empty;
-            return value.Replace("\\", "\\\\").Replace("\"", "\\\"")
-                        .Replace("\n", "\\n").Replace("\r", "\\r")
-                        .Replace("\t", "\\t");
-        }
-
-        private static Task WriteHealthJsonAsync(HttpContext context, bool isHealthy, string message)
-        {
-            return Utf8JsonWriterHelper.WriteResponseAsync(
-                context.Response,
-                (isHealthy, message),
-                static (writer, state) =>
-                {
-                    writer.WriteStartObject();
-                    writer.WriteString("status", state.isHealthy ? "healthy" : "unhealthy");
-                    writer.WriteString("message", state.message);
-                    writer.WriteEndObject();
-                },
-                context.RequestAborted);
         }
 
         private static bool VerifyPassword(string password, string storedHash, string? storedSalt)

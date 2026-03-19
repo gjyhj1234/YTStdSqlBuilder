@@ -30,7 +30,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await TenantConfigAppService.GetSystemConfigAsync(0, user.UserId, tenantRefId);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<TenantSystemConfigDto>.Ok(result));
             }).WithSummary("获取租户系统配置");
 

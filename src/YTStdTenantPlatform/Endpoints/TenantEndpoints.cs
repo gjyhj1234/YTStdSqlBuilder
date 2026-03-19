@@ -30,7 +30,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await TenantLifecycleAppService.GetByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<TenantDto>.Ok(result));
             }).WithSummary("获取租户详情");
 

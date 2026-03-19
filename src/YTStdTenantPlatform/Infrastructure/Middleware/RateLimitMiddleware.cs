@@ -57,13 +57,14 @@ namespace YTStdTenantPlatform.Infrastructure.Middleware
                 context.Response.Headers["Retry-After"] = _windowSeconds.ToString();
                 await Utf8JsonWriterHelper.WriteResponseAsync(
                     context.Response,
-                    false,
-                    static (writer, _) =>
+                    context.TraceIdentifier,
+                    static (writer, traceId) =>
                     {
                         writer.WriteStartObject();
                         writer.WriteBoolean("success", false);
-                        writer.WriteString("error", "请求过于频繁");
-                        writer.WriteString("message", "请稍后再试");
+                        writer.WriteString("message", "请求过于频繁: 请稍后再试");
+                        writer.WriteNull("data");
+                        writer.WriteString("traceId", traceId);
                         writer.WriteEndObject();
                     },
                     context.RequestAborted);

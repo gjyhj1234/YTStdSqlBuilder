@@ -69,8 +69,8 @@ namespace YTStdTenantPlatform.Infrastructure.Middleware
                 {
                     writer.WriteStartObject();
                     writer.WriteBoolean("success", false);
-                    writer.WriteString("error", state.error);
-                    writer.WriteString("message", state.message);
+                    writer.WriteString("message", state.error + ": " + state.message);
+                    writer.WriteNull("data");
                     writer.WriteString("traceId", state.traceId);
                     writer.WriteEndObject();
                 },

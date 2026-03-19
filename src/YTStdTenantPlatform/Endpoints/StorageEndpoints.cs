@@ -38,7 +38,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await StorageAppService.GetStrategyByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<StorageStrategyDto>.Ok(result));
             }).WithSummary("获取存储策略详情");
 
@@ -98,7 +98,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await StorageAppService.GetFileByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<TenantFileDto>.Ok(result));
             }).WithSummary("获取文件详情");
 

@@ -37,7 +37,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.GetTemplateByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<NotificationTemplateDto>.Ok(result));
             }).WithSummary("获取通知模板详情");
 
@@ -97,7 +97,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.GetNotificationByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<NotificationDto>.Ok(result));
             }).WithSummary("获取通知详情");
 

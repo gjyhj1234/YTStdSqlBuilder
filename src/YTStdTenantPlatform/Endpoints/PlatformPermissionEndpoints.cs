@@ -37,14 +37,14 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await PlatformPermissionAppService.GetByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<PlatformPermissionDto>.Ok(result));
             }).WithSummary("获取权限详情");
 
             group.MapGet("/code/{code}", (HttpContext ctx, string code) =>
             {
                 var result = PlatformPermissionAppService.GetByCode(code);
-                if (result == null) { ctx.Response.StatusCode = 404; return Task.CompletedTask; }
+                if (result == null) { return WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); }
                 return WriteJsonAsync(ctx, ApiResult<PlatformPermissionDto>.Ok(result));
             }).WithSummary("按编码查询权限");
         }

@@ -49,13 +49,14 @@ namespace YTStdTenantPlatform.Infrastructure.Middleware
                 context.Response.ContentType = "application/json; charset=utf-8";
                 await Utf8JsonWriterHelper.WriteResponseAsync(
                     context.Response,
-                    false,
-                    static (writer, _) =>
+                    context.TraceIdentifier,
+                    static (writer, traceId) =>
                     {
                         writer.WriteStartObject();
                         writer.WriteBoolean("success", false);
-                        writer.WriteString("error", "未认证");
-                        writer.WriteString("message", "请先登录");
+                        writer.WriteString("message", "未认证: 请先登录");
+                        writer.WriteNull("data");
+                        writer.WriteString("traceId", traceId);
                         writer.WriteEndObject();
                     },
                     context.RequestAborted);
@@ -86,13 +87,14 @@ namespace YTStdTenantPlatform.Infrastructure.Middleware
                 context.Response.ContentType = "application/json; charset=utf-8";
                 await Utf8JsonWriterHelper.WriteResponseAsync(
                     context.Response,
-                    false,
-                    static (writer, _) =>
+                    context.TraceIdentifier,
+                    static (writer, traceId) =>
                     {
                         writer.WriteStartObject();
                         writer.WriteBoolean("success", false);
-                        writer.WriteString("error", "权限不足");
-                        writer.WriteString("message", "您没有执行此操作的权限");
+                        writer.WriteString("message", "权限不足: 您没有执行此操作的权限");
+                        writer.WriteNull("data");
+                        writer.WriteString("traceId", traceId);
                         writer.WriteEndObject();
                     },
                     context.RequestAborted);

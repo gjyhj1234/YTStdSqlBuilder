@@ -38,7 +38,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await BillingAppService.GetInvoiceByIdAsync(0, user.UserId, id);
-                if (result == null) { ctx.Response.StatusCode = 404; return; }
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
                 await WriteJsonAsync(ctx, ApiResult<BillingInvoiceDto>.Ok(result));
             }).WithSummary("获取发票详情");
 

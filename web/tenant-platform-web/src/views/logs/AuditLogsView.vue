@@ -41,17 +41,17 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
         @row-click="onRowClick"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="auditType" caption="审计类型" />
-        <DxColumn data-field="severity" caption="严重等级" cell-template="severityCell" :width="100" />
-        <DxColumn data-field="subjectType" caption="主体类型" />
-        <DxColumn data-field="subjectId" caption="主体ID" />
-        <DxColumn data-field="complianceTag" caption="合规标签" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="AuditType" caption="审计类型" />
+        <DxColumn data-field="Severity" caption="严重等级" cell-template="severityCell" :width="100" />
+        <DxColumn data-field="SubjectType" caption="主体类型" />
+        <DxColumn data-field="SubjectId" caption="主体ID" />
+        <DxColumn data-field="ComplianceTag" caption="合规标签" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <template #severityCell="{ data: cellData }">
           <StatusTag :status="cellData.value" :label-map="severityLabelMap" />
         </template>
@@ -110,14 +110,14 @@ import { formatDateTime } from '@/utils/format'
 import {
   getAuditLogs,
   getAuditLog,
-  type AuditLogDto,
+  type AuditLogRepDTO,
 } from '@/api/logs'
 
 const showGuide = ref(false)
 const showDetail = ref(false)
 const filterKeyword = ref('')
 const filterSeverity = ref<string | undefined>(undefined)
-const detailData = ref<AuditLogDto | null>(null)
+const detailData = ref<AuditLogRepDTO | null>(null)
 
 const severityLabelMap: Record<string, string> = {
   Critical: '严重',
@@ -133,25 +133,25 @@ const severityOptions = [
   { text: '低', value: 'Low' },
 ]
 
-const gridData = ref<AuditLogDto[]>([])
+const gridData = ref<AuditLogRepDTO[]>([])
 
 async function loadData() {
   try {
     const res = await getAuditLogs({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      severity: filterSeverity.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Severity: filterSeverity.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
 }
 
-async function onRowClick(e: { data: AuditLogDto }) {
+async function onRowClick(e: { data: AuditLogRepDTO }) {
   try {
-    const res = await getAuditLog(e.data.id)
+    const res = await getAuditLog(e.data.Id)
     detailData.value = res.data
     showDetail.value = true
   } catch {

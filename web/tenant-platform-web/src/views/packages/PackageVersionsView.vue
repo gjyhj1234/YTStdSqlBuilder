@@ -38,24 +38,24 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="packageId" :caption="$t('套餐ID')" :width="80" />
-        <DxColumn data-field="versionCode" :caption="$t('版本编码')" :width="120" />
-        <DxColumn data-field="versionName" :caption="$t('版本名称')" :width="140" />
-        <DxColumn data-field="editionType" :caption="$t('版本类型')" :width="100" />
-        <DxColumn data-field="billingCycle" :caption="$t('计费周期')" :width="100" />
-        <DxColumn data-field="price" :caption="$t('价格')" :width="100" cell-template="priceCell" />
-        <DxColumn data-field="currencyCode" :caption="$t('币种')" :width="60" />
-        <DxColumn data-field="trialDays" :caption="$t('试用天数')" :width="80" />
-        <DxColumn data-field="isDefault" :caption="$t('默认')" cell-template="booleanCell" :width="60" />
-        <DxColumn data-field="enabled" :caption="$t('common.enable')" cell-template="booleanCell" :width="60" />
-        <DxColumn data-field="effectiveFrom" :caption="$t('生效时间')" cell-template="dateTimeCell" :width="140" />
-        <DxColumn data-field="effectiveTo" :caption="$t('失效时间')" cell-template="dateTimeCell" :width="140" />
-        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" :width="140" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="PackageId" :caption="$t('套餐ID')" :width="80" />
+        <DxColumn data-field="VersionCode" :caption="$t('版本编码')" :width="120" />
+        <DxColumn data-field="VersionName" :caption="$t('版本名称')" :width="140" />
+        <DxColumn data-field="EditionType" :caption="$t('版本类型')" :width="100" />
+        <DxColumn data-field="BillingCycle" :caption="$t('计费周期')" :width="100" />
+        <DxColumn data-field="Price" :caption="$t('价格')" :width="100" cell-template="priceCell" />
+        <DxColumn data-field="CurrencyCode" :caption="$t('币种')" :width="60" />
+        <DxColumn data-field="TrialDays" :caption="$t('试用天数')" :width="80" />
+        <DxColumn data-field="IsDefault" :caption="$t('默认')" cell-template="booleanCell" :width="60" />
+        <DxColumn data-field="Enabled" :caption="$t('common.enable')" cell-template="booleanCell" :width="60" />
+        <DxColumn data-field="EffectiveFrom" :caption="$t('生效时间')" cell-template="dateTimeCell" :width="140" />
+        <DxColumn data-field="EffectiveTo" :caption="$t('失效时间')" cell-template="dateTimeCell" :width="140" />
+        <DxColumn data-field="CreatedAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" :width="140" />
         <template #priceCell="{ data: cellData }">
-          <span>{{ formatCurrency(Number(cellData.value), cellData.data.currencyCode) }}</span>
+          <span>{{ formatCurrency(Number(cellData.value), cellData.data.CurrencyCode) }}</span>
         </template>
         <template #dateTimeCell="{ data: cellData }">
           <span>{{ formatDateTime(cellData.value) }}</span>
@@ -82,35 +82,35 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="packageId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="PackageId" editor-type="dxNumberBox">
           <DxLabel :text="$t('套餐ID')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="versionCode" editor-type="dxTextBox">
+        <DxSimpleItem data-field="VersionCode" editor-type="dxTextBox">
           <DxLabel :text="$t('版本编码')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="versionName" editor-type="dxTextBox">
+        <DxSimpleItem data-field="VersionName" editor-type="dxTextBox">
           <DxLabel :text="$t('版本名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="editionType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="EditionType" editor-type="dxSelectBox"
           :editor-options="{ items: editionTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel :text="$t('版本类型')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="billingCycle" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="BillingCycle" editor-type="dxSelectBox"
           :editor-options="{ items: billingCycles, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel :text="$t('计费周期')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="price" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="Price" editor-type="dxNumberBox"
           :editor-options="{ format: '#,##0.00', min: 0 }">
           <DxLabel :text="$t('价格')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="currencyCode" editor-type="dxTextBox">
+        <DxSimpleItem data-field="CurrencyCode" editor-type="dxTextBox">
           <DxLabel :text="$t('币种')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="trialDays" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="TrialDays" editor-type="dxNumberBox"
           :editor-options="{ min: 0 }">
           <DxLabel :text="$t('试用天数')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="isDefault" editor-type="dxCheckBox">
+        <DxSimpleItem data-field="IsDefault" editor-type="dxCheckBox">
           <DxLabel :text="$t('默认版本')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -146,8 +146,8 @@ import { formatCurrency, formatDateTime } from '@/utils/format'
 import {
   getPackageVersions,
   createPackageVersion,
-  type SaasPackageVersionDto,
-  type CreateSaasPackageVersionRequest,
+  type SaasPackageVersionRepDTO,
+  type CreateSaasPackageVersionReqDTO,
 } from '@/api/packages'
 import {
   PACKAGE_VERSION_CREATE,
@@ -174,28 +174,28 @@ const billingCycles = computed(() => [
   { text: t('一次性'), value: 'OneTime' },
 ])
 
-const gridData = ref<SaasPackageVersionDto[]>([])
+const gridData = ref<SaasPackageVersionRepDTO[]>([])
 
-const createForm = reactive<CreateSaasPackageVersionRequest>({
-  packageId: 0,
-  versionCode: '',
-  versionName: '',
-  editionType: 'Standard',
-  billingCycle: 'Monthly',
-  price: 0,
-  currencyCode: 'CNY',
-  trialDays: 0,
-  isDefault: false,
+const createForm = reactive<CreateSaasPackageVersionReqDTO>({
+  PackageId: 0,
+  VersionCode: '',
+  VersionName: '',
+  EditionType: 'Standard',
+  BillingCycle: 'Monthly',
+  Price: 0,
+  CurrencyCode: 'CNY',
+  TrialDays: 0,
+  IsDefault: false,
 })
 
 async function loadData() {
   if (!filterPackageId.value) return
   try {
     const res = await getPackageVersions(filterPackageId.value, {
-      page: 1,
-      pageSize: 20,
+      Page: 1,
+      PageSize: 20,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -206,15 +206,15 @@ async function handleCreate() {
     await createPackageVersion(createForm.packageId, createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      packageId: 0,
-      versionCode: '',
-      versionName: '',
-      editionType: 'Standard',
-      billingCycle: 'Monthly',
-      price: 0,
-      currencyCode: 'CNY',
-      trialDays: 0,
-      isDefault: false,
+      PackageId: 0,
+      VersionCode: '',
+      VersionName: '',
+      EditionType: 'Standard',
+      BillingCycle: 'Monthly',
+      Price: 0,
+      CurrencyCode: 'CNY',
+      TrialDays: 0,
+      IsDefault: false,
     })
     await loadData()
   } catch {

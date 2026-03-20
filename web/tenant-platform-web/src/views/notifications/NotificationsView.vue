@@ -57,18 +57,18 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="templateId" caption="模板ID" :width="80" />
-        <DxColumn data-field="channel" caption="渠道" :width="80" />
-        <DxColumn data-field="recipient" caption="收件人" />
-        <DxColumn data-field="subject" caption="主题" />
-        <DxColumn data-field="sendStatus" caption="发送状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="sentAt" caption="发送时间" cell-template="dateCell" />
-        <DxColumn data-field="readAt" caption="已读时间" cell-template="dateCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="TemplateId" caption="模板ID" :width="80" />
+        <DxColumn data-field="Channel" caption="渠道" :width="80" />
+        <DxColumn data-field="Recipient" caption="收件人" />
+        <DxColumn data-field="Subject" caption="主题" />
+        <DxColumn data-field="SendStatus" caption="发送状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="SentAt" caption="发送时间" cell-template="dateCell" />
+        <DxColumn data-field="ReadAt" caption="已读时间" cell-template="dateCell" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="100" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -78,10 +78,10 @@
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
-            v-if="!cellData.data.readAt && perm.has(NOTIFICATION_RECORD_VIEW)"
+            v-if="!cellData.data.ReadAt && perm.has(NOTIFICATION_RECORD_VIEW)"
             text="标记已读"
             styling-mode="text"
-            @click="onMarkRead(cellData.data.id)"
+            @click="onMarkRead(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -103,23 +103,23 @@
         :col-count="2"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="templateId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TemplateId" editor-type="dxNumberBox">
           <DxLabel text="模板ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="channel" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="Channel" editor-type="dxSelectBox"
           :editor-options="{ items: channelOptions, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="渠道" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="recipient">
+        <DxSimpleItem data-field="Recipient">
           <DxLabel text="收件人" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="subject" :col-span="2">
+        <DxSimpleItem data-field="Subject" :col-span="2">
           <DxLabel text="主题" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="body" editor-type="dxTextArea" :col-span="2"
+        <DxSimpleItem data-field="Body" editor-type="dxTextArea" :col-span="2"
           :editor-options="{ height: 120 }">
           <DxLabel text="内容" />
         </DxSimpleItem>
@@ -158,8 +158,8 @@ import {
   getNotifications,
   createNotification,
   markNotificationRead,
-  type NotificationDto,
-  type CreateNotificationRequest,
+  type NotificationRepDTO,
+  type CreateNotificationReqDTO,
 } from '@/api/notifications'
 import {
   NOTIFICATION_RECORD_VIEW,
@@ -186,27 +186,27 @@ const sendStatusOptions = [
   { text: '发送失败', value: 'Failed' },
 ]
 
-const gridData = ref<NotificationDto[]>([])
+const gridData = ref<NotificationRepDTO[]>([])
 
-const createForm = reactive<CreateNotificationRequest>({
-  tenantRefId: 0,
-  templateId: 0,
-  channel: '',
-  recipient: '',
-  subject: '',
-  body: '',
+const createForm = reactive<CreateNotificationReqDTO>({
+  TenantRefId: 0,
+  TemplateId: 0,
+  Channel: '',
+  Recipient: '',
+  Subject: '',
+  Body: '',
 })
 
 async function loadData() {
   try {
     const res = await getNotifications({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      channel: filterChannel.value || undefined,
-      sendStatus: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Channel: filterChannel.value || undefined,
+      SendStatus: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -217,8 +217,8 @@ async function handleCreate() {
     await createNotification(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      tenantRefId: 0, templateId: 0, channel: '',
-      recipient: '', subject: '', body: '',
+      TenantRefId: 0, TemplateId: 0, Channel: '',
+      Recipient: '', Subject: '', Body: '',
     })
     await loadData()
   } catch {

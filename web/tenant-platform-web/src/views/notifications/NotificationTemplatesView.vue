@@ -48,16 +48,16 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="templateCode" caption="模板编码" />
-        <DxColumn data-field="templateName" caption="模板名称" />
-        <DxColumn data-field="channel" caption="渠道" :width="100" />
-        <DxColumn data-field="subjectTemplate" caption="主题模板" />
-        <DxColumn data-field="bodyTemplate" caption="内容模板" cell-template="bodyCell" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TemplateCode" caption="模板编码" />
+        <DxColumn data-field="TemplateName" caption="模板名称" />
+        <DxColumn data-field="Channel" caption="渠道" :width="100" />
+        <DxColumn data-field="SubjectTemplate" caption="主题模板" />
+        <DxColumn data-field="BodyTemplate" caption="内容模板" cell-template="bodyCell" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="200" />
         <template #bodyCell="{ data: cellData }">
           <span>{{ truncate(cellData.value, 40) }}</span>
@@ -76,18 +76,18 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(NOTIFICATION_TEMPLATE_UPDATE)"
+            v-if="cellData.data.Status === 'Active' && perm.has(NOTIFICATION_TEMPLATE_UPDATE)"
             text="禁用"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
           <DxButton
-            v-if="cellData.data.status !== 'Active' && perm.has(NOTIFICATION_TEMPLATE_UPDATE)"
+            v-if="cellData.data.Status !== 'Active' && perm.has(NOTIFICATION_TEMPLATE_UPDATE)"
             text="启用"
             styling-mode="text"
             type="success"
-            @click="onEnable(cellData.data.id)"
+            @click="onEnable(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -109,20 +109,20 @@
         :col-count="2"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="templateCode">
+        <DxSimpleItem data-field="TemplateCode">
           <DxLabel text="模板编码" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="templateName">
+        <DxSimpleItem data-field="TemplateName">
           <DxLabel text="模板名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="channel" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="Channel" editor-type="dxSelectBox"
           :editor-options="{ items: channelOptions, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="渠道" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="subjectTemplate" :col-span="2">
+        <DxSimpleItem data-field="SubjectTemplate" :col-span="2">
           <DxLabel text="主题模板" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="bodyTemplate" editor-type="dxTextArea" :col-span="2"
+        <DxSimpleItem data-field="BodyTemplate" editor-type="dxTextArea" :col-span="2"
           :editor-options="{ height: 120 }">
           <DxLabel text="内容模板" />
         </DxSimpleItem>
@@ -146,13 +146,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="templateName">
+        <DxSimpleItem data-field="TemplateName">
           <DxLabel text="模板名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="subjectTemplate">
+        <DxSimpleItem data-field="SubjectTemplate">
           <DxLabel text="主题模板" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="bodyTemplate" editor-type="dxTextArea"
+        <DxSimpleItem data-field="BodyTemplate" editor-type="dxTextArea"
           :editor-options="{ height: 120 }">
           <DxLabel text="内容模板" />
         </DxSimpleItem>
@@ -193,9 +193,9 @@ import {
   updateNotificationTemplate,
   enableNotificationTemplate,
   disableNotificationTemplate,
-  type NotificationTemplateDto,
-  type CreateNotificationTemplateRequest,
-  type UpdateNotificationTemplateRequest,
+  type NotificationTemplateRepDTO,
+  type CreateNotificationTemplateReqDTO,
+  type UpdateNotificationTemplateReqDTO,
 } from '@/api/notifications'
 import {
   NOTIFICATION_TEMPLATE_CREATE,
@@ -217,20 +217,20 @@ const channelOptions = [
   { text: '推送', value: 'Push' },
 ]
 
-const gridData = ref<NotificationTemplateDto[]>([])
+const gridData = ref<NotificationTemplateRepDTO[]>([])
 
-const createForm = reactive<CreateNotificationTemplateRequest>({
-  templateCode: '',
-  templateName: '',
-  channel: '',
-  subjectTemplate: '',
-  bodyTemplate: '',
+const createForm = reactive<CreateNotificationTemplateReqDTO>({
+  TemplateCode: '',
+  TemplateName: '',
+  Channel: '',
+  SubjectTemplate: '',
+  BodyTemplate: '',
 })
 
-const editForm = reactive<UpdateNotificationTemplateRequest>({
-  templateName: '',
-  subjectTemplate: '',
-  bodyTemplate: '',
+const editForm = reactive<UpdateNotificationTemplateReqDTO>({
+  TemplateName: '',
+  SubjectTemplate: '',
+  BodyTemplate: '',
 })
 
 function truncate(str: string | undefined, maxLen: number): string {
@@ -241,12 +241,12 @@ function truncate(str: string | undefined, maxLen: number): string {
 async function loadData() {
   try {
     const res = await getNotificationTemplates({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      channel: filterChannel.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Channel: filterChannel.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -257,8 +257,8 @@ async function handleCreate() {
     await createNotificationTemplate(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      templateCode: '', templateName: '', channel: '',
-      subjectTemplate: '', bodyTemplate: '',
+      TemplateCode: '', TemplateName: '', Channel: '',
+      SubjectTemplate: '', BodyTemplate: '',
     })
     await loadData()
   } catch {
@@ -266,12 +266,12 @@ async function handleCreate() {
   }
 }
 
-function onEdit(row: NotificationTemplateDto) {
+function onEdit(row: NotificationTemplateRepDTO) {
   editingId.value = row.id
   Object.assign(editForm, {
-    templateName: row.templateName,
-    subjectTemplate: row.subjectTemplate,
-    bodyTemplate: row.bodyTemplate,
+    TemplateName: row.templateName,
+    SubjectTemplate: row.subjectTemplate,
+    BodyTemplate: row.bodyTemplate,
   })
   showEditPopup.value = true
 }

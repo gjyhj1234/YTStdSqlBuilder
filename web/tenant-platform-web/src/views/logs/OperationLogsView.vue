@@ -41,19 +41,19 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
         @row-click="onRowClick"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="tenantRefId" :caption="$t('common.tenantId')" :width="80" />
-        <DxColumn data-field="operatorType" :caption="$t('操作者类型')" />
-        <DxColumn data-field="operatorId" :caption="$t('操作者ID')" :width="90" />
-        <DxColumn data-field="action" :caption="$t('common.actions')" />
-        <DxColumn data-field="resourceType" :caption="$t('资源类型')" />
-        <DxColumn data-field="resourceId" :caption="$t('资源ID')" />
-        <DxColumn data-field="ipAddress" :caption="$t('IP 地址')" />
-        <DxColumn data-field="operationResult" :caption="$t('操作结果')" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="TenantRefId" :caption="$t('common.tenantId')" :width="80" />
+        <DxColumn data-field="OperatorType" :caption="$t('操作者类型')" />
+        <DxColumn data-field="OperatorId" :caption="$t('操作者ID')" :width="90" />
+        <DxColumn data-field="Action" :caption="$t('common.actions')" />
+        <DxColumn data-field="ResourceType" :caption="$t('资源类型')" />
+        <DxColumn data-field="ResourceId" :caption="$t('资源ID')" />
+        <DxColumn data-field="IpAddress" :caption="$t('IP 地址')" />
+        <DxColumn data-field="OperationResult" :caption="$t('操作结果')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -115,14 +115,14 @@ import { formatDateTime } from '@/utils/format'
 import {
   getOperationLogs,
   getOperationLog,
-  type OperationLogDto,
+  type OperationLogRepDTO,
 } from '@/api/logs'
 
 const showGuide = ref(false)
 const showDetail = ref(false)
 const filterKeyword = ref('')
 const filterResult = ref<string | undefined>(undefined)
-const detailData = ref<OperationLogDto | null>(null)
+const detailData = ref<OperationLogRepDTO | null>(null)
 const { t } = useI18n()
 
 const resultOptions = computed(() => [
@@ -135,25 +135,25 @@ const resultLabelMap = computed(() => ({
   Failure: t('失败'),
 }))
 
-const gridData = ref<OperationLogDto[]>([])
+const gridData = ref<OperationLogRepDTO[]>([])
 
 async function loadData() {
   try {
     const res = await getOperationLogs({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      operationResult: filterResult.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      OperationResult: filterResult.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
 }
 
-async function onRowClick(e: { data: OperationLogDto }) {
+async function onRowClick(e: { data: OperationLogRepDTO }) {
   try {
-    const res = await getOperationLog(e.data.id)
+    const res = await getOperationLog(e.data.Id)
     detailData.value = res.data
     showDetail.value = true
   } catch {

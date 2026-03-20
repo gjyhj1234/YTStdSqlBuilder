@@ -39,14 +39,14 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="packageCode" :caption="$t('套餐编码')" :width="120" />
-        <DxColumn data-field="packageName" :caption="$t('套餐名称')" :width="160" />
-        <DxColumn data-field="description" :caption="$t('common.description')" />
-        <DxColumn data-field="status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" :width="160" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="PackageCode" :caption="$t('套餐编码')" :width="120" />
+        <DxColumn data-field="PackageName" :caption="$t('套餐名称')" :width="160" />
+        <DxColumn data-field="Description" :caption="$t('common.description')" />
+        <DxColumn data-field="Status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" :width="160" />
         <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="160" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -63,18 +63,18 @@
             @click="openEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(PACKAGE_LIST_UPDATE)"
+            v-if="cellData.data.Status === 'Active' && perm.has(PACKAGE_LIST_UPDATE)"
             :text="$t('common.disable')"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Disabled' && perm.has(PACKAGE_LIST_UPDATE)"
+            v-if="cellData.data.Status === 'Disabled' && perm.has(PACKAGE_LIST_UPDATE)"
             :text="$t('common.enable')"
             styling-mode="text"
             type="success"
-            @click="onEnable(cellData.data.id)"
+            @click="onEnable(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -96,13 +96,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="packageCode" editor-type="dxTextBox">
+        <DxSimpleItem data-field="PackageCode" editor-type="dxTextBox">
           <DxLabel :text="$t('套餐编码')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="packageName" editor-type="dxTextBox">
+        <DxSimpleItem data-field="PackageName" editor-type="dxTextBox">
           <DxLabel :text="$t('套餐名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="description" editor-type="dxTextArea">
+        <DxSimpleItem data-field="Description" editor-type="dxTextArea">
           <DxLabel :text="$t('common.description')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -125,10 +125,10 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="packageName" editor-type="dxTextBox">
+        <DxSimpleItem data-field="PackageName" editor-type="dxTextBox">
           <DxLabel :text="$t('套餐名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="description" editor-type="dxTextArea">
+        <DxSimpleItem data-field="Description" editor-type="dxTextArea">
           <DxLabel :text="$t('common.description')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -167,9 +167,9 @@ import {
   updatePackage,
   enablePackage,
   disablePackage,
-  type SaasPackageDto,
-  type CreateSaasPackageRequest,
-  type UpdateSaasPackageRequest,
+  type SaasPackageRepDTO,
+  type CreateSaasPackageReqDTO,
+  type UpdateSaasPackageReqDTO,
 } from '@/api/packages'
 import {
   PACKAGE_LIST_CREATE,
@@ -183,27 +183,27 @@ const showEditPopup = ref(false)
 const filterKeyword = ref('')
 const editingId = ref(0)
 
-const gridData = ref<SaasPackageDto[]>([])
+const gridData = ref<SaasPackageRepDTO[]>([])
 
-const createForm = reactive<CreateSaasPackageRequest>({
-  packageCode: '',
-  packageName: '',
-  description: '',
+const createForm = reactive<CreateSaasPackageReqDTO>({
+  PackageCode: '',
+  PackageName: '',
+  Description: '',
 })
 
-const editForm = reactive<UpdateSaasPackageRequest>({
-  packageName: '',
-  description: '',
+const editForm = reactive<UpdateSaasPackageReqDTO>({
+  PackageName: '',
+  Description: '',
 })
 
 async function loadData() {
   try {
     const res = await getPackages({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -213,14 +213,14 @@ async function handleCreate() {
   try {
     await createPackage(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { packageCode: '', packageName: '', description: '' })
+    Object.assign(createForm, { PackageCode: '', PackageName: '', Description: '' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function openEdit(row: SaasPackageDto) {
+function openEdit(row: SaasPackageRepDTO) {
   editingId.value = row.id
   editForm.packageName = row.packageName
   editForm.description = row.description

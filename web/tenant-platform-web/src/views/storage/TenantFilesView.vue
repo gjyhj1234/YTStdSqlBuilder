@@ -38,21 +38,21 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="storageStrategyId" caption="策略ID" :width="80" />
-        <DxColumn data-field="fileName" caption="文件名" />
-        <DxColumn data-field="filePath" caption="文件路径" />
-        <DxColumn data-field="fileExt" caption="扩展名" :width="80" />
-        <DxColumn data-field="mimeType" caption="MIME 类型" :width="120" />
-        <DxColumn data-field="fileSize" caption="文件大小" cell-template="sizeCell" :width="100" />
-        <DxColumn data-field="uploaderType" caption="上传者类型" :width="100" />
-        <DxColumn data-field="uploaderId" caption="上传者ID" :width="90" />
-        <DxColumn data-field="visibility" caption="可见性" :width="80" />
-        <DxColumn data-field="downloadCount" caption="下载次数" :width="90" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="StorageStrategyId" caption="策略ID" :width="80" />
+        <DxColumn data-field="FileName" caption="文件名" />
+        <DxColumn data-field="FilePath" caption="文件路径" />
+        <DxColumn data-field="FileExt" caption="扩展名" :width="80" />
+        <DxColumn data-field="MimeType" caption="MIME 类型" :width="120" />
+        <DxColumn data-field="FileSize" caption="文件大小" cell-template="sizeCell" :width="100" />
+        <DxColumn data-field="UploaderType" caption="上传者类型" :width="100" />
+        <DxColumn data-field="UploaderId" caption="上传者ID" :width="90" />
+        <DxColumn data-field="Visibility" caption="可见性" :width="80" />
+        <DxColumn data-field="DownloadCount" caption="下载次数" :width="90" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="80" />
         <template #sizeCell="{ data: cellData }">
           <span>{{ formatFileSize(cellData.value) }}</span>
@@ -66,7 +66,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -99,7 +99,7 @@ import { formatDateTime } from '@/utils/format'
 import {
   getTenantFiles,
   deleteTenantFile,
-  type TenantFileDto,
+  type TenantFileRepDTO,
 } from '@/api/storage'
 import {
   INFRA_COMPONENT_DELETE,
@@ -110,7 +110,7 @@ const showGuide = ref(false)
 const filterKeyword = ref('')
 const filterTenantId = ref<number | undefined>(undefined)
 
-const gridData = ref<TenantFileDto[]>([])
+const gridData = ref<TenantFileRepDTO[]>([])
 
 function formatFileSize(bytes: number | null | undefined): string {
   if (bytes == null || bytes === 0) return '0 B'
@@ -122,12 +122,12 @@ function formatFileSize(bytes: number | null | undefined): string {
 async function loadData() {
   try {
     const res = await getTenantFiles({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      tenantRefId: filterTenantId.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      TenantRefId: filterTenantId.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }

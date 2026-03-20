@@ -33,17 +33,17 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="statDate" caption="统计日期" cell-template="dateCellDate" />
-        <DxColumn data-field="activeUserCount" caption="活跃用户数" :width="110" />
-        <DxColumn data-field="newUserCount" caption="新增用户数" :width="110" />
-        <DxColumn data-field="apiCallCount" caption="API 调用数" :width="110" />
-        <DxColumn data-field="storageBytes" caption="存储字节数" :width="110" />
-        <DxColumn data-field="resourceScore" caption="资源评分" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCellDateTime" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="StatDate" caption="统计日期" cell-template="dateCellDate" />
+        <DxColumn data-field="ActiveUserCount" caption="活跃用户数" :width="110" />
+        <DxColumn data-field="NewUserCount" caption="新增用户数" :width="110" />
+        <DxColumn data-field="ApiCallCount" caption="API 调用数" :width="110" />
+        <DxColumn data-field="StorageBytes" caption="存储字节数" :width="110" />
+        <DxColumn data-field="ResourceScore" caption="资源评分" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCellDateTime" />
         <template #dateCellDate="{ data: cellData }">
           <span>{{ formatDate(cellData.value) }}</span>
         </template>
@@ -63,15 +63,15 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="componentName" caption="组件名称" />
-        <DxColumn data-field="metricType" caption="指标类型" :width="110" />
-        <DxColumn data-field="metricKey" caption="指标键" />
-        <DxColumn data-field="metricValue" caption="指标值" :width="100" />
-        <DxColumn data-field="metricUnit" caption="单位" :width="80" />
-        <DxColumn data-field="collectedAt" caption="采集时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="ComponentName" caption="组件名称" />
+        <DxColumn data-field="MetricType" caption="指标类型" :width="110" />
+        <DxColumn data-field="MetricKey" caption="指标键" />
+        <DxColumn data-field="MetricValue" caption="指标值" :width="100" />
+        <DxColumn data-field="MetricUnit" caption="单位" :width="80" />
+        <DxColumn data-field="CollectedAt" caption="采集时间" cell-template="dateCell" />
         <template #dateCell="{ data: cellData }">
           <span>{{ formatDateTime(cellData.value) }}</span>
         </template>
@@ -103,24 +103,24 @@ import { formatDateTime, formatDate } from '@/utils/format'
 import {
   getDailyStats,
   getMonitorMetrics,
-  type TenantDailyStatDto,
-  type PlatformMonitorMetricDto,
+  type TenantDailyStatRepDTO,
+  type PlatformMonitorMetricRepDTO,
 } from '@/api/operations'
 
 const showGuide = ref(false)
 const filterTenantRefId = ref<number | undefined>(undefined)
 
-const dailyStatsData = ref<TenantDailyStatDto[]>([])
-const metricsData = ref<PlatformMonitorMetricDto[]>([])
+const dailyStatsData = ref<TenantDailyStatRepDTO[]>([])
+const metricsData = ref<PlatformMonitorMetricRepDTO[]>([])
 
 async function loadDailyStats() {
   try {
     const res = await getDailyStats({
-      page: 1,
-      pageSize: 20,
-      tenantRefId: filterTenantRefId.value,
+      Page: 1,
+      PageSize: 20,
+      TenantRefId: filterTenantRefId.value,
     })
-    dailyStatsData.value = res.data.items
+    dailyStatsData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -128,8 +128,8 @@ async function loadDailyStats() {
 
 async function loadMetrics() {
   try {
-    const res = await getMonitorMetrics({ page: 1, pageSize: 20 })
-    metricsData.value = res.data.items
+    const res = await getMonitorMetrics({ Page: 1, PageSize: 20 })
+    metricsData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }

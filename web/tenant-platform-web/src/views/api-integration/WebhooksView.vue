@@ -28,14 +28,14 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="webhookName" caption="Webhook 名称" />
-        <DxColumn data-field="targetUrl" caption="目标 URL" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="WebhookName" caption="Webhook 名称" />
+        <DxColumn data-field="TargetUrl" caption="目标 URL" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="200" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -51,18 +51,18 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(INFRA_WEBHOOK_UPDATE)"
+            v-if="cellData.data.Status === 'Active' && perm.has(INFRA_WEBHOOK_UPDATE)"
             text="禁用"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
           <DxButton
-            v-if="cellData.data.status !== 'Active' && perm.has(INFRA_WEBHOOK_UPDATE)"
+            v-if="cellData.data.Status !== 'Active' && perm.has(INFRA_WEBHOOK_UPDATE)"
             text="启用"
             styling-mode="text"
             type="success"
-            @click="onEnable(cellData.data.id)"
+            @click="onEnable(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -84,13 +84,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="webhookName">
+        <DxSimpleItem data-field="WebhookName">
           <DxLabel text="Webhook 名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="targetUrl">
+        <DxSimpleItem data-field="TargetUrl">
           <DxLabel text="目标 URL" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -113,10 +113,10 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="webhookName">
+        <DxSimpleItem data-field="WebhookName">
           <DxLabel text="Webhook 名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="targetUrl">
+        <DxSimpleItem data-field="TargetUrl">
           <DxLabel text="目标 URL" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -154,9 +154,9 @@ import {
   updateWebhook,
   enableWebhook,
   disableWebhook,
-  type TenantWebhookDto,
-  type CreateWebhookRequest,
-  type UpdateWebhookRequest,
+  type TenantWebhookRepDTO,
+  type CreateWebhookReqDTO,
+  type UpdateWebhookReqDTO,
 } from '@/api/apiIntegration'
 import {
   INFRA_WEBHOOK_CREATE,
@@ -169,23 +169,23 @@ const showCreatePopup = ref(false)
 const showEditPopup = ref(false)
 const editingId = ref<number>(0)
 
-const gridData = ref<TenantWebhookDto[]>([])
+const gridData = ref<TenantWebhookRepDTO[]>([])
 
-const createForm = reactive<CreateWebhookRequest>({
-  tenantRefId: 0,
-  webhookName: '',
-  targetUrl: '',
+const createForm = reactive<CreateWebhookReqDTO>({
+  TenantRefId: 0,
+  WebhookName: '',
+  TargetUrl: '',
 })
 
-const editForm = reactive<UpdateWebhookRequest>({
-  webhookName: '',
-  targetUrl: '',
+const editForm = reactive<UpdateWebhookReqDTO>({
+  WebhookName: '',
+  TargetUrl: '',
 })
 
 async function loadData() {
   try {
-    const res = await getWebhooks({ page: 1, pageSize: 20 })
-    gridData.value = res.data.items
+    const res = await getWebhooks({ Page: 1, PageSize: 20 })
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -195,16 +195,16 @@ async function handleCreate() {
   try {
     await createWebhook(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { tenantRefId: 0, webhookName: '', targetUrl: '' })
+    Object.assign(createForm, { TenantRefId: 0, WebhookName: '', TargetUrl: '' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function onEdit(webhook: TenantWebhookDto) {
+function onEdit(webhook: TenantWebhookRepDTO) {
   editingId.value = webhook.id
-  Object.assign(editForm, { webhookName: webhook.webhookName, targetUrl: webhook.targetUrl })
+  Object.assign(editForm, { WebhookName: webhook.webhookName, TargetUrl: webhook.targetUrl })
   showEditPopup.value = true
 }
 

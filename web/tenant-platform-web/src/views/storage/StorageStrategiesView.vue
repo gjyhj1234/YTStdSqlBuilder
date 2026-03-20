@@ -48,16 +48,16 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="strategyCode" caption="策略编码" />
-        <DxColumn data-field="strategyName" caption="策略名称" />
-        <DxColumn data-field="providerType" caption="提供者类型" :width="120" />
-        <DxColumn data-field="bucketName" caption="存储桶" />
-        <DxColumn data-field="basePath" caption="基础路径" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="StrategyCode" caption="策略编码" />
+        <DxColumn data-field="StrategyName" caption="策略名称" />
+        <DxColumn data-field="ProviderType" caption="提供者类型" :width="120" />
+        <DxColumn data-field="BucketName" caption="存储桶" />
+        <DxColumn data-field="BasePath" caption="基础路径" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="200" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -73,18 +73,18 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(INFRA_COMPONENT_UPDATE)"
+            v-if="cellData.data.Status === 'Active' && perm.has(INFRA_COMPONENT_UPDATE)"
             text="禁用"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
           <DxButton
-            v-if="cellData.data.status !== 'Active' && perm.has(INFRA_COMPONENT_UPDATE)"
+            v-if="cellData.data.Status !== 'Active' && perm.has(INFRA_COMPONENT_UPDATE)"
             text="启用"
             styling-mode="text"
             type="success"
-            @click="onEnable(cellData.data.id)"
+            @click="onEnable(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -106,20 +106,20 @@
         :col-count="2"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="strategyCode">
+        <DxSimpleItem data-field="StrategyCode">
           <DxLabel text="策略编码" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="strategyName">
+        <DxSimpleItem data-field="StrategyName">
           <DxLabel text="策略名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="providerType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="ProviderType" editor-type="dxSelectBox"
           :editor-options="{ items: providerOptions, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="提供者类型" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="bucketName">
+        <DxSimpleItem data-field="BucketName">
           <DxLabel text="存储桶名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="basePath" :col-span="2">
+        <DxSimpleItem data-field="BasePath" :col-span="2">
           <DxLabel text="基础路径" />
         </DxSimpleItem>
         <DxButtonItem :col-span="2">
@@ -142,13 +142,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="strategyName">
+        <DxSimpleItem data-field="StrategyName">
           <DxLabel text="策略名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="bucketName">
+        <DxSimpleItem data-field="BucketName">
           <DxLabel text="存储桶名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="basePath">
+        <DxSimpleItem data-field="BasePath">
           <DxLabel text="基础路径" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -188,9 +188,9 @@ import {
   updateStorageStrategy,
   enableStorageStrategy,
   disableStorageStrategy,
-  type StorageStrategyDto,
-  type CreateStorageStrategyRequest,
-  type UpdateStorageStrategyRequest,
+  type StorageStrategyRepDTO,
+  type CreateStorageStrategyReqDTO,
+  type UpdateStorageStrategyReqDTO,
 } from '@/api/storage'
 import {
   INFRA_COMPONENT_CREATE,
@@ -213,31 +213,31 @@ const providerOptions = [
   { text: 'MinIO', value: 'Minio' },
 ]
 
-const gridData = ref<StorageStrategyDto[]>([])
+const gridData = ref<StorageStrategyRepDTO[]>([])
 
-const createForm = reactive<CreateStorageStrategyRequest>({
-  strategyCode: '',
-  strategyName: '',
-  providerType: '',
-  bucketName: '',
-  basePath: '',
+const createForm = reactive<CreateStorageStrategyReqDTO>({
+  StrategyCode: '',
+  StrategyName: '',
+  ProviderType: '',
+  BucketName: '',
+  BasePath: '',
 })
 
-const editForm = reactive<UpdateStorageStrategyRequest>({
-  strategyName: '',
-  bucketName: '',
-  basePath: '',
+const editForm = reactive<UpdateStorageStrategyReqDTO>({
+  StrategyName: '',
+  BucketName: '',
+  BasePath: '',
 })
 
 async function loadData() {
   try {
     const res = await getStorageStrategies({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      providerType: filterProvider.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      ProviderType: filterProvider.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -248,8 +248,8 @@ async function handleCreate() {
     await createStorageStrategy(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      strategyCode: '', strategyName: '', providerType: '',
-      bucketName: '', basePath: '',
+      StrategyCode: '', StrategyName: '', ProviderType: '',
+      BucketName: '', BasePath: '',
     })
     await loadData()
   } catch {
@@ -257,12 +257,12 @@ async function handleCreate() {
   }
 }
 
-function onEdit(row: StorageStrategyDto) {
+function onEdit(row: StorageStrategyRepDTO) {
   editingId.value = row.id
   Object.assign(editForm, {
-    strategyName: row.strategyName,
-    bucketName: row.bucketName,
-    basePath: row.basePath,
+    StrategyName: row.strategyName,
+    BucketName: row.bucketName,
+    BasePath: row.basePath,
   })
   showEditPopup.value = true
 }

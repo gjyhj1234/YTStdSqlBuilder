@@ -46,15 +46,15 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="paramKey" caption="参数键" />
-        <DxColumn data-field="paramName" caption="参数名称" />
-        <DxColumn data-field="paramType" caption="参数类型" :width="100" />
-        <DxColumn data-field="paramValue" caption="参数值" />
-        <DxColumn data-field="updatedAt" caption="更新时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="ParamKey" caption="参数键" />
+        <DxColumn data-field="ParamName" caption="参数名称" />
+        <DxColumn data-field="ParamType" caption="参数类型" :width="100" />
+        <DxColumn data-field="ParamValue" caption="参数值" />
+        <DxColumn data-field="UpdatedAt" caption="更新时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="140" />
         <template #dateCell="{ data: cellData }">
           <span>{{ formatDateTime(cellData.value) }}</span>
@@ -71,7 +71,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -93,21 +93,21 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox"
           :editor-options="{ min: 1, showSpinButtons: true }">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="paramKey">
+        <DxSimpleItem data-field="ParamKey">
           <DxLabel text="参数键" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="paramName">
+        <DxSimpleItem data-field="ParamName">
           <DxLabel text="参数名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="paramType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="ParamType" editor-type="dxSelectBox"
           :editor-options="{ items: paramTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="参数类型" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="paramValue">
+        <DxSimpleItem data-field="ParamValue">
           <DxLabel text="参数值" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -144,8 +144,8 @@ import {
   getTenantParameters,
   saveTenantParameter,
   deleteTenantParameter,
-  type TenantParameterDto,
-  type SaveTenantParameterRequest,
+  type TenantParameterRepDTO,
+  type SaveTenantParameterReqDTO,
 } from '@/api/tenantConfig'
 import {
   TENANT_CONFIG_UPDATE,
@@ -166,27 +166,27 @@ const paramTypes = [
   { text: 'JSON', value: 'Json' },
 ]
 
-const gridData = ref<TenantParameterDto[]>([])
+const gridData = ref<TenantParameterRepDTO[]>([])
 
-const defaultForm: SaveTenantParameterRequest = {
-  tenantRefId: 0,
-  paramKey: '',
-  paramName: '',
-  paramType: 'String',
-  paramValue: '',
+const defaultForm: SaveTenantParameterReqDTO = {
+  TenantRefId: 0,
+  ParamKey: '',
+  ParamName: '',
+  ParamType: 'String',
+  ParamValue: '',
 }
 
-const createForm = reactive<SaveTenantParameterRequest>({ ...defaultForm })
+const createForm = reactive<SaveTenantParameterReqDTO>({ ...defaultForm })
 
 async function loadData() {
   try {
     const res = await getTenantParameters({
-      page: 1,
-      pageSize: 20,
-      tenantRefId: filterTenantRefId.value,
-      keyword: filterKeyword.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      TenantRefId: filterTenantRefId.value,
+      Keyword: filterKeyword.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -204,13 +204,13 @@ async function handleSave() {
   }
 }
 
-function onEdit(row: TenantParameterDto) {
+function onEdit(row: TenantParameterRepDTO) {
   Object.assign(createForm, {
-    tenantRefId: row.tenantRefId,
-    paramKey: row.paramKey,
-    paramName: row.paramName,
-    paramType: row.paramType,
-    paramValue: row.paramValue,
+    TenantRefId: row.tenantRefId,
+    ParamKey: row.paramKey,
+    ParamName: row.paramName,
+    ParamType: row.paramType,
+    ParamValue: row.paramValue,
   })
   isEditing.value = true
   showCreatePopup.value = true

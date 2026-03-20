@@ -48,18 +48,18 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="tenantRefId" :caption="$t('common.tenantId')" :width="80" />
-        <DxColumn data-field="packageVersionId" :caption="$t('套餐版本ID')" :width="100" />
-        <DxColumn data-field="subscriptionStatus" :caption="$t('订阅状态')" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="subscriptionType" :caption="$t('订阅类型')" :width="100" />
-        <DxColumn data-field="startedAt" :caption="$t('开始时间')" cell-template="dateTimeCell" />
-        <DxColumn data-field="expiresAt" :caption="$t('common.expiresAt')" cell-template="dateTimeCell" />
-        <DxColumn data-field="autoRenew" :caption="$t('自动续费')" cell-template="booleanCell" :width="80" />
-        <DxColumn data-field="cancelledAt" :caption="$t('取消时间')" cell-template="dateTimeCell" />
-        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="TenantRefId" :caption="$t('common.tenantId')" :width="80" />
+        <DxColumn data-field="PackageVersionId" :caption="$t('套餐版本ID')" :width="100" />
+        <DxColumn data-field="SubscriptionStatus" :caption="$t('订阅状态')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="SubscriptionType" :caption="$t('订阅类型')" :width="100" />
+        <DxColumn data-field="StartedAt" :caption="$t('开始时间')" cell-template="dateTimeCell" />
+        <DxColumn data-field="ExpiresAt" :caption="$t('common.expiresAt')" cell-template="dateTimeCell" />
+        <DxColumn data-field="AutoRenew" :caption="$t('自动续费')" cell-template="booleanCell" :width="80" />
+        <DxColumn data-field="CancelledAt" :caption="$t('取消时间')" cell-template="dateTimeCell" />
+        <DxColumn data-field="CreatedAt" :caption="$t('common.createdAt')" cell-template="dateTimeCell" />
         <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="100" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -72,11 +72,11 @@
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
-            v-if="cellData.data.subscriptionStatus === 'Active' && perm.has(SUBSCRIPTION_LIST_CANCEL)"
+            v-if="cellData.data.SubscriptionStatus === 'Active' && perm.has(SUBSCRIPTION_LIST_CANCEL)"
             :text="$t('取消')"
             styling-mode="text"
             type="danger"
-            @click="onCancel(cellData.data.id)"
+            @click="onCancel(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -98,17 +98,17 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel :text="$t('common.tenantId')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="packageVersionId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="PackageVersionId" editor-type="dxNumberBox">
           <DxLabel :text="$t('套餐版本ID')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="subscriptionType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="SubscriptionType" editor-type="dxSelectBox"
           :editor-options="{ items: subscriptionTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel :text="$t('订阅类型')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="autoRenew" editor-type="dxCheckBox">
+        <DxSimpleItem data-field="AutoRenew" editor-type="dxCheckBox">
           <DxLabel :text="$t('自动续费')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -147,8 +147,8 @@ import {
   getSubscriptions,
   createSubscription,
   cancelSubscription,
-  type TenantSubscriptionDto,
-  type CreateSubscriptionRequest,
+  type TenantSubscriptionRepDTO,
+  type CreateSubscriptionReqDTO,
 } from '@/api/subscriptions'
 import {
   SUBSCRIPTION_LIST_CREATE,
@@ -176,24 +176,24 @@ const subscriptionTypes = computed(() => [
   { text: t('续费'), value: 'Renewal' },
 ])
 
-const gridData = ref<TenantSubscriptionDto[]>([])
+const gridData = ref<TenantSubscriptionRepDTO[]>([])
 
-const createForm = reactive<CreateSubscriptionRequest>({
-  tenantRefId: 0,
-  packageVersionId: 0,
-  subscriptionType: 'New',
-  autoRenew: false,
+const createForm = reactive<CreateSubscriptionReqDTO>({
+  TenantRefId: 0,
+  PackageVersionId: 0,
+  SubscriptionType: 'New',
+  AutoRenew: false,
 })
 
 async function loadData() {
   try {
     const res = await getSubscriptions({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -203,7 +203,7 @@ async function handleCreate() {
   try {
     await createSubscription(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { tenantRefId: 0, packageVersionId: 0, subscriptionType: 'New', autoRenew: false })
+    Object.assign(createForm, { TenantRefId: 0, PackageVersionId: 0, SubscriptionType: 'New', AutoRenew: false })
     await loadData()
   } catch {
     // 错误由 http 层统一处理

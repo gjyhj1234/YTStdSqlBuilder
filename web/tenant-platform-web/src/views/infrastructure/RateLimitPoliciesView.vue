@@ -48,17 +48,17 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="subjectType" caption="主体类型" :width="120" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="SubjectType" caption="主体类型" :width="120" />
         <DxColumn data-field="subjectKey" caption="主体标识" :width="180" />
         <DxColumn data-field="windowSeconds" caption="窗口秒数" :width="100" />
         <DxColumn data-field="limitCount" caption="限制次数" :width="100" />
         <DxColumn data-field="burstLimit" caption="突发限制" :width="100" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" :width="160" />
-        <DxColumn data-field="updatedAt" caption="更新时间" cell-template="dateTimeCell" :width="160" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateTimeCell" :width="160" />
+        <DxColumn data-field="UpdatedAt" caption="更新时间" cell-template="dateTimeCell" :width="160" />
         <DxColumn caption="操作" cell-template="actionCell" :width="120" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -79,7 +79,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -101,7 +101,7 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="subjectType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="SubjectType" editor-type="dxSelectBox"
           :editor-options="{ items: subjectTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="主体类型" />
         </DxSimpleItem>
@@ -186,19 +186,19 @@ import {
 
 /* ---------- 类型 ---------- */
 interface RateLimitPolicyDto {
-  id: number
-  subjectType: string
+  Id: number
+  SubjectType: string
   subjectKey: string
   windowSeconds: number
   limitCount: number
   burstLimit: number | null
-  status: string
-  createdAt: string
-  updatedAt: string
+  Status: string
+  CreatedAt: string
+  UpdatedAt: string
 }
 
 interface CreateRateLimitPolicyRequest {
-  subjectType: string
+  SubjectType: string
   subjectKey: string
   windowSeconds: number
   limitCount: number
@@ -235,7 +235,7 @@ const subjectTypes = [
 const gridData = ref<RateLimitPolicyDto[]>([])
 
 const createForm = reactive<CreateRateLimitPolicyRequest>({
-  subjectType: 'Tenant',
+  SubjectType: 'Tenant',
   subjectKey: '',
   windowSeconds: 60,
   limitCount: 100,
@@ -251,12 +251,12 @@ const editForm = reactive<UpdateRateLimitPolicyRequest>({
 async function loadData() {
   try {
     const res = await get<PagedResult<RateLimitPolicyDto>>('/api/rate-limit-policies', {
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -266,7 +266,7 @@ async function handleCreate() {
   try {
     await post('/api/rate-limit-policies', createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { subjectType: 'Tenant', subjectKey: '', windowSeconds: 60, limitCount: 100, burstLimit: null })
+    Object.assign(createForm, { SubjectType: 'Tenant', subjectKey: '', windowSeconds: 60, limitCount: 100, burstLimit: null })
     await loadData()
   } catch {
     // 错误由 http 层统一处理

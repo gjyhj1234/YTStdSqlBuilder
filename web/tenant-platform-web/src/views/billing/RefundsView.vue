@@ -48,16 +48,16 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="refundNo" caption="退款单号" />
-        <DxColumn data-field="paymentOrderId" caption="支付单ID" :width="80" />
-        <DxColumn data-field="refundStatus" caption="退款状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="refundAmount" caption="退款金额" cell-template="amountCell" :width="100" />
-        <DxColumn data-field="refundReason" caption="退款原因" />
-        <DxColumn data-field="refundedAt" caption="退款时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="RefundNo" caption="退款单号" />
+        <DxColumn data-field="PaymentOrderId" caption="支付单ID" :width="80" />
+        <DxColumn data-field="RefundStatus" caption="退款状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="RefundAmount" caption="退款金额" cell-template="amountCell" :width="100" />
+        <DxColumn data-field="RefundReason" caption="退款原因" />
+        <DxColumn data-field="RefundedAt" caption="退款时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateTimeCell" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -86,14 +86,14 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="paymentOrderId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="PaymentOrderId" editor-type="dxNumberBox">
           <DxLabel text="支付单ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="refundAmount" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="RefundAmount" editor-type="dxNumberBox"
           :editor-options="{ min: 0, format: '#,##0.00' }">
           <DxLabel text="退款金额" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="refundReason" editor-type="dxTextArea">
+        <DxSimpleItem data-field="RefundReason" editor-type="dxTextArea">
           <DxLabel text="退款原因" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -130,8 +130,8 @@ import { formatDateTime, formatAmount } from '@/utils/format'
 import {
   getPaymentRefunds,
   createRefund,
-  type PaymentRefundDto,
-  type CreateRefundRequest,
+  type PaymentRefundRepDTO,
+  type CreateRefundReqDTO,
 } from '@/api/billing'
 import {
   BILLING_PAYMENT_REFUND,
@@ -150,23 +150,23 @@ const statusOptions = [
   { text: '处理中', value: 'Processing' },
 ]
 
-const gridData = ref<PaymentRefundDto[]>([])
+const gridData = ref<PaymentRefundRepDTO[]>([])
 
-const createForm = reactive<CreateRefundRequest>({
-  paymentOrderId: 0,
-  refundAmount: 0,
-  refundReason: '',
+const createForm = reactive<CreateRefundReqDTO>({
+  PaymentOrderId: 0,
+  RefundAmount: 0,
+  RefundReason: '',
 })
 
 async function loadData() {
   try {
     const res = await getPaymentRefunds({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -176,7 +176,7 @@ async function handleCreate() {
   try {
     await createRefund(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { paymentOrderId: 0, refundAmount: 0, refundReason: '' })
+    Object.assign(createForm, { PaymentOrderId: 0, RefundAmount: 0, RefundReason: '' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理

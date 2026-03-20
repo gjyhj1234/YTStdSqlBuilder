@@ -46,15 +46,15 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="featureKey" caption="功能键" />
-        <DxColumn data-field="featureName" caption="功能名称" />
-        <DxColumn data-field="enabled" caption="启用状态" cell-template="enabledCell" :width="100" />
-        <DxColumn data-field="rolloutType" caption="发布策略" :width="120" />
-        <DxColumn data-field="updatedAt" caption="更新时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="FeatureKey" caption="功能键" />
+        <DxColumn data-field="FeatureName" caption="功能名称" />
+        <DxColumn data-field="Enabled" caption="启用状态" cell-template="enabledCell" :width="100" />
+        <DxColumn data-field="RolloutType" caption="发布策略" :width="120" />
+        <DxColumn data-field="UpdatedAt" caption="更新时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="140" />
         <template #enabledCell="{ data: cellData }">
           <StatusTag :status="cellData.value ? 'Active' : 'Disabled'" />
@@ -65,9 +65,9 @@
         <template #actionCell="{ data: cellData }">
           <DxButton
             v-if="perm.has(TENANT_CONFIG_UPDATE)"
-            :text="cellData.data.enabled ? '禁用' : '启用'"
+            :text="cellData.data.Enabled ? '禁用' : '启用'"
             styling-mode="text"
-            :type="cellData.data.enabled ? 'danger' : 'success'"
+            :type="cellData.data.Enabled ? 'danger' : 'success'"
             @click="onToggle(cellData.data)"
           />
           <DxButton
@@ -96,20 +96,20 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox"
           :editor-options="{ min: 1, showSpinButtons: true }">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="featureKey">
+        <DxSimpleItem data-field="FeatureKey">
           <DxLabel text="功能键" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="featureName">
+        <DxSimpleItem data-field="FeatureName">
           <DxLabel text="功能名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="enabled" editor-type="dxCheckBox">
+        <DxSimpleItem data-field="Enabled" editor-type="dxCheckBox">
           <DxLabel text="启用" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="rolloutType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="RolloutType" editor-type="dxSelectBox"
           :editor-options="{ items: rolloutTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="发布策略" />
         </DxSimpleItem>
@@ -148,8 +148,8 @@ import {
   getTenantFeatureFlags,
   saveTenantFeatureFlag,
   toggleFeatureFlag,
-  type TenantFeatureFlagDto,
-  type SaveTenantFeatureFlagRequest,
+  type TenantFeatureFlagRepDTO,
+  type SaveTenantFeatureFlagReqDTO,
 } from '@/api/tenantConfig'
 import {
   TENANT_CONFIG_UPDATE,
@@ -169,27 +169,27 @@ const rolloutTypes = [
   { text: '百分比', value: 'Percentage' },
 ]
 
-const gridData = ref<TenantFeatureFlagDto[]>([])
+const gridData = ref<TenantFeatureFlagRepDTO[]>([])
 
-const defaultForm: SaveTenantFeatureFlagRequest = {
-  tenantRefId: 0,
-  featureKey: '',
-  featureName: '',
-  enabled: true,
-  rolloutType: 'FullRelease',
+const defaultForm: SaveTenantFeatureFlagReqDTO = {
+  TenantRefId: 0,
+  FeatureKey: '',
+  FeatureName: '',
+  Enabled: true,
+  RolloutType: 'FullRelease',
 }
 
-const createForm = reactive<SaveTenantFeatureFlagRequest>({ ...defaultForm })
+const createForm = reactive<SaveTenantFeatureFlagReqDTO>({ ...defaultForm })
 
 async function loadData() {
   try {
     const res = await getTenantFeatureFlags({
-      page: 1,
-      pageSize: 20,
-      tenantRefId: filterTenantRefId.value,
-      keyword: filterKeyword.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      TenantRefId: filterTenantRefId.value,
+      Keyword: filterKeyword.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -207,19 +207,19 @@ async function handleSave() {
   }
 }
 
-function onEdit(row: TenantFeatureFlagDto) {
+function onEdit(row: TenantFeatureFlagRepDTO) {
   Object.assign(createForm, {
-    tenantRefId: row.tenantRefId,
-    featureKey: row.featureKey,
-    featureName: row.featureName,
-    enabled: row.enabled,
-    rolloutType: row.rolloutType,
+    TenantRefId: row.tenantRefId,
+    FeatureKey: row.featureKey,
+    FeatureName: row.featureName,
+    Enabled: row.enabled,
+    RolloutType: row.rolloutType,
   })
   isEditing.value = true
   showCreatePopup.value = true
 }
 
-async function onToggle(row: TenantFeatureFlagDto) {
+async function onToggle(row: TenantFeatureFlagRepDTO) {
   try {
     await toggleFeatureFlag(row.id, !row.enabled)
     await loadData()

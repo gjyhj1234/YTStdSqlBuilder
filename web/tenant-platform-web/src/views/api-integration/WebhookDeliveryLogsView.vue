@@ -31,16 +31,16 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="webhookId" caption="Webhook ID" :width="110" />
-        <DxColumn data-field="eventId" caption="事件ID" :width="80" />
-        <DxColumn data-field="deliveryStatus" caption="投递状态" cell-template="statusCell" :width="110" />
-        <DxColumn data-field="responseStatusCode" caption="响应码" :width="90" />
-        <DxColumn data-field="retryCount" caption="重试次数" :width="90" />
-        <DxColumn data-field="deliveredAt" caption="投递时间" cell-template="dateCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="WebhookId" caption="Webhook ID" :width="110" />
+        <DxColumn data-field="EventId" caption="事件ID" :width="80" />
+        <DxColumn data-field="DeliveryStatus" caption="投递状态" cell-template="statusCell" :width="110" />
+        <DxColumn data-field="ResponseStatusCode" caption="响应码" :width="90" />
+        <DxColumn data-field="RetryCount" caption="重试次数" :width="90" />
+        <DxColumn data-field="DeliveredAt" caption="投递时间" cell-template="dateCell" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -75,22 +75,22 @@ import PageHelpEntry from '@/components/help/PageHelpEntry.vue'
 import { formatDateTime } from '@/utils/format'
 import {
   getWebhookDeliveryLogs,
-  type WebhookDeliveryLogDto,
+  type WebhookDeliveryLogRepDTO,
 } from '@/api/apiIntegration'
 
 const showGuide = ref(false)
 const filterWebhookId = ref<number | undefined>(undefined)
 
-const gridData = ref<WebhookDeliveryLogDto[]>([])
+const gridData = ref<WebhookDeliveryLogRepDTO[]>([])
 
 async function loadData() {
   try {
     const res = await getWebhookDeliveryLogs({
-      page: 1,
-      pageSize: 20,
-      webhookId: filterWebhookId.value,
+      Page: 1,
+      PageSize: 20,
+      WebhookId: filterWebhookId.value,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }

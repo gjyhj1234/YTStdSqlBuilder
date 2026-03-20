@@ -28,18 +28,18 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="keyName" caption="密钥名称" />
-        <DxColumn data-field="accessKey" caption="Access Key" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="quotaLimit" caption="配额上限" :width="100" />
-        <DxColumn data-field="rateLimit" caption="速率限制" :width="100" />
-        <DxColumn data-field="lastUsedAt" caption="最后使用" cell-template="dateCell" />
-        <DxColumn data-field="expiresAt" caption="过期时间" cell-template="dateCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="KeyName" caption="密钥名称" />
+        <DxColumn data-field="AccessKey" caption="Access Key" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="QuotaLimit" caption="配额上限" :width="100" />
+        <DxColumn data-field="RateLimit" caption="速率限制" :width="100" />
+        <DxColumn data-field="LastUsedAt" caption="最后使用" cell-template="dateCell" />
+        <DxColumn data-field="ExpiresAt" caption="过期时间" cell-template="dateCell" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="100" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -49,11 +49,11 @@
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(INFRA_APIKEY_DISABLE)"
+            v-if="cellData.data.Status === 'Active' && perm.has(INFRA_APIKEY_DISABLE)"
             text="禁用"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -75,13 +75,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="keyName">
+        <DxSimpleItem data-field="KeyName">
           <DxLabel text="密钥名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="expiresAt" editor-type="dxDateBox"
+        <DxSimpleItem data-field="ExpiresAt" editor-type="dxDateBox"
           :editor-options="{ type: 'datetime', displayFormat: 'yyyy-MM-dd HH:mm' }">
           <DxLabel text="过期时间" />
         </DxSimpleItem>
@@ -136,9 +136,9 @@ import {
   getApiKeys,
   createApiKey,
   disableApiKey,
-  type TenantApiKeyDto,
-  type CreateApiKeyRequest,
-  type ApiKeyCreatedResult,
+  type TenantApiKeyRepDTO,
+  type CreateApiKeyReqDTO,
+  type ApiKeyCreatedRepDTO,
 } from '@/api/apiIntegration'
 import {
   INFRA_APIKEY_CREATE,
@@ -150,24 +150,24 @@ const showGuide = ref(false)
 const showCreatePopup = ref(false)
 const showSecretPopup = ref(false)
 
-const gridData = ref<TenantApiKeyDto[]>([])
+const gridData = ref<TenantApiKeyRepDTO[]>([])
 
-const createForm = reactive<CreateApiKeyRequest>({
-  tenantRefId: 0,
-  keyName: '',
-  expiresAt: '',
+const createForm = reactive<CreateApiKeyReqDTO>({
+  TenantRefId: 0,
+  KeyName: '',
+  ExpiresAt: '',
 })
 
-const createdResult = reactive<ApiKeyCreatedResult>({
-  id: 0,
-  accessKey: '',
-  secretKey: '',
+const createdResult = reactive<ApiKeyCreatedRepDTO>({
+  Id: 0,
+  AccessKey: '',
+  SecretKey: '',
 })
 
 async function loadData() {
   try {
-    const res = await getApiKeys({ page: 1, pageSize: 20 })
-    gridData.value = res.data.items
+    const res = await getApiKeys({ Page: 1, PageSize: 20 })
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -177,7 +177,7 @@ async function handleCreate() {
   try {
     const res = await createApiKey(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { tenantRefId: 0, keyName: '', expiresAt: '' })
+    Object.assign(createForm, { TenantRefId: 0, KeyName: '', ExpiresAt: '' })
     Object.assign(createdResult, res.data)
     showSecretPopup.value = true
     await loadData()

@@ -39,15 +39,15 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="quotaType" caption="配额类型" />
-        <DxColumn data-field="quotaLimit" caption="配额上限" :width="100" />
-        <DxColumn data-field="warningThreshold" caption="告警阈值" :width="100" />
-        <DxColumn data-field="resetCycle" caption="重置周期" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="QuotaType" caption="配额类型" />
+        <DxColumn data-field="QuotaLimit" caption="配额上限" :width="100" />
+        <DxColumn data-field="WarningThreshold" caption="告警阈值" :width="100" />
+        <DxColumn data-field="ResetCycle" caption="重置周期" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="120" />
         <template #dateCell="{ data: cellData }">
           <span>{{ formatDateTime(cellData.value) }}</span>
@@ -64,7 +64,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -86,22 +86,22 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="quotaType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="QuotaType" editor-type="dxSelectBox"
           :editor-options="{ items: quotaTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="配额类型" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="quotaLimit" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="QuotaLimit" editor-type="dxNumberBox"
           :editor-options="{ min: 0 }">
           <DxLabel text="配额上限" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="warningThreshold" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="WarningThreshold" editor-type="dxNumberBox"
           :editor-options="{ min: 0 }">
           <DxLabel text="告警阈值" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="resetCycle" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="ResetCycle" editor-type="dxSelectBox"
           :editor-options="{ items: resetCycles, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="重置周期" />
         </DxSimpleItem>
@@ -137,8 +137,8 @@ import { formatDateTime } from '@/utils/format'
 import {
   getTenantResourceQuotas,
   saveTenantResourceQuota,
-  type TenantResourceQuotaDto,
-  type SaveTenantResourceQuotaRequest,
+  type TenantResourceQuotaRepDTO,
+  type SaveTenantResourceQuotaReqDTO,
 } from '@/api/tenantResources'
 import {
   TENANT_RESOURCE_CREATE,
@@ -167,24 +167,24 @@ const resetCycles = [
   { text: '每年', value: 'Yearly' },
 ]
 
-const gridData = ref<TenantResourceQuotaDto[]>([])
+const gridData = ref<TenantResourceQuotaRepDTO[]>([])
 
-const createForm = reactive<SaveTenantResourceQuotaRequest>({
-  tenantRefId: 0,
-  quotaType: 'Storage',
-  quotaLimit: 0,
-  warningThreshold: 0,
-  resetCycle: 'Monthly',
+const createForm = reactive<SaveTenantResourceQuotaReqDTO>({
+  TenantRefId: 0,
+  QuotaType: 'Storage',
+  QuotaLimit: 0,
+  WarningThreshold: 0,
+  ResetCycle: 'Monthly',
 })
 
 async function loadData() {
   try {
     const res = await getTenantResourceQuotas({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -195,8 +195,8 @@ async function handleCreate() {
     await saveTenantResourceQuota(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      tenantRefId: 0, quotaType: 'Storage', quotaLimit: 0,
-      warningThreshold: 0, resetCycle: 'Monthly',
+      TenantRefId: 0, QuotaType: 'Storage', QuotaLimit: 0,
+      WarningThreshold: 0, ResetCycle: 'Monthly',
     })
     await loadData()
   } catch {
@@ -204,7 +204,7 @@ async function handleCreate() {
   }
 }
 
-function onEdit(_quota: TenantResourceQuotaDto) {
+function onEdit(_quota: TenantResourceQuotaRepDTO) {
   // 后续阶段完善编辑功能
 }
 

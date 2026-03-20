@@ -1,9 +1,9 @@
 using System;
 using System.Net;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using YTStdLogger.Core;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Infrastructure.Serialization;
 
 namespace YTStdTenantPlatform.Infrastructure.Middleware
@@ -29,23 +29,22 @@ namespace YTStdTenantPlatform.Infrastructure.Middleware
             catch (UnauthorizedAccessException ex)
             {
                 Logger.Warn(0, 0, "[GlobalExceptionMiddleware] 未授权访问: " + ex.Message);
-                await WriteErrorResponse(context, HttpStatusCode.Forbidden, "权限不足", ex.Message);
+                await WriteErrorResponse(context, HttpStatusCode.Forbidden, ErrorCodes.Forbidden, Messages.Forbidden);
             }
             catch (ArgumentException ex)
             {
                 Logger.Warn(0, 0, "[GlobalExceptionMiddleware] 参数错误: " + ex.Message);
-                await WriteErrorResponse(context, HttpStatusCode.BadRequest, "参数错误", ex.Message);
+                await WriteErrorResponse(context, HttpStatusCode.BadRequest, ErrorCodes.InvalidParameter, Messages.InvalidParameter);
             }
             catch (InvalidOperationException ex)
             {
                 Logger.Warn(0, 0, "[GlobalExceptionMiddleware] 操作无效: " + ex.Message);
-                await WriteErrorResponse(context, HttpStatusCode.BadRequest, "操作无效", ex.Message);
+                await WriteErrorResponse(context, HttpStatusCode.BadRequest, ErrorCodes.InvalidOperation, Messages.InvalidOperation);
             }
             catch (Exception ex)
             {
                 Logger.Error(0, 0, "[GlobalExceptionMiddleware] 未处理异常: " + ex.ToString());
-                await WriteErrorResponse(context, HttpStatusCode.InternalServerError,
-                    "服务器内部错误", "请联系管理员或稍后重试");
+                await WriteErrorResponse(context, HttpStatusCode.InternalServerError, ErrorCodes.InternalServerError, Messages.InternalServerError);
             }
         }
 
@@ -53,28 +52,13 @@ namespace YTStdTenantPlatform.Infrastructure.Middleware
         private static async Task WriteErrorResponse(
             HttpContext context,
             HttpStatusCode statusCode,
-            string error,
+            int errorCode,
             string message)
         {
             if (context.Response.HasStarted) return;
 
-            context.Response.StatusCode = (int)statusCode;
-            context.Response.ContentType = "application/json; charset=utf-8";
-
-            var traceId = context.TraceIdentifier;
-            await Utf8JsonWriterHelper.WriteResponseAsync(
-                context.Response,
-                (error, message, traceId),
-                static (writer, state) =>
-                {
-                    writer.WriteStartObject();
-                    writer.WriteBoolean("success", false);
-                    writer.WriteString("message", state.error + ": " + state.message);
-                    writer.WriteNull("data");
-                    writer.WriteString("traceId", state.traceId);
-                    writer.WriteEndObject();
-                },
-                context.RequestAborted);
+            var result = Application.Dtos.ApiResult.Fail(errorCode, message);
+            await TenantPlatformJsonResponseWriter.WriteAsync(context, result, (int)statusCode);
         }
     }
 }

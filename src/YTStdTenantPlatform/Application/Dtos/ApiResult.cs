@@ -3,49 +3,43 @@ using System.Collections.Generic;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>统一 API 响应包装</summary>
+    /// <summary>统一 API 响应包装（无数据）</summary>
     public sealed class ApiResult
     {
-        /// <summary>是否成功</summary>
-        public bool Success { get; set; }
+        /// <summary>响应代码：0=成功，非0=错误码（对应 ErrorCodes 常量）</summary>
+        public int Code { get; set; }
 
-        /// <summary>消息</summary>
+        /// <summary>消息键，用于前端国际化展示（对应 Messages 常量）</summary>
         public string Message { get; set; } = "";
 
-        /// <summary>TraceId</summary>
-        public string TraceId { get; set; } = "";
-
         /// <summary>成功结果</summary>
-        public static ApiResult Ok(string message = "操作成功")
-            => new ApiResult { Success = true, Message = message };
+        public static ApiResult Ok(string message = "operation.success")
+            => new ApiResult { Code = 0, Message = message };
 
         /// <summary>失败结果</summary>
-        public static ApiResult Fail(string message = "操作失败")
-            => new ApiResult { Success = false, Message = message };
+        public static ApiResult Fail(int code, string message)
+            => new ApiResult { Code = code, Message = message };
     }
 
-    /// <summary>带数据的统一 API 响应包装</summary>
+    /// <summary>统一 API 响应包装（带数据）</summary>
     public sealed class ApiResult<T>
     {
-        /// <summary>是否成功</summary>
-        public bool Success { get; set; }
+        /// <summary>响应代码：0=成功，非0=错误码（对应 ErrorCodes 常量）</summary>
+        public int Code { get; set; }
 
-        /// <summary>消息</summary>
+        /// <summary>消息键，用于前端国际化展示（对应 Messages 常量）</summary>
         public string Message { get; set; } = "";
 
-        /// <summary>数据</summary>
+        /// <summary>响应数据</summary>
         public T? Data { get; set; }
 
-        /// <summary>TraceId</summary>
-        public string TraceId { get; set; } = "";
-
         /// <summary>成功结果</summary>
-        public static ApiResult<T> Ok(T data, string message = "操作成功")
-            => new ApiResult<T> { Success = true, Message = message, Data = data };
+        public static ApiResult<T> Ok(T data, string message = "operation.success")
+            => new ApiResult<T> { Code = 0, Message = message, Data = data };
 
         /// <summary>失败结果</summary>
-        public static ApiResult<T> Fail(string message = "操作失败")
-            => new ApiResult<T> { Success = false, Message = message };
+        public static ApiResult<T> Fail(int code, string message)
+            => new ApiResult<T> { Code = code, Message = message };
     }
 
     /// <summary>分页请求</summary>

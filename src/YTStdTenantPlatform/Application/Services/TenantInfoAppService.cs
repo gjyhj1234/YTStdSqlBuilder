@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -15,20 +16,20 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取租户分组树</summary>
-        public static async ValueTask<List<TenantGroupDto>> GetGroupTreeAsync(int tenantId, long operatorId)
+        public static async ValueTask<List<TenantGroupRepDTO>> GetGroupTreeAsync(int tenantId, long operatorId)
         {
             var (result, data) = await TenantGroupCRUD.GetListAsync(tenantId, operatorId);
-            if (!result.Success || data == null) return new List<TenantGroupDto>();
+            if (!result.Success || data == null) return new List<TenantGroupRepDTO>();
             return BuildGroupTree(data);
         }
 
         /// <summary>获取分组平铺列表</summary>
-        public static async ValueTask<List<TenantGroupDto>> GetGroupListAsync(int tenantId, long operatorId)
+        public static async ValueTask<List<TenantGroupRepDTO>> GetGroupListAsync(int tenantId, long operatorId)
         {
             var (result, data) = await TenantGroupCRUD.GetListAsync(tenantId, operatorId);
-            if (!result.Success || data == null) return new List<TenantGroupDto>();
+            if (!result.Success || data == null) return new List<TenantGroupRepDTO>();
 
-            var list = new List<TenantGroupDto>(data.Count);
+            var list = new List<TenantGroupRepDTO>(data.Count);
             foreach (var g in data)
                 list.Add(MapGroupToDto(g));
             return list;
@@ -36,10 +37,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建租户分组</summary>
         public static async ValueTask<ApiResult<long>> CreateGroupAsync(
-            int tenantId, long operatorId, CreateTenantGroupRequest req)
+            int tenantId, long operatorId, CreateTenantGroupReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.GroupCode))
-                return ApiResult<long>.Fail("分组编码不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.GroupCodeRequired, Messages.GroupCodeRequired);
 
             var group = new TenantGroup
             {
@@ -53,7 +54,7 @@ namespace YTStdTenantPlatform.Application.Services
             };
 
             var insResult = await TenantGroupCRUD.InsertAsync(tenantId, operatorId, group);
-            if (!insResult.Success) return ApiResult<long>.Fail("创建分组失败: " + insResult.ErrorMessage);
+            if (!insResult.Success) return ApiResult<long>.Fail(ErrorCodes.GroupCreateFailed, Messages.GroupCreateFailed);
 
             Logger.Info(tenantId, operatorId, "[TenantInfoAppService] 创建分组: " + req.GroupCode);
             return ApiResult<long>.Ok(insResult.Id);
@@ -64,13 +65,13 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取租户域名列表</summary>
-        public static async ValueTask<List<TenantDomainDto>> GetDomainsAsync(
+        public static async ValueTask<List<TenantDomainRepDTO>> GetDomainsAsync(
             int tenantId, long operatorId, long tenantRefId)
         {
             var (result, data) = await TenantDomainCRUD.GetListAsync(tenantId, operatorId);
-            if (!result.Success || data == null) return new List<TenantDomainDto>();
+            if (!result.Success || data == null) return new List<TenantDomainRepDTO>();
 
-            var list = new List<TenantDomainDto>();
+            var list = new List<TenantDomainRepDTO>();
             foreach (var d in data)
             {
                 if (d.TenantRefId == tenantRefId)
@@ -81,10 +82,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建租户域名</summary>
         public static async ValueTask<ApiResult<long>> CreateDomainAsync(
-            int tenantId, long operatorId, CreateTenantDomainRequest req)
+            int tenantId, long operatorId, CreateTenantDomainReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.Domain))
-                return ApiResult<long>.Fail("域名不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.DomainRequired, Messages.DomainRequired);
 
             var domain = new TenantDomain
             {
@@ -97,7 +98,7 @@ namespace YTStdTenantPlatform.Application.Services
             };
 
             var insResult = await TenantDomainCRUD.InsertAsync(tenantId, operatorId, domain);
-            if (!insResult.Success) return ApiResult<long>.Fail("创建域名失败: " + insResult.ErrorMessage);
+            if (!insResult.Success) return ApiResult<long>.Fail(ErrorCodes.DomainCreateFailed, Messages.DomainCreateFailed);
 
             Logger.Info(tenantId, operatorId, "[TenantInfoAppService] 创建域名: " + req.Domain);
             return ApiResult<long>.Ok(insResult.Id);
@@ -108,12 +109,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取标签列表</summary>
-        public static async ValueTask<PagedResult<TenantTagDto>> GetTagListAsync(
+        public static async ValueTask<PagedResult<TenantTagRepDTO>> GetTagListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantTagCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantTagDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantTagRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantTag>();
             foreach (var tag in data)
@@ -125,13 +126,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(tag);
             }
 
-            var items = new List<TenantTagDto>();
+            var items = new List<TenantTagRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapTagToDto(filtered[i]));
 
-            return new PagedResult<TenantTagDto>
+            return new PagedResult<TenantTagRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -140,10 +141,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建标签</summary>
         public static async ValueTask<ApiResult<long>> CreateTagAsync(
-            int tenantId, long operatorId, CreateTenantTagRequest req)
+            int tenantId, long operatorId, CreateTenantTagReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.TagKey))
-                return ApiResult<long>.Fail("标签键不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.TagKeyRequired, Messages.TagKeyRequired);
 
             var tag = new TenantTag
             {
@@ -155,7 +156,7 @@ namespace YTStdTenantPlatform.Application.Services
             };
 
             var insResult = await TenantTagCRUD.InsertAsync(tenantId, operatorId, tag);
-            if (!insResult.Success) return ApiResult<long>.Fail("创建标签失败: " + insResult.ErrorMessage);
+            if (!insResult.Success) return ApiResult<long>.Fail(ErrorCodes.TagCreateFailed, Messages.TagCreateFailed);
 
             Logger.Info(tenantId, operatorId, "[TenantInfoAppService] 创建标签: " + req.TagKey);
             return ApiResult<long>.Ok(insResult.Id);
@@ -163,7 +164,7 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>标签绑定</summary>
         public static async ValueTask<ApiResult> BindTagsAsync(
-            int tenantId, long operatorId, TagBindRequest req)
+            int tenantId, long operatorId, TagBindReqDTO req)
         {
             foreach (var tagId in req.TagIds)
             {
@@ -178,16 +179,16 @@ namespace YTStdTenantPlatform.Application.Services
 
             Logger.Info(tenantId, operatorId,
                 "[TenantInfoAppService] 标签绑定: tenant=" + req.TenantRefId + " 标签数=" + req.TagIds.Length);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
         // Mapping helpers
         // ──────────────────────────────────────────────────────
 
-        private static TenantGroupDto MapGroupToDto(TenantGroup g)
+        private static TenantGroupRepDTO MapGroupToDto(TenantGroup g)
         {
-            return new TenantGroupDto
+            return new TenantGroupRepDTO
             {
                 Id = g.Id, GroupCode = g.GroupCode, GroupName = g.GroupName,
                 Description = g.Description, ParentId = g.ParentId,
@@ -195,17 +196,17 @@ namespace YTStdTenantPlatform.Application.Services
             };
         }
 
-        private static List<TenantGroupDto> BuildGroupTree(IReadOnlyList<TenantGroup> data)
+        private static List<TenantGroupRepDTO> BuildGroupTree(IReadOnlyList<TenantGroup> data)
         {
-            var allDtos = new Dictionary<long, TenantGroupDto>(data.Count);
+            var allDtos = new Dictionary<long, TenantGroupRepDTO>(data.Count);
             foreach (var g in data)
             {
                 var dto = MapGroupToDto(g);
-                dto.Children = new List<TenantGroupDto>();
+                dto.Children = new List<TenantGroupRepDTO>();
                 allDtos[g.Id] = dto;
             }
 
-            var roots = new List<TenantGroupDto>();
+            var roots = new List<TenantGroupRepDTO>();
             foreach (var g in data)
             {
                 var dto = allDtos[g.Id];
@@ -217,9 +218,9 @@ namespace YTStdTenantPlatform.Application.Services
             return roots;
         }
 
-        private static TenantDomainDto MapDomainToDto(TenantDomain d)
+        private static TenantDomainRepDTO MapDomainToDto(TenantDomain d)
         {
-            return new TenantDomainDto
+            return new TenantDomainRepDTO
             {
                 Id = d.Id, TenantRefId = d.TenantRefId, Domain = d.Domain,
                 DomainType = d.DomainType, IsPrimary = d.IsPrimary,
@@ -227,9 +228,9 @@ namespace YTStdTenantPlatform.Application.Services
             };
         }
 
-        private static TenantTagDto MapTagToDto(TenantTag t)
+        private static TenantTagRepDTO MapTagToDto(TenantTag t)
         {
-            return new TenantTagDto
+            return new TenantTagRepDTO
             {
                 Id = t.Id, TagKey = t.TagKey, TagValue = t.TagValue,
                 TagType = t.TagType, Description = t.Description,

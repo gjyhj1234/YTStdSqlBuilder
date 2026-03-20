@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -15,12 +16,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取发票分页列表</summary>
-        public static async ValueTask<PagedResult<BillingInvoiceDto>> GetInvoiceListAsync(
+        public static async ValueTask<PagedResult<BillingInvoiceRepDTO>> GetInvoiceListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await BillingInvoiceCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<BillingInvoiceDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<BillingInvoiceRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<BillingInvoice>();
             foreach (var inv in data)
@@ -34,13 +35,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(inv);
             }
 
-            var items = new List<BillingInvoiceDto>();
+            var items = new List<BillingInvoiceRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapInvoiceToDto(filtered[i]));
 
-            return new PagedResult<BillingInvoiceDto>
+            return new PagedResult<BillingInvoiceRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -48,7 +49,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取发票详情</summary>
-        public static async ValueTask<BillingInvoiceDto?> GetInvoiceByIdAsync(
+        public static async ValueTask<BillingInvoiceRepDTO?> GetInvoiceByIdAsync(
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await BillingInvoiceCRUD.GetListAsync(tenantId, operatorId);
@@ -63,10 +64,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建发票</summary>
         public static async ValueTask<ApiResult<long>> CreateInvoiceAsync(
-            int tenantId, long operatorId, CreateBillingInvoiceRequest req)
+            int tenantId, long operatorId, CreateBillingInvoiceReqDTO req)
         {
             if (req.TenantRefId <= 0)
-                return ApiResult<long>.Fail("关联租户 ID 无效");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var now = DateTime.UtcNow;
             var entity = new BillingInvoice
@@ -84,7 +85,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await BillingInvoiceCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建发票失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.InvoiceCreateFailed, Messages.InvoiceCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[BillingAppService] 创建发票: " + entity.InvoiceNo);
@@ -96,21 +97,21 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, invoices) = await BillingInvoiceCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || invoices == null) return ApiResult.Fail("查询发票失败");
+            if (!getResult.Success || invoices == null) return ApiResult.Fail(ErrorCodes.InvoiceQueryFailed, Messages.InvoiceQueryFailed);
 
             BillingInvoice? target = null;
             foreach (var inv in invoices) { if (inv.Id == id) { target = inv; break; } }
-            if (target == null) return ApiResult.Fail("发票不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.InvoiceNotFound, Messages.InvoiceNotFound);
 
             target.InvoiceStatus = "voided";
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await BillingInvoiceCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("作废发票失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.InvoiceVoidFailed, Messages.InvoiceVoidFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[BillingAppService] 作废发票: " + target.InvoiceNo);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -118,12 +119,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取发票明细列表</summary>
-        public static async ValueTask<PagedResult<BillingInvoiceItemDto>> GetInvoiceItemsAsync(
+        public static async ValueTask<PagedResult<BillingInvoiceItemRepDTO>> GetInvoiceItemsAsync(
             int tenantId, long operatorId, long invoiceId, PagedRequest request)
         {
             var (result, data) = await BillingInvoiceItemCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<BillingInvoiceItemDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<BillingInvoiceItemRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<BillingInvoiceItem>();
             foreach (var item in data)
@@ -132,13 +133,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(item);
             }
 
-            var items = new List<BillingInvoiceItemDto>();
+            var items = new List<BillingInvoiceItemRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var it = filtered[i];
-                items.Add(new BillingInvoiceItemDto
+                items.Add(new BillingInvoiceItemRepDTO
                 {
                     Id = it.Id, InvoiceId = it.InvoiceId,
                     ItemType = it.ItemType, ItemName = it.ItemName,
@@ -147,7 +148,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<BillingInvoiceItemDto>
+            return new PagedResult<BillingInvoiceItemRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -159,12 +160,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取支付订单分页列表</summary>
-        public static async ValueTask<PagedResult<PaymentOrderDto>> GetPaymentOrderListAsync(
+        public static async ValueTask<PagedResult<PaymentOrderRepDTO>> GetPaymentOrderListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PaymentOrderCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<PaymentOrderDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<PaymentOrderRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<PaymentOrder>();
             foreach (var o in data)
@@ -175,13 +176,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(o);
             }
 
-            var items = new List<PaymentOrderDto>();
+            var items = new List<PaymentOrderRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapPaymentOrderToDto(filtered[i]));
 
-            return new PagedResult<PaymentOrderDto>
+            return new PagedResult<PaymentOrderRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -190,10 +191,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建支付订单</summary>
         public static async ValueTask<ApiResult<long>> CreatePaymentOrderAsync(
-            int tenantId, long operatorId, CreatePaymentOrderRequest req)
+            int tenantId, long operatorId, CreatePaymentOrderReqDTO req)
         {
             if (req.Amount <= 0)
-                return ApiResult<long>.Fail("金额必须大于零");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var now = DateTime.UtcNow;
             var entity = new PaymentOrder
@@ -211,7 +212,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await PaymentOrderCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建支付订单失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.PaymentOrderCreateFailed, Messages.PaymentOrderCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[BillingAppService] 创建支付订单: " + entity.OrderNo);
@@ -223,20 +224,20 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取退款分页列表</summary>
-        public static async ValueTask<PagedResult<PaymentRefundDto>> GetRefundListAsync(
+        public static async ValueTask<PagedResult<PaymentRefundRepDTO>> GetRefundListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PaymentRefundCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<PaymentRefundDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<PaymentRefundRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
-            var items = new List<PaymentRefundDto>();
+            var items = new List<PaymentRefundRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < data.Count && i < offset + size; i++)
                 items.Add(MapRefundToDto(data[i]));
 
-            return new PagedResult<PaymentRefundDto>
+            return new PagedResult<PaymentRefundRepDTO>
             {
                 Items = items, Total = data.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -245,10 +246,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建退款</summary>
         public static async ValueTask<ApiResult<long>> CreateRefundAsync(
-            int tenantId, long operatorId, CreateRefundRequest req)
+            int tenantId, long operatorId, CreateRefundReqDTO req)
         {
             if (req.RefundAmount <= 0)
-                return ApiResult<long>.Fail("退款金额必须大于零");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var now = DateTime.UtcNow;
             var entity = new PaymentRefund
@@ -264,7 +265,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await PaymentRefundCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建退款失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.RefundCreateFailed, Messages.RefundCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[BillingAppService] 创建退款: " + entity.RefundNo);
@@ -275,7 +276,7 @@ namespace YTStdTenantPlatform.Application.Services
         // Mapping helpers
         // ──────────────────────────────────────────────────────
 
-        private static BillingInvoiceDto MapInvoiceToDto(BillingInvoice inv) => new BillingInvoiceDto
+        private static BillingInvoiceRepDTO MapInvoiceToDto(BillingInvoice inv) => new BillingInvoiceRepDTO
         {
             Id = inv.Id, InvoiceNo = inv.InvoiceNo, TenantRefId = inv.TenantRefId,
             SubscriptionId = inv.SubscriptionId, InvoiceStatus = inv.InvoiceStatus,
@@ -286,7 +287,7 @@ namespace YTStdTenantPlatform.Application.Services
             DueAt = inv.DueAt, PaidAt = inv.PaidAt, CreatedAt = inv.CreatedAt
         };
 
-        private static PaymentOrderDto MapPaymentOrderToDto(PaymentOrder o) => new PaymentOrderDto
+        private static PaymentOrderRepDTO MapPaymentOrderToDto(PaymentOrder o) => new PaymentOrderRepDTO
         {
             Id = o.Id, OrderNo = o.OrderNo, TenantRefId = o.TenantRefId,
             InvoiceId = o.InvoiceId, PaymentChannel = o.PaymentChannel,
@@ -295,7 +296,7 @@ namespace YTStdTenantPlatform.Application.Services
             PaidAt = o.PaidAt, CreatedAt = o.CreatedAt
         };
 
-        private static PaymentRefundDto MapRefundToDto(PaymentRefund r) => new PaymentRefundDto
+        private static PaymentRefundRepDTO MapRefundToDto(PaymentRefund r) => new PaymentRefundRepDTO
         {
             Id = r.Id, RefundNo = r.RefundNo, PaymentOrderId = r.PaymentOrderId,
             RefundStatus = r.RefundStatus, RefundAmount = r.RefundAmount,

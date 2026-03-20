@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -17,12 +18,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取 API 密钥分页列表</summary>
-        public static async ValueTask<PagedResult<TenantApiKeyDto>> GetApiKeyListAsync(
+        public static async ValueTask<PagedResult<TenantApiKeyRepDTO>> GetApiKeyListAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantApiKeyCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantApiKeyDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantApiKeyRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantApiKey>();
             foreach (var k in data)
@@ -31,13 +32,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(k);
             }
 
-            var items = new List<TenantApiKeyDto>();
+            var items = new List<TenantApiKeyRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapApiKeyToDto(filtered[i]));
 
-            return new PagedResult<TenantApiKeyDto>
+            return new PagedResult<TenantApiKeyRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -45,11 +46,11 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>创建 API 密钥</summary>
-        public static async ValueTask<ApiResult<ApiKeyCreatedResult>> CreateApiKeyAsync(
-            int tenantId, long operatorId, CreateApiKeyRequest req)
+        public static async ValueTask<ApiResult<ApiKeyCreatedRepDTO>> CreateApiKeyAsync(
+            int tenantId, long operatorId, CreateApiKeyReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.KeyName))
-                return ApiResult<ApiKeyCreatedResult>.Fail("密钥名称不能为空");
+                return ApiResult<ApiKeyCreatedRepDTO>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var accessKey = "ak_" + Guid.NewGuid().ToString("N");
             var rawSecret = Guid.NewGuid().ToString("N");
@@ -71,11 +72,11 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantApiKeyCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<ApiKeyCreatedResult>.Fail("创建 API 密钥失败: " + insResult.ErrorMessage);
+                return ApiResult<ApiKeyCreatedRepDTO>.Fail(ErrorCodes.ApiKeyCreateFailed, Messages.ApiKeyCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[ApiIntegrationAppService] 创建 API 密钥: " + req.KeyName);
-            return ApiResult<ApiKeyCreatedResult>.Ok(new ApiKeyCreatedResult
+            return ApiResult<ApiKeyCreatedRepDTO>.Ok(new ApiKeyCreatedRepDTO
             {
                 Id = insResult.Id,
                 AccessKey = accessKey,
@@ -88,21 +89,21 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, keys) = await TenantApiKeyCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || keys == null) return ApiResult.Fail("查询 API 密钥失败");
+            if (!getResult.Success || keys == null) return ApiResult.Fail(ErrorCodes.ApiKeyQueryFailed, Messages.ApiKeyQueryFailed);
 
             TenantApiKey? target = null;
             foreach (var k in keys) { if (k.Id == id) { target = k; break; } }
-            if (target == null) return ApiResult.Fail("API 密钥不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.ApiKeyNotFound, Messages.ApiKeyNotFound);
 
             target.Status = "disabled";
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await TenantApiKeyCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("禁用 API 密钥失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.ApiKeyDisableFailed, Messages.ApiKeyDisableFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[ApiIntegrationAppService] 禁用 API 密钥: " + target.KeyName);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -110,12 +111,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取 API 用量统计列表</summary>
-        public static async ValueTask<PagedResult<TenantApiUsageStatDto>> GetApiUsageStatsAsync(
+        public static async ValueTask<PagedResult<TenantApiUsageStatRepDTO>> GetApiUsageStatsAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantApiUsageStatCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantApiUsageStatDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantApiUsageStatRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantApiUsageStat>();
             foreach (var s in data)
@@ -124,13 +125,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(s);
             }
 
-            var items = new List<TenantApiUsageStatDto>();
+            var items = new List<TenantApiUsageStatRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapUsageStatToDto(filtered[i]));
 
-            return new PagedResult<TenantApiUsageStatDto>
+            return new PagedResult<TenantApiUsageStatRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -142,27 +143,27 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取 Webhook 事件列表</summary>
-        public static async ValueTask<PagedResult<WebhookEventDto>> GetWebhookEventListAsync(
+        public static async ValueTask<PagedResult<WebhookEventRepDTO>> GetWebhookEventListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await WebhookEventCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<WebhookEventDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<WebhookEventRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
-            var items = new List<WebhookEventDto>();
+            var items = new List<WebhookEventRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < data.Count && i < offset + size; i++)
             {
                 var e = data[i];
-                items.Add(new WebhookEventDto
+                items.Add(new WebhookEventRepDTO
                 {
                     Id = e.Id, EventCode = e.EventCode, EventName = e.EventName,
                     Description = e.Description, CreatedAt = e.CreatedAt
                 });
             }
 
-            return new PagedResult<WebhookEventDto>
+            return new PagedResult<WebhookEventRepDTO>
             {
                 Items = items, Total = data.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -174,12 +175,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取租户 Webhook 列表</summary>
-        public static async ValueTask<PagedResult<TenantWebhookDto>> GetWebhookListAsync(
+        public static async ValueTask<PagedResult<TenantWebhookRepDTO>> GetWebhookListAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantWebhookCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantWebhookDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantWebhookRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantWebhook>();
             foreach (var w in data)
@@ -188,13 +189,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(w);
             }
 
-            var items = new List<TenantWebhookDto>();
+            var items = new List<TenantWebhookRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapWebhookToDto(filtered[i]));
 
-            return new PagedResult<TenantWebhookDto>
+            return new PagedResult<TenantWebhookRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -203,12 +204,12 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建租户 Webhook</summary>
         public static async ValueTask<ApiResult<long>> CreateWebhookAsync(
-            int tenantId, long operatorId, CreateWebhookRequest req)
+            int tenantId, long operatorId, CreateWebhookReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.WebhookName))
-                return ApiResult<long>.Fail("Webhook 名称不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
             if (string.IsNullOrWhiteSpace(req.TargetUrl))
-                return ApiResult<long>.Fail("目标地址不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var now = DateTime.UtcNow;
             var entity = new TenantWebhook
@@ -223,7 +224,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantWebhookCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建 Webhook 失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.WebhookCreateFailed, Messages.WebhookCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[ApiIntegrationAppService] 创建 Webhook: " + req.WebhookName);
@@ -232,25 +233,25 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>更新租户 Webhook</summary>
         public static async ValueTask<ApiResult> UpdateWebhookAsync(
-            int tenantId, long operatorId, long id, UpdateWebhookRequest req)
+            int tenantId, long operatorId, long id, UpdateWebhookReqDTO req)
         {
             var (getResult, webhooks) = await TenantWebhookCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || webhooks == null) return ApiResult.Fail("查询 Webhook 失败");
+            if (!getResult.Success || webhooks == null) return ApiResult.Fail(ErrorCodes.WebhookQueryFailed, Messages.WebhookQueryFailed);
 
             TenantWebhook? target = null;
             foreach (var w in webhooks) { if (w.Id == id) { target = w; break; } }
-            if (target == null) return ApiResult.Fail("Webhook 不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.WebhookNotFound, Messages.WebhookNotFound);
 
             if (req.WebhookName != null) target.WebhookName = req.WebhookName;
             if (req.TargetUrl != null) target.TargetUrl = req.TargetUrl;
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await TenantWebhookCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("更新 Webhook 失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.WebhookUpdateFailed, Messages.WebhookUpdateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[ApiIntegrationAppService] 更新 Webhook: " + target.WebhookName);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         /// <summary>设置 Webhook 状态（启用/禁用）</summary>
@@ -258,21 +259,21 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, webhooks) = await TenantWebhookCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || webhooks == null) return ApiResult.Fail("查询 Webhook 失败");
+            if (!getResult.Success || webhooks == null) return ApiResult.Fail(ErrorCodes.WebhookQueryFailed, Messages.WebhookQueryFailed);
 
             TenantWebhook? target = null;
             foreach (var w in webhooks) { if (w.Id == id) { target = w; break; } }
-            if (target == null) return ApiResult.Fail("Webhook 不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.WebhookNotFound, Messages.WebhookNotFound);
 
             target.Status = status;
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await TenantWebhookCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("状态变更失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.WebhookStatusChangeFailed, Messages.WebhookStatusChangeFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[ApiIntegrationAppService] Webhook 状态变更: " + target.WebhookName + " → " + status);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -280,12 +281,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取 Webhook 投递日志列表</summary>
-        public static async ValueTask<PagedResult<WebhookDeliveryLogDto>> GetDeliveryLogsAsync(
+        public static async ValueTask<PagedResult<WebhookDeliveryLogRepDTO>> GetDeliveryLogsAsync(
             int tenantId, long operatorId, long webhookId, PagedRequest request)
         {
             var (result, data) = await WebhookDeliveryLogCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<WebhookDeliveryLogDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<WebhookDeliveryLogRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<WebhookDeliveryLog>();
             foreach (var log in data)
@@ -294,13 +295,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(log);
             }
 
-            var items = new List<WebhookDeliveryLogDto>();
+            var items = new List<WebhookDeliveryLogRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var l = filtered[i];
-                items.Add(new WebhookDeliveryLogDto
+                items.Add(new WebhookDeliveryLogRepDTO
                 {
                     Id = l.Id, WebhookId = l.WebhookId, EventId = l.EventId,
                     DeliveryStatus = l.DeliveryStatus,
@@ -310,7 +311,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<WebhookDeliveryLogDto>
+            return new PagedResult<WebhookDeliveryLogRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -329,7 +330,7 @@ namespace YTStdTenantPlatform.Application.Services
             return Convert.ToHexString(hash);
         }
 
-        private static TenantApiKeyDto MapApiKeyToDto(TenantApiKey k) => new TenantApiKeyDto
+        private static TenantApiKeyRepDTO MapApiKeyToDto(TenantApiKey k) => new TenantApiKeyRepDTO
         {
             Id = k.Id, TenantRefId = k.TenantRefId, KeyName = k.KeyName,
             AccessKey = k.AccessKey, Status = k.Status,
@@ -338,7 +339,7 @@ namespace YTStdTenantPlatform.Application.Services
             CreatedAt = k.CreatedAt
         };
 
-        private static TenantApiUsageStatDto MapUsageStatToDto(TenantApiUsageStat s) => new TenantApiUsageStatDto
+        private static TenantApiUsageStatRepDTO MapUsageStatToDto(TenantApiUsageStat s) => new TenantApiUsageStatRepDTO
         {
             Id = s.Id, TenantRefId = s.TenantRefId, ApiKeyId = s.ApiKeyId,
             StatDate = s.StatDate, ApiPath = s.ApiPath,
@@ -347,7 +348,7 @@ namespace YTStdTenantPlatform.Application.Services
             CreatedAt = s.CreatedAt
         };
 
-        private static TenantWebhookDto MapWebhookToDto(TenantWebhook w) => new TenantWebhookDto
+        private static TenantWebhookRepDTO MapWebhookToDto(TenantWebhook w) => new TenantWebhookRepDTO
         {
             Id = w.Id, TenantRefId = w.TenantRefId, WebhookName = w.WebhookName,
             TargetUrl = w.TargetUrl, Status = w.Status, CreatedAt = w.CreatedAt

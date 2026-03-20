@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -15,12 +16,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取订阅分页列表</summary>
-        public static async ValueTask<PagedResult<TenantSubscriptionDto>> GetSubscriptionListAsync(
+        public static async ValueTask<PagedResult<TenantSubscriptionRepDTO>> GetSubscriptionListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantSubscriptionCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantSubscriptionDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantSubscriptionRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantSubscription>();
             foreach (var s in data)
@@ -31,13 +32,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(s);
             }
 
-            var items = new List<TenantSubscriptionDto>();
+            var items = new List<TenantSubscriptionRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapSubscriptionToDto(filtered[i]));
 
-            return new PagedResult<TenantSubscriptionDto>
+            return new PagedResult<TenantSubscriptionRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -45,7 +46,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取订阅详情</summary>
-        public static async ValueTask<TenantSubscriptionDto?> GetSubscriptionByIdAsync(
+        public static async ValueTask<TenantSubscriptionRepDTO?> GetSubscriptionByIdAsync(
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantSubscriptionCRUD.GetListAsync(tenantId, operatorId);
@@ -60,12 +61,12 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建订阅</summary>
         public static async ValueTask<ApiResult<long>> CreateSubscriptionAsync(
-            int tenantId, long operatorId, CreateSubscriptionRequest req)
+            int tenantId, long operatorId, CreateSubscriptionReqDTO req)
         {
             if (req.TenantRefId <= 0)
-                return ApiResult<long>.Fail("关联租户 ID 无效");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
             if (req.PackageVersionId <= 0)
-                return ApiResult<long>.Fail("套餐版本 ID 无效");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var now = DateTime.UtcNow;
             var entity = new TenantSubscription
@@ -84,7 +85,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantSubscriptionCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建订阅失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.SubscriptionCreateFailed, Messages.SubscriptionCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[SubscriptionAppService] 创建订阅: tenant=" + req.TenantRefId);
@@ -96,22 +97,22 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, subscriptions) = await TenantSubscriptionCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || subscriptions == null) return ApiResult.Fail("查询订阅失败");
+            if (!getResult.Success || subscriptions == null) return ApiResult.Fail(ErrorCodes.SubscriptionQueryFailed, Messages.SubscriptionQueryFailed);
 
             TenantSubscription? target = null;
             foreach (var s in subscriptions) { if (s.Id == id) { target = s; break; } }
-            if (target == null) return ApiResult.Fail("订阅不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.SubscriptionNotFound, Messages.SubscriptionNotFound);
 
             target.SubscriptionStatus = "cancelled";
             target.CancelledAt = DateTime.UtcNow;
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await TenantSubscriptionCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("取消订阅失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.SubscriptionCancelFailed, Messages.SubscriptionCancelFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[SubscriptionAppService] 取消订阅: id=" + id);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -119,20 +120,20 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取试用分页列表</summary>
-        public static async ValueTask<PagedResult<TenantTrialDto>> GetTrialListAsync(
+        public static async ValueTask<PagedResult<TenantTrialRepDTO>> GetTrialListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantTrialCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantTrialDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantTrialRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
-            var items = new List<TenantTrialDto>();
+            var items = new List<TenantTrialRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < data.Count && i < offset + size; i++)
                 items.Add(MapTrialToDto(data[i]));
 
-            return new PagedResult<TenantTrialDto>
+            return new PagedResult<TenantTrialRepDTO>
             {
                 Items = items, Total = data.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -141,10 +142,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建试用</summary>
         public static async ValueTask<ApiResult<long>> CreateTrialAsync(
-            int tenantId, long operatorId, CreateTrialRequest req)
+            int tenantId, long operatorId, CreateTrialReqDTO req)
         {
             if (req.TenantRefId <= 0)
-                return ApiResult<long>.Fail("关联租户 ID 无效");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var now = DateTime.UtcNow;
             var entity = new TenantTrial
@@ -160,7 +161,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantTrialCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建试用失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.TrialCreateFailed, Messages.TrialCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[SubscriptionAppService] 创建试用: tenant=" + req.TenantRefId);
@@ -172,12 +173,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取订阅变更记录列表</summary>
-        public static async ValueTask<PagedResult<TenantSubscriptionChangeDto>> GetSubscriptionChangesAsync(
+        public static async ValueTask<PagedResult<TenantSubscriptionChangeRepDTO>> GetSubscriptionChangesAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantSubscriptionChangeCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantSubscriptionChangeDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantSubscriptionChangeRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantSubscriptionChange>();
             foreach (var c in data)
@@ -186,13 +187,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(c);
             }
 
-            var items = new List<TenantSubscriptionChangeDto>();
+            var items = new List<TenantSubscriptionChangeRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var c = filtered[i];
-                items.Add(new TenantSubscriptionChangeDto
+                items.Add(new TenantSubscriptionChangeRepDTO
                 {
                     Id = c.Id, TenantRefId = c.TenantRefId,
                     SubscriptionId = c.SubscriptionId, ChangeType = c.ChangeType,
@@ -203,7 +204,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<TenantSubscriptionChangeDto>
+            return new PagedResult<TenantSubscriptionChangeRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -214,7 +215,7 @@ namespace YTStdTenantPlatform.Application.Services
         // Mapping helpers
         // ──────────────────────────────────────────────────────
 
-        private static TenantSubscriptionDto MapSubscriptionToDto(TenantSubscription s) => new TenantSubscriptionDto
+        private static TenantSubscriptionRepDTO MapSubscriptionToDto(TenantSubscription s) => new TenantSubscriptionRepDTO
         {
             Id = s.Id, TenantRefId = s.TenantRefId, PackageVersionId = s.PackageVersionId,
             SubscriptionStatus = s.SubscriptionStatus, SubscriptionType = s.SubscriptionType,
@@ -223,7 +224,7 @@ namespace YTStdTenantPlatform.Application.Services
             CreatedAt = s.CreatedAt
         };
 
-        private static TenantTrialDto MapTrialToDto(TenantTrial t) => new TenantTrialDto
+        private static TenantTrialRepDTO MapTrialToDto(TenantTrial t) => new TenantTrialRepDTO
         {
             Id = t.Id, TenantRefId = t.TenantRefId, PackageVersionId = t.PackageVersionId,
             Status = t.Status, StartedAt = t.StartedAt, ExpiresAt = t.ExpiresAt,

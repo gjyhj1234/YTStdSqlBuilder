@@ -7,6 +7,7 @@ using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
 using YTStdTenantPlatform.Infrastructure.Cache;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -14,20 +15,20 @@ namespace YTStdTenantPlatform.Application.Services
     public static class PlatformUserAppService
     {
         /// <summary>获取用户分页列表</summary>
-        public static async ValueTask<PagedResult<PlatformUserDto>> GetListAsync(
+        public static async ValueTask<PagedResult<PlatformUserRepDTO>> GetListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (queryResult, data) = await PlatformUserCRUD.GetListAsync(tenantId, operatorId);
             if (!queryResult.Success || data == null)
-                return new PagedResult<PlatformUserDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<PlatformUserRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = FilterUsers(data, request);
             var paged = Paginate(filtered, request);
-            var items = new List<PlatformUserDto>(paged.Count);
+            var items = new List<PlatformUserRepDTO>(paged.Count);
             foreach (var u in paged)
                 items.Add(MapToDto(u));
 
-            return new PagedResult<PlatformUserDto>
+            return new PagedResult<PlatformUserRepDTO>
             {
                 Items = items,
                 Total = filtered.Count,
@@ -37,7 +38,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取用户详情</summary>
-        public static async ValueTask<PlatformUserDto?> GetByIdAsync(int tenantId, long operatorId, long id)
+        public static async ValueTask<PlatformUserRepDTO?> GetByIdAsync(int tenantId, long operatorId, long id)
         {
             var (queryResult, data) = await PlatformUserCRUD.GetListAsync(tenantId, operatorId);
             if (!queryResult.Success || data == null) return null;
@@ -52,14 +53,14 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建平台用户</summary>
         public static async ValueTask<ApiResult<long>> CreateAsync(
-            int tenantId, long operatorId, CreatePlatformUserRequest req)
+            int tenantId, long operatorId, CreatePlatformUserReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.Username))
-                return ApiResult<long>.Fail("用户名不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.UserUsernameRequired, Messages.UserUsernameRequired);
             if (string.IsNullOrWhiteSpace(req.Email))
-                return ApiResult<long>.Fail("邮箱不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.UserEmailRequired, Messages.UserEmailRequired);
             if (string.IsNullOrWhiteSpace(req.Password))
-                return ApiResult<long>.Fail("密码不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.UserPasswordRequired, Messages.UserPasswordRequired);
 
             var salt = GenerateSalt();
             var hash = HashPassword(req.Password, salt);
@@ -82,7 +83,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await PlatformUserCRUD.InsertAsync(tenantId, operatorId, user);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建用户失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.UserCreateFailed, Messages.UserCreateFailed);
 
             Logger.Info(tenantId, operatorId, "[PlatformUserAppService] 创建用户: " + req.Username);
             return ApiResult<long>.Ok(insResult.Id);
@@ -90,18 +91,18 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>更新平台用户</summary>
         public static async ValueTask<ApiResult> UpdateAsync(
-            int tenantId, long operatorId, long id, UpdatePlatformUserRequest req)
+            int tenantId, long operatorId, long id, UpdatePlatformUserReqDTO req)
         {
             var (queryResult, allUsers) = await PlatformUserCRUD.GetListAsync(tenantId, operatorId);
             if (!queryResult.Success || allUsers == null)
-                return ApiResult.Fail("查询用户失败");
+                return ApiResult.Fail(ErrorCodes.UserQueryFailed, Messages.UserQueryFailed);
 
             PlatformUser? target = null;
             foreach (var u in allUsers)
             {
                 if (u.Id == id && u.DeletedAt == null) { target = u; break; }
             }
-            if (target == null) return ApiResult.Fail("用户不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.UserNotFound, Messages.UserNotFound);
 
             if (req.DisplayName != null) target.DisplayName = req.DisplayName;
             if (req.Phone != null) target.Phone = req.Phone;
@@ -111,10 +112,10 @@ namespace YTStdTenantPlatform.Application.Services
 
             var updResult = await PlatformUserCRUD.UpdateAsync(tenantId, operatorId, target);
             if (!updResult.Success)
-                return ApiResult.Fail("更新用户失败: " + updResult.ErrorMessage);
+                return ApiResult.Fail(ErrorCodes.UserUpdateFailed, Messages.UserUpdateFailed);
 
             Logger.Info(tenantId, operatorId, "[PlatformUserAppService] 更新用户: " + target.Username);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         /// <summary>启用/禁用用户</summary>
@@ -123,29 +124,29 @@ namespace YTStdTenantPlatform.Application.Services
         {
             var (queryResult, allUsers) = await PlatformUserCRUD.GetListAsync(tenantId, operatorId);
             if (!queryResult.Success || allUsers == null)
-                return ApiResult.Fail("查询用户失败");
+                return ApiResult.Fail(ErrorCodes.UserQueryFailed, Messages.UserQueryFailed);
 
             PlatformUser? target = null;
             foreach (var u in allUsers)
             {
                 if (u.Id == id && u.DeletedAt == null) { target = u; break; }
             }
-            if (target == null) return ApiResult.Fail("用户不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.UserNotFound, Messages.UserNotFound);
 
             target.Status = status;
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await PlatformUserCRUD.UpdateAsync(tenantId, operatorId, target);
             if (!updResult.Success)
-                return ApiResult.Fail("状态变更失败");
+                return ApiResult.Fail(ErrorCodes.UserStatusChangeFailed, Messages.UserStatusChangeFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[PlatformUserAppService] 用户状态变更: " + target.Username + " → " + status);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         /// <summary>映射实体到 DTO</summary>
-        private static PlatformUserDto MapToDto(PlatformUser u) => new PlatformUserDto
+        private static PlatformUserRepDTO MapToDto(PlatformUser u) => new PlatformUserRepDTO
         {
             Id = u.Id, Username = u.Username, Email = u.Email,
             Phone = u.Phone, DisplayName = u.DisplayName,

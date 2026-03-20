@@ -5,6 +5,7 @@ using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
 using YTStdTenantPlatform.Infrastructure.Cache;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -16,7 +17,7 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取租户系统配置</summary>
-        public static async ValueTask<TenantSystemConfigDto?> GetSystemConfigAsync(
+        public static async ValueTask<TenantSystemConfigRepDTO?> GetSystemConfigAsync(
             int tenantId, long operatorId, long tenantRefId)
         {
             var (result, data) = await TenantSystemConfigCRUD.GetListAsync(tenantId, operatorId);
@@ -31,10 +32,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>更新租户系统配置</summary>
         public static async ValueTask<ApiResult> UpdateSystemConfigAsync(
-            int tenantId, long operatorId, long tenantRefId, UpdateTenantSystemConfigRequest req)
+            int tenantId, long operatorId, long tenantRefId, UpdateTenantSystemConfigReqDTO req)
         {
             var (getResult, configs) = await TenantSystemConfigCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || configs == null) return ApiResult.Fail("查询配置失败");
+            if (!getResult.Success || configs == null) return ApiResult.Fail(ErrorCodes.ConfigQueryFailed, Messages.ConfigQueryFailed);
 
             TenantSystemConfig? target = null;
             foreach (var c in configs) { if (c.TenantRefId == tenantRefId) { target = c; break; } }
@@ -69,7 +70,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             Logger.Info(tenantId, operatorId,
                 "[TenantConfigAppService] 更新系统配置: tenant=" + tenantRefId);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -77,12 +78,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取功能开关列表</summary>
-        public static async ValueTask<PagedResult<TenantFeatureFlagDto>> GetFeatureFlagListAsync(
+        public static async ValueTask<PagedResult<TenantFeatureFlagRepDTO>> GetFeatureFlagListAsync(
             int tenantId, long operatorId, PagedRequest request, long? tenantRefId = null)
         {
             var (result, data) = await TenantFeatureFlagCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantFeatureFlagDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantFeatureFlagRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantFeatureFlag>();
             foreach (var f in data)
@@ -95,13 +96,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(f);
             }
 
-            var items = new List<TenantFeatureFlagDto>();
+            var items = new List<TenantFeatureFlagRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapFlagToDto(filtered[i]));
 
-            return new PagedResult<TenantFeatureFlagDto>
+            return new PagedResult<TenantFeatureFlagRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -110,10 +111,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建/更新功能开关</summary>
         public static async ValueTask<ApiResult<long>> SaveFeatureFlagAsync(
-            int tenantId, long operatorId, SaveTenantFeatureFlagRequest req)
+            int tenantId, long operatorId, SaveTenantFeatureFlagReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.FeatureKey))
-                return ApiResult<long>.Fail("功能键不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.FeatureKeyRequired, Messages.FeatureKeyRequired);
 
             var now = DateTime.UtcNow;
             var flag = new TenantFeatureFlag
@@ -129,7 +130,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantFeatureFlagCRUD.InsertAsync(tenantId, operatorId, flag);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("保存功能开关失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.FeatureFlagSaveFailed, Messages.FeatureFlagSaveFailed);
 
             await PlatformCacheCoordinator.InvalidateFeatureFlagsAsync();
             Logger.Info(tenantId, operatorId,
@@ -142,21 +143,21 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, bool enabled)
         {
             var (getResult, flags) = await TenantFeatureFlagCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || flags == null) return ApiResult.Fail("查询功能开关失败");
+            if (!getResult.Success || flags == null) return ApiResult.Fail(ErrorCodes.ConfigQueryFailed, Messages.ConfigQueryFailed);
 
             TenantFeatureFlag? target = null;
             foreach (var f in flags) { if (f.Id == id) { target = f; break; } }
-            if (target == null) return ApiResult.Fail("功能开关不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.FeatureFlagNotFound, Messages.FeatureFlagNotFound);
 
             target.Enabled = enabled;
             target.UpdatedAt = DateTime.UtcNow;
             var updResult = await TenantFeatureFlagCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("状态变更失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.FeatureFlagToggleFailed, Messages.FeatureFlagToggleFailed);
 
             await PlatformCacheCoordinator.InvalidateFeatureFlagsAsync();
             Logger.Info(tenantId, operatorId,
                 "[TenantConfigAppService] 切换功能开关: " + target.FeatureKey + " → " + enabled);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -164,12 +165,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取租户参数列表</summary>
-        public static async ValueTask<PagedResult<TenantParameterDto>> GetParameterListAsync(
+        public static async ValueTask<PagedResult<TenantParameterRepDTO>> GetParameterListAsync(
             int tenantId, long operatorId, PagedRequest request, long? tenantRefId = null)
         {
             var (result, data) = await TenantParameterCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantParameterDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantParameterRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantParameter>();
             foreach (var p in data)
@@ -182,13 +183,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(p);
             }
 
-            var items = new List<TenantParameterDto>();
+            var items = new List<TenantParameterRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var p = filtered[i];
-                items.Add(new TenantParameterDto
+                items.Add(new TenantParameterRepDTO
                 {
                     Id = p.Id, TenantRefId = p.TenantRefId,
                     ParamKey = p.ParamKey, ParamName = p.ParamName,
@@ -197,7 +198,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<TenantParameterDto>
+            return new PagedResult<TenantParameterRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -206,10 +207,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建/更新租户参数</summary>
         public static async ValueTask<ApiResult<long>> SaveParameterAsync(
-            int tenantId, long operatorId, SaveTenantParameterRequest req)
+            int tenantId, long operatorId, SaveTenantParameterReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.ParamKey))
-                return ApiResult<long>.Fail("参数键不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.ParamKeyRequired, Messages.ParamKeyRequired);
 
             var now = DateTime.UtcNow;
             var param = new TenantParameter
@@ -225,7 +226,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantParameterCRUD.InsertAsync(tenantId, operatorId, param);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("保存参数失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.ParamSaveFailed, Messages.ParamSaveFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[TenantConfigAppService] 保存参数: " + req.ParamKey);
@@ -237,19 +238,19 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var delResult = await TenantParameterCRUD.DeleteAsync(tenantId, operatorId, id);
-            if (!delResult.Success) return ApiResult.Fail("删除参数失败");
+            if (!delResult.Success) return ApiResult.Fail(ErrorCodes.ParamDeleteFailed, Messages.ParamDeleteFailed);
 
             Logger.Info(tenantId, operatorId, "[TenantConfigAppService] 删除参数: id=" + id);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
         // Mapping helpers
         // ──────────────────────────────────────────────────────
 
-        private static TenantSystemConfigDto MapConfigToDto(TenantSystemConfig c)
+        private static TenantSystemConfigRepDTO MapConfigToDto(TenantSystemConfig c)
         {
-            return new TenantSystemConfigDto
+            return new TenantSystemConfigRepDTO
             {
                 Id = c.Id, TenantRefId = c.TenantRefId,
                 SystemName = c.SystemName, LogoUrl = c.LogoUrl,
@@ -258,9 +259,9 @@ namespace YTStdTenantPlatform.Application.Services
             };
         }
 
-        private static TenantFeatureFlagDto MapFlagToDto(TenantFeatureFlag f)
+        private static TenantFeatureFlagRepDTO MapFlagToDto(TenantFeatureFlag f)
         {
-            return new TenantFeatureFlagDto
+            return new TenantFeatureFlagRepDTO
             {
                 Id = f.Id, TenantRefId = f.TenantRefId,
                 FeatureKey = f.FeatureKey, FeatureName = f.FeatureName,

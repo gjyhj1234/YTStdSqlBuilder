@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Application.Services;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -30,17 +31,17 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await TenantConfigAppService.GetSystemConfigAsync(0, user.UserId, tenantRefId);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<TenantSystemConfigDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<TenantSystemConfigRepDTO>.Ok(result));
             }).WithSummary("获取租户系统配置");
 
             group.MapPut("/{tenantRefId:long}", async (HttpContext ctx, long tenantRefId) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateTenantSystemConfigRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<UpdateTenantSystemConfigReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantConfigAppService.UpdateSystemConfigAsync(0, user.UserId, tenantRefId, req);
-                await WriteJsonAsync(ctx, result, result.Success ? 200 : 400);
+                await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);
             }).WithSummary("更新租户系统配置");
         }
 
@@ -55,16 +56,16 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await TenantConfigAppService.GetFeatureFlagListAsync(0, user.UserId, req, tenantRefId);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantFeatureFlagDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantFeatureFlagRepDTO>>.Ok(result));
             }).WithSummary("获取功能开关列表");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantFeatureFlagRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantFeatureFlagReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantConfigAppService.SaveFeatureFlagAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建/更新功能开关");
@@ -73,7 +74,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await TenantConfigAppService.ToggleFeatureFlagAsync(0, user.UserId, id, enabled);
-                await WriteJsonAsync(ctx, result, result.Success ? 200 : 400);
+                await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);
             }).WithSummary("切换功能开关启停");
         }
 
@@ -88,16 +89,16 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await TenantConfigAppService.GetParameterListAsync(0, user.UserId, req, tenantRefId);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantParameterDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantParameterRepDTO>>.Ok(result));
             }).WithSummary("获取参数列表");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantParameterRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantParameterReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantConfigAppService.SaveParameterAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建/更新参数");
@@ -106,7 +107,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await TenantConfigAppService.DeleteParameterAsync(0, user.UserId, id);
-                await WriteJsonAsync(ctx, result, result.Success ? 200 : 400);
+                await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);
             }).WithSummary("删除参数");
         }
 

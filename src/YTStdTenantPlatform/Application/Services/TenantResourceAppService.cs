@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -11,12 +12,12 @@ namespace YTStdTenantPlatform.Application.Services
     public static class TenantResourceAppService
     {
         /// <summary>获取资源配额列表</summary>
-        public static async ValueTask<PagedResult<TenantResourceQuotaDto>> GetListAsync(
+        public static async ValueTask<PagedResult<TenantResourceQuotaRepDTO>> GetListAsync(
             int tenantId, long operatorId, PagedRequest request, long? tenantRefId = null)
         {
             var (result, data) = await TenantResourceQuotaCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantResourceQuotaDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantResourceQuotaRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantResourceQuota>();
             foreach (var q in data)
@@ -28,13 +29,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(q);
             }
 
-            var items = new List<TenantResourceQuotaDto>();
+            var items = new List<TenantResourceQuotaRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapToDto(filtered[i]));
 
-            return new PagedResult<TenantResourceQuotaDto>
+            return new PagedResult<TenantResourceQuotaRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -42,7 +43,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取配额详情</summary>
-        public static async ValueTask<TenantResourceQuotaDto?> GetByIdAsync(
+        public static async ValueTask<TenantResourceQuotaRepDTO?> GetByIdAsync(
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantResourceQuotaCRUD.GetListAsync(tenantId, operatorId);
@@ -57,12 +58,12 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建或更新资源配额</summary>
         public static async ValueTask<ApiResult<long>> SaveAsync(
-            int tenantId, long operatorId, SaveTenantResourceQuotaRequest req)
+            int tenantId, long operatorId, SaveTenantResourceQuotaReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.QuotaType))
-                return ApiResult<long>.Fail("配额类型不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.QuotaTypeRequired, Messages.QuotaTypeRequired);
             if (req.QuotaLimit <= 0)
-                return ApiResult<long>.Fail("配额上限必须大于 0");
+                return ApiResult<long>.Fail(ErrorCodes.QuotaLimitInvalid, Messages.QuotaLimitInvalid);
 
             var now = DateTime.UtcNow;
             var quota = new TenantResourceQuota
@@ -78,16 +79,16 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantResourceQuotaCRUD.InsertAsync(tenantId, operatorId, quota);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("保存配额失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.QuotaSaveFailed, Messages.QuotaSaveFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[TenantResourceAppService] 保存配额: tenant=" + req.TenantRefId + " type=" + req.QuotaType);
             return ApiResult<long>.Ok(insResult.Id);
         }
 
-        private static TenantResourceQuotaDto MapToDto(TenantResourceQuota q)
+        private static TenantResourceQuotaRepDTO MapToDto(TenantResourceQuota q)
         {
-            return new TenantResourceQuotaDto
+            return new TenantResourceQuotaRepDTO
             {
                 Id = q.Id, TenantRefId = q.TenantRefId, QuotaType = q.QuotaType,
                 QuotaLimit = q.QuotaLimit, WarningThreshold = q.WarningThreshold,

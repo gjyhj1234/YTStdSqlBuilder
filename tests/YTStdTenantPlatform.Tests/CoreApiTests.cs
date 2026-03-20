@@ -17,15 +17,15 @@ namespace YTStdTenantPlatform.Tests
         public void ApiResult_Ok_ReturnsSuccess()
         {
             var result = ApiResult.Ok();
-            Assert.True(result.Success);
-            Assert.Equal("操作成功", result.Message);
+            Assert.True(result.Code == 0);
+            Assert.Equal("operation.success", result.Message);
         }
 
         [Fact]
         public void ApiResult_Fail_ReturnsFailure()
         {
-            var result = ApiResult.Fail("测试失败");
-            Assert.False(result.Success);
+            var result = ApiResult.Fail(1003, "测试失败");
+            Assert.False(result.Code == 0);
             Assert.Equal("测试失败", result.Message);
         }
 
@@ -33,16 +33,16 @@ namespace YTStdTenantPlatform.Tests
         public void ApiResultT_Ok_ReturnsDataAndSuccess()
         {
             var result = ApiResult<long>.Ok(42L);
-            Assert.True(result.Success);
+            Assert.True(result.Code == 0);
             Assert.Equal(42L, result.Data);
-            Assert.Equal("操作成功", result.Message);
+            Assert.Equal("operation.success", result.Message);
         }
 
         [Fact]
         public void ApiResultT_Fail_ReturnsFailureAndNoData()
         {
-            var result = ApiResult<long>.Fail("创建失败");
-            Assert.False(result.Success);
+            var result = ApiResult<long>.Fail(1003, "创建失败");
+            Assert.False(result.Code == 0);
             Assert.Equal("创建失败", result.Message);
             Assert.Equal(0L, result.Data);
         }
@@ -147,7 +147,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void PlatformUserDto_HasExpectedProperties()
         {
-            var dto = new PlatformUserDto
+            var dto = new PlatformUserRepDTO
             {
                 Id = 1,
                 Username = "admin",
@@ -165,7 +165,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void PlatformRoleDto_HasExpectedProperties()
         {
-            var dto = new PlatformRoleDto
+            var dto = new PlatformRoleRepDTO
             {
                 Id = 1,
                 Code = "super_admin",
@@ -178,7 +178,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantDto_HasExpectedProperties()
         {
-            var dto = new TenantDto
+            var dto = new TenantRepDTO
             {
                 Id = 1,
                 TenantCode = "demo",
@@ -194,12 +194,12 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantGroupDto_Children_CanBeEmpty()
         {
-            var dto = new TenantGroupDto
+            var dto = new TenantGroupRepDTO
             {
                 Id = 1,
                 GroupCode = "g1",
                 GroupName = "分组1",
-                Children = new List<TenantGroupDto>()
+                Children = new List<TenantGroupRepDTO>()
             };
             Assert.NotNull(dto.Children);
             Assert.Empty(dto.Children);
@@ -208,7 +208,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void PlatformPermissionDto_Children_CanBeNull()
         {
-            var dto = new PlatformPermissionDto
+            var dto = new PlatformPermissionRepDTO
             {
                 Id = 1,
                 Code = "platform:user:list",
@@ -225,7 +225,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreatePlatformUserRequest_DefaultValues()
         {
-            var req = new CreatePlatformUserRequest();
+            var req = new CreatePlatformUserReqDTO();
             Assert.Equal("", req.Username);
             Assert.Equal("", req.Email);
             Assert.Equal("", req.Password);
@@ -235,7 +235,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateTenantRequest_DefaultValues()
         {
-            var req = new CreateTenantRequest();
+            var req = new CreateTenantReqDTO();
             Assert.Equal("manual", req.SourceType);
             Assert.Equal("shared", req.IsolationMode);
             Assert.Equal("zh-CN", req.DefaultLanguage);
@@ -245,7 +245,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreatePlatformRoleRequest_DefaultValues()
         {
-            var req = new CreatePlatformRoleRequest();
+            var req = new CreatePlatformRoleReqDTO();
             Assert.Equal("", req.Code);
             Assert.Equal("", req.Name);
             Assert.Null(req.Description);
@@ -254,28 +254,28 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void RolePermissionBindRequest_DefaultEmpty()
         {
-            var req = new RolePermissionBindRequest();
+            var req = new RolePermissionBindReqDTO();
             Assert.Empty(req.PermissionIds);
         }
 
         [Fact]
         public void RoleMemberBindRequest_DefaultEmpty()
         {
-            var req = new RoleMemberBindRequest();
+            var req = new RoleMemberBindReqDTO();
             Assert.Empty(req.UserIds);
         }
 
         [Fact]
         public void TagBindRequest_DefaultEmpty()
         {
-            var req = new TagBindRequest();
+            var req = new TagBindReqDTO();
             Assert.Empty(req.TagIds);
         }
 
         [Fact]
         public void SaveTenantResourceQuotaRequest_Defaults()
         {
-            var req = new SaveTenantResourceQuotaRequest();
+            var req = new SaveTenantResourceQuotaReqDTO();
             Assert.Equal(0, req.TenantRefId);
             Assert.Equal("", req.QuotaType);
             Assert.Equal(0, req.QuotaLimit);
@@ -284,7 +284,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaveTenantFeatureFlagRequest_Defaults()
         {
-            var req = new SaveTenantFeatureFlagRequest();
+            var req = new SaveTenantFeatureFlagReqDTO();
             Assert.Equal("all", req.RolloutType);
             Assert.False(req.Enabled);
         }
@@ -292,7 +292,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaveTenantParameterRequest_Defaults()
         {
-            var req = new SaveTenantParameterRequest();
+            var req = new SaveTenantParameterReqDTO();
             Assert.Equal("string", req.ParamType);
         }
 
@@ -303,7 +303,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantSystemConfigDto_Properties()
         {
-            var dto = new TenantSystemConfigDto
+            var dto = new TenantSystemConfigRepDTO
             {
                 Id = 1,
                 TenantRefId = 100,
@@ -316,7 +316,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantFeatureFlagDto_Properties()
         {
-            var dto = new TenantFeatureFlagDto
+            var dto = new TenantFeatureFlagRepDTO
             {
                 Id = 1,
                 FeatureKey = "advanced_search",
@@ -330,7 +330,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantDomainDto_Properties()
         {
-            var dto = new TenantDomainDto
+            var dto = new TenantDomainRepDTO
             {
                 Id = 1,
                 Domain = "demo.example.com",
@@ -344,7 +344,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantTagDto_Properties()
         {
-            var dto = new TenantTagDto
+            var dto = new TenantTagRepDTO
             {
                 Id = 1,
                 TagKey = "industry",
@@ -357,7 +357,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantLifecycleEventDto_Properties()
         {
-            var dto = new TenantLifecycleEventDto
+            var dto = new TenantLifecycleEventRepDTO
             {
                 Id = 1,
                 TenantRefId = 100,
@@ -371,7 +371,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantParameterDto_Properties()
         {
-            var dto = new TenantParameterDto
+            var dto = new TenantParameterRepDTO
             {
                 ParamKey = "max_users",
                 ParamType = "number",
@@ -387,7 +387,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantStatusChangeRequest_Properties()
         {
-            var req = new TenantStatusChangeRequest
+            var req = new TenantStatusChangeReqDTO
             {
                 TargetStatus = "active",
                 Reason = "审批通过"
@@ -399,7 +399,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdateTenantRequest_NullableProperties()
         {
-            var req = new UpdateTenantRequest();
+            var req = new UpdateTenantReqDTO();
             Assert.Null(req.TenantName);
             Assert.Null(req.EnterpriseName);
             Assert.Null(req.ContactName);
@@ -410,7 +410,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdatePlatformUserRequest_NullableProperties()
         {
-            var req = new UpdatePlatformUserRequest();
+            var req = new UpdatePlatformUserReqDTO();
             Assert.Null(req.DisplayName);
             Assert.Null(req.Phone);
             Assert.Null(req.Email);
@@ -420,7 +420,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdatePlatformRoleRequest_NullableProperties()
         {
-            var req = new UpdatePlatformRoleRequest();
+            var req = new UpdatePlatformRoleReqDTO();
             Assert.Null(req.Name);
             Assert.Null(req.Description);
         }
@@ -428,7 +428,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdateTenantSystemConfigRequest_NullableProperties()
         {
-            var req = new UpdateTenantSystemConfigRequest();
+            var req = new UpdateTenantSystemConfigReqDTO();
             Assert.Null(req.SystemName);
             Assert.Null(req.LogoUrl);
             Assert.Null(req.SystemTheme);
@@ -439,7 +439,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateTenantDomainRequest_Defaults()
         {
-            var req = new CreateTenantDomainRequest();
+            var req = new CreateTenantDomainReqDTO();
             Assert.Equal("custom", req.DomainType);
             Assert.Equal(0, req.TenantRefId);
         }
@@ -447,7 +447,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateTenantTagRequest_Defaults()
         {
-            var req = new CreateTenantTagRequest();
+            var req = new CreateTenantTagReqDTO();
             Assert.Equal("custom", req.TagType);
             Assert.Null(req.Description);
         }
@@ -455,7 +455,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateTenantGroupRequest_Defaults()
         {
-            var req = new CreateTenantGroupRequest();
+            var req = new CreateTenantGroupReqDTO();
             Assert.Null(req.ParentId);
             Assert.Null(req.Description);
         }
@@ -478,7 +478,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantResourceQuotaDto_Properties()
         {
-            var dto = new TenantResourceQuotaDto
+            var dto = new TenantResourceQuotaRepDTO
             {
                 Id = 1,
                 TenantRefId = 100,

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -15,12 +16,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取租户每日统计列表</summary>
-        public static async ValueTask<PagedResult<TenantDailyStatDto>> GetDailyStatListAsync(
+        public static async ValueTask<PagedResult<TenantDailyStatRepDTO>> GetDailyStatListAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantDailyStatCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantDailyStatDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantDailyStatRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantDailyStat>();
             foreach (var s in data)
@@ -29,13 +30,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(s);
             }
 
-            var items = new List<TenantDailyStatDto>();
+            var items = new List<TenantDailyStatRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var s = filtered[i];
-                items.Add(new TenantDailyStatDto
+                items.Add(new TenantDailyStatRepDTO
                 {
                     Id = s.Id, TenantRefId = s.TenantRefId, StatDate = s.StatDate,
                     ActiveUserCount = s.ActiveUserCount, NewUserCount = s.NewUserCount,
@@ -44,7 +45,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<TenantDailyStatDto>
+            return new PagedResult<TenantDailyStatRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -56,12 +57,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取平台监控指标列表</summary>
-        public static async ValueTask<PagedResult<PlatformMonitorMetricDto>> GetMonitorMetricListAsync(
+        public static async ValueTask<PagedResult<PlatformMonitorMetricRepDTO>> GetMonitorMetricListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PlatformMonitorMetricCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<PlatformMonitorMetricDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<PlatformMonitorMetricRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<PlatformMonitorMetric>();
             foreach (var m in data)
@@ -72,13 +73,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(m);
             }
 
-            var items = new List<PlatformMonitorMetricDto>();
+            var items = new List<PlatformMonitorMetricRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var m = filtered[i];
-                items.Add(new PlatformMonitorMetricDto
+                items.Add(new PlatformMonitorMetricRepDTO
                 {
                     Id = m.Id, ComponentName = m.ComponentName,
                     MetricType = m.MetricType, MetricKey = m.MetricKey,
@@ -87,7 +88,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<PlatformMonitorMetricDto>
+            return new PagedResult<PlatformMonitorMetricRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize

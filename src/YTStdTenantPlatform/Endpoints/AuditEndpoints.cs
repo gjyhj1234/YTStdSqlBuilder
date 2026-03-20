@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Application.Services;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -31,15 +32,15 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword, Status = status };
                 var result = await AuditAppService.GetOperationLogListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<OperationLogDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<OperationLogRepDTO>>.Ok(result));
             }).WithSummary("获取操作日志分页列表");
 
             group.MapGet("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
                 var result = await AuditAppService.GetOperationLogByIdAsync(0, user.UserId, id);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<OperationLogDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<OperationLogRepDTO>.Ok(result));
             }).WithSummary("获取操作日志详情");
         }
 
@@ -54,15 +55,15 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword, Status = status };
                 var result = await AuditAppService.GetAuditLogListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<AuditLogDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<AuditLogRepDTO>>.Ok(result));
             }).WithSummary("获取审计日志分页列表");
 
             group.MapGet("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
                 var result = await AuditAppService.GetAuditLogByIdAsync(0, user.UserId, id);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<AuditLogDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<AuditLogRepDTO>.Ok(result));
             }).WithSummary("获取审计日志详情");
         }
 
@@ -77,15 +78,15 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword, Status = status };
                 var result = await AuditAppService.GetSystemLogListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<SystemLogDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<SystemLogRepDTO>>.Ok(result));
             }).WithSummary("获取系统日志分页列表");
 
             group.MapGet("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
                 var result = await AuditAppService.GetSystemLogByIdAsync(0, user.UserId, id);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<SystemLogDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<SystemLogRepDTO>.Ok(result));
             }).WithSummary("获取系统日志详情");
         }
 

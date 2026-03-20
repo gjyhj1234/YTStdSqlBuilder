@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -15,12 +16,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取存储策略分页列表</summary>
-        public static async ValueTask<PagedResult<StorageStrategyDto>> GetStrategyListAsync(
+        public static async ValueTask<PagedResult<StorageStrategyRepDTO>> GetStrategyListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<StorageStrategyDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<StorageStrategyRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<StorageStrategy>();
             foreach (var s in data)
@@ -31,13 +32,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(s);
             }
 
-            var items = new List<StorageStrategyDto>();
+            var items = new List<StorageStrategyRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapStrategyToDto(filtered[i]));
 
-            return new PagedResult<StorageStrategyDto>
+            return new PagedResult<StorageStrategyRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -45,7 +46,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取存储策略详情</summary>
-        public static async ValueTask<StorageStrategyDto?> GetStrategyByIdAsync(
+        public static async ValueTask<StorageStrategyRepDTO?> GetStrategyByIdAsync(
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
@@ -60,10 +61,10 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建存储策略</summary>
         public static async ValueTask<ApiResult<long>> CreateStrategyAsync(
-            int tenantId, long operatorId, CreateStorageStrategyRequest req)
+            int tenantId, long operatorId, CreateStorageStrategyReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.StrategyCode))
-                return ApiResult<long>.Fail("策略编码不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.StorageStrategyNameRequired, Messages.StorageStrategyNameRequired);
 
             var now = DateTime.UtcNow;
             var entity = new StorageStrategy
@@ -80,7 +81,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await StorageStrategyCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建存储策略失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.StorageStrategyCreateFailed, Messages.StorageStrategyCreateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[StorageAppService] 创建存储策略: " + req.StrategyCode);
@@ -89,14 +90,14 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>更新存储策略</summary>
         public static async ValueTask<ApiResult> UpdateStrategyAsync(
-            int tenantId, long operatorId, long id, UpdateStorageStrategyRequest req)
+            int tenantId, long operatorId, long id, UpdateStorageStrategyReqDTO req)
         {
             var (getResult, strategies) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || strategies == null) return ApiResult.Fail("查询存储策略失败");
+            if (!getResult.Success || strategies == null) return ApiResult.Fail(ErrorCodes.StorageStrategyQueryFailed, Messages.StorageStrategyQueryFailed);
 
             StorageStrategy? target = null;
             foreach (var s in strategies) { if (s.Id == id) { target = s; break; } }
-            if (target == null) return ApiResult.Fail("存储策略不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.StorageStrategyNotFound, Messages.StorageStrategyNotFound);
 
             if (req.StrategyName != null) target.StrategyName = req.StrategyName;
             if (req.BucketName != null) target.BucketName = req.BucketName;
@@ -104,11 +105,11 @@ namespace YTStdTenantPlatform.Application.Services
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await StorageStrategyCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("更新存储策略失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.StorageStrategyUpdateFailed, Messages.StorageStrategyUpdateFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[StorageAppService] 更新存储策略: " + target.StrategyCode);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         /// <summary>设置存储策略状态（启用/禁用）</summary>
@@ -116,21 +117,21 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, strategies) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || strategies == null) return ApiResult.Fail("查询存储策略失败");
+            if (!getResult.Success || strategies == null) return ApiResult.Fail(ErrorCodes.StorageStrategyQueryFailed, Messages.StorageStrategyQueryFailed);
 
             StorageStrategy? target = null;
             foreach (var s in strategies) { if (s.Id == id) { target = s; break; } }
-            if (target == null) return ApiResult.Fail("存储策略不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.StorageStrategyNotFound, Messages.StorageStrategyNotFound);
 
             target.Status = status;
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await StorageStrategyCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("状态变更失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.StorageStrategyStatusChangeFailed, Messages.StorageStrategyStatusChangeFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[StorageAppService] 存储策略状态变更: " + target.StrategyCode + " → " + status);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -138,12 +139,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取文件分页列表</summary>
-        public static async ValueTask<PagedResult<TenantFileDto>> GetFileListAsync(
+        public static async ValueTask<PagedResult<TenantFileRepDTO>> GetFileListAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantFileCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantFileDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantFileRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantFile>();
             foreach (var f in data)
@@ -155,13 +156,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(f);
             }
 
-            var items = new List<TenantFileDto>();
+            var items = new List<TenantFileRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapFileToDto(filtered[i]));
 
-            return new PagedResult<TenantFileDto>
+            return new PagedResult<TenantFileRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -169,7 +170,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取文件详情</summary>
-        public static async ValueTask<TenantFileDto?> GetFileByIdAsync(
+        public static async ValueTask<TenantFileRepDTO?> GetFileByIdAsync(
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantFileCRUD.GetListAsync(tenantId, operatorId);
@@ -187,10 +188,10 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var delResult = await TenantFileCRUD.DeleteAsync(tenantId, operatorId, id);
-            if (!delResult.Success) return ApiResult.Fail("删除文件失败");
+            if (!delResult.Success) return ApiResult.Fail(ErrorCodes.FileDeleteFailed, Messages.FileDeleteFailed);
 
             Logger.Info(tenantId, operatorId, "[StorageAppService] 删除文件: id=" + id);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         // ──────────────────────────────────────────────────────
@@ -198,12 +199,12 @@ namespace YTStdTenantPlatform.Application.Services
         // ──────────────────────────────────────────────────────
 
         /// <summary>获取文件访问策略列表</summary>
-        public static async ValueTask<PagedResult<FileAccessPolicyDto>> GetFileAccessPoliciesAsync(
+        public static async ValueTask<PagedResult<FileAccessPolicyRepDTO>> GetFileAccessPoliciesAsync(
             int tenantId, long operatorId, long fileId, PagedRequest request)
         {
             var (result, data) = await FileAccessPolicyCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<FileAccessPolicyDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<FileAccessPolicyRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<FileAccessPolicy>();
             foreach (var p in data)
@@ -212,13 +213,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(p);
             }
 
-            var items = new List<FileAccessPolicyDto>();
+            var items = new List<FileAccessPolicyRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var p = filtered[i];
-                items.Add(new FileAccessPolicyDto
+                items.Add(new FileAccessPolicyRepDTO
                 {
                     Id = p.Id, FileId = p.FileId, SubjectType = p.SubjectType,
                     SubjectId = p.SubjectId, PermissionCode = p.PermissionCode,
@@ -226,7 +227,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<FileAccessPolicyDto>
+            return new PagedResult<FileAccessPolicyRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -235,14 +236,14 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建/更新文件访问策略</summary>
         public static async ValueTask<ApiResult<long>> SaveFileAccessPolicyAsync(
-            int tenantId, long operatorId, SaveFileAccessPolicyRequest req)
+            int tenantId, long operatorId, SaveFileAccessPolicyReqDTO req)
         {
             if (req.FileId <= 0)
-                return ApiResult<long>.Fail("文件 ID 无效");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
             if (string.IsNullOrWhiteSpace(req.SubjectType))
-                return ApiResult<long>.Fail("主体类型不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
             if (string.IsNullOrWhiteSpace(req.PermissionCode))
-                return ApiResult<long>.Fail("权限编码不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.InvalidParameter, Messages.InvalidParameter);
 
             var entity = new FileAccessPolicy
             {
@@ -255,7 +256,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await FileAccessPolicyCRUD.InsertAsync(tenantId, operatorId, entity);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("保存文件访问策略失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.FileAccessPolicySaveFailed, Messages.FileAccessPolicySaveFailed);
 
             Logger.Info(tenantId, operatorId,
                 "[StorageAppService] 保存文件访问策略: fileId=" + req.FileId);
@@ -266,14 +267,14 @@ namespace YTStdTenantPlatform.Application.Services
         // Mapping helpers
         // ──────────────────────────────────────────────────────
 
-        private static StorageStrategyDto MapStrategyToDto(StorageStrategy s) => new StorageStrategyDto
+        private static StorageStrategyRepDTO MapStrategyToDto(StorageStrategy s) => new StorageStrategyRepDTO
         {
             Id = s.Id, StrategyCode = s.StrategyCode, StrategyName = s.StrategyName,
             ProviderType = s.ProviderType, BucketName = s.BucketName,
             BasePath = s.BasePath, Status = s.Status, CreatedAt = s.CreatedAt
         };
 
-        private static TenantFileDto MapFileToDto(TenantFile f) => new TenantFileDto
+        private static TenantFileRepDTO MapFileToDto(TenantFile f) => new TenantFileRepDTO
         {
             Id = f.Id, TenantRefId = f.TenantRefId,
             StorageStrategyId = f.StorageStrategyId, FileName = f.FileName,

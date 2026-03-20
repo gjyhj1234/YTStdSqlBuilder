@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Application.Services;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -33,16 +34,16 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await ApiIntegrationAppService.GetApiKeyListAsync(0, user.UserId, tenantRefId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantApiKeyDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantApiKeyRepDTO>>.Ok(result));
             }).WithSummary("获取 API 密钥列表");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateApiKeyRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<CreateApiKeyReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await ApiIntegrationAppService.CreateApiKeyAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建 API 密钥");
@@ -51,7 +52,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await ApiIntegrationAppService.DisableApiKeyAsync(0, user.UserId, id);
-                await WriteJsonAsync(ctx, result, result.Success ? 200 : 400);
+                await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);
             }).WithSummary("禁用 API 密钥");
         }
 
@@ -66,7 +67,7 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await ApiIntegrationAppService.GetApiUsageStatsAsync(0, user.UserId, tenantRefId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantApiUsageStatDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantApiUsageStatRepDTO>>.Ok(result));
             }).WithSummary("获取 API 用量统计");
         }
 
@@ -81,7 +82,7 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await ApiIntegrationAppService.GetWebhookEventListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<WebhookEventDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<WebhookEventRepDTO>>.Ok(result));
             }).WithSummary("获取 Webhook 事件列表");
         }
 
@@ -96,16 +97,16 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await ApiIntegrationAppService.GetWebhookListAsync(0, user.UserId, tenantRefId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantWebhookDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantWebhookRepDTO>>.Ok(result));
             }).WithSummary("获取 Webhook 列表");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateWebhookRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<CreateWebhookReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await ApiIntegrationAppService.CreateWebhookAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建 Webhook");
@@ -113,10 +114,10 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPut("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateWebhookRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<UpdateWebhookReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await ApiIntegrationAppService.UpdateWebhookAsync(0, user.UserId, id, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, result, 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("更新 Webhook");
 
@@ -124,7 +125,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await ApiIntegrationAppService.SetWebhookStatusAsync(0, user.UserId, id, "active");
-                if (!result.Success) { await WriteJsonAsync(ctx, result, 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("启用 Webhook");
 
@@ -132,7 +133,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await ApiIntegrationAppService.SetWebhookStatusAsync(0, user.UserId, id, "disabled");
-                if (!result.Success) { await WriteJsonAsync(ctx, result, 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("禁用 Webhook");
         }
@@ -148,7 +149,7 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await ApiIntegrationAppService.GetDeliveryLogsAsync(0, user.UserId, webhookId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<WebhookDeliveryLogDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<WebhookDeliveryLogRepDTO>>.Ok(result));
             }).WithSummary("获取 Webhook 投递日志");
         }
 

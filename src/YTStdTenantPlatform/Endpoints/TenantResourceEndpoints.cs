@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Application.Services;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -23,24 +24,24 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await TenantResourceAppService.GetListAsync(0, user.UserId, req, tenantRefId);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantResourceQuotaDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantResourceQuotaRepDTO>>.Ok(result));
             }).WithSummary("获取资源配额列表");
 
             group.MapGet("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
                 var result = await TenantResourceAppService.GetByIdAsync(0, user.UserId, id);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<TenantResourceQuotaDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<TenantResourceQuotaRepDTO>.Ok(result));
             }).WithSummary("获取配额详情");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantResourceQuotaRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantResourceQuotaReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantResourceAppService.SaveAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建/更新资源配额");

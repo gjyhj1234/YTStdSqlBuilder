@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdLogger.Core;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -11,12 +12,12 @@ namespace YTStdTenantPlatform.Application.Services
     public static class TenantLifecycleAppService
     {
         /// <summary>获取租户分页列表</summary>
-        public static async ValueTask<PagedResult<TenantDto>> GetListAsync(
+        public static async ValueTask<PagedResult<TenantRepDTO>> GetListAsync(
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<Tenant>();
             foreach (var t in data)
@@ -32,13 +33,13 @@ namespace YTStdTenantPlatform.Application.Services
                 filtered.Add(t);
             }
 
-            var items = new List<TenantDto>();
+            var items = new List<TenantRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
                 items.Add(MapToDto(filtered[i]));
 
-            return new PagedResult<TenantDto>
+            return new PagedResult<TenantRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -46,7 +47,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>获取租户详情</summary>
-        public static async ValueTask<TenantDto?> GetByIdAsync(int tenantId, long operatorId, long id)
+        public static async ValueTask<TenantRepDTO?> GetByIdAsync(int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null) return null;
@@ -60,12 +61,12 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>创建租户</summary>
         public static async ValueTask<ApiResult<long>> CreateAsync(
-            int tenantId, long operatorId, CreateTenantRequest req)
+            int tenantId, long operatorId, CreateTenantReqDTO req)
         {
             if (string.IsNullOrWhiteSpace(req.TenantCode))
-                return ApiResult<long>.Fail("租户编码不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.TenantCodeRequired, Messages.TenantCodeRequired);
             if (string.IsNullOrWhiteSpace(req.TenantName))
-                return ApiResult<long>.Fail("租户名称不能为空");
+                return ApiResult<long>.Fail(ErrorCodes.TenantNameRequired, Messages.TenantNameRequired);
 
             var now = DateTime.UtcNow;
             var tenant = new Tenant
@@ -89,7 +90,7 @@ namespace YTStdTenantPlatform.Application.Services
 
             var insResult = await TenantCRUD.InsertAsync(tenantId, operatorId, tenant);
             if (!insResult.Success)
-                return ApiResult<long>.Fail("创建租户失败: " + insResult.ErrorMessage);
+                return ApiResult<long>.Fail(ErrorCodes.TenantCreateFailed, Messages.TenantCreateFailed);
 
             // 记录生命周期事件
             await RecordLifecycleEventAsync(tenantId, operatorId, insResult.Id, "created", null, "pending", "新建租户", operatorId);
@@ -100,14 +101,14 @@ namespace YTStdTenantPlatform.Application.Services
 
         /// <summary>更新租户信息</summary>
         public static async ValueTask<ApiResult> UpdateAsync(
-            int tenantId, long operatorId, long id, UpdateTenantRequest req)
+            int tenantId, long operatorId, long id, UpdateTenantReqDTO req)
         {
             var (getResult, tenants) = await TenantCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || tenants == null) return ApiResult.Fail("查询租户失败");
+            if (!getResult.Success || tenants == null) return ApiResult.Fail(ErrorCodes.TenantQueryFailed, Messages.TenantQueryFailed);
 
             Tenant? target = null;
             foreach (var t in tenants) { if (t.Id == id && t.DeletedAt == null) { target = t; break; } }
-            if (target == null) return ApiResult.Fail("租户不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.TenantNotFound, Messages.TenantNotFound);
 
             if (req.TenantName != null) target.TenantName = req.TenantName;
             if (req.EnterpriseName != null) target.EnterpriseName = req.EnterpriseName;
@@ -117,29 +118,29 @@ namespace YTStdTenantPlatform.Application.Services
             target.UpdatedAt = DateTime.UtcNow;
 
             var updResult = await TenantCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("更新租户失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.TenantUpdateFailed, Messages.TenantUpdateFailed);
 
             Logger.Info(tenantId, operatorId, "[TenantLifecycleAppService] 更新租户: " + target.TenantCode);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         /// <summary>租户状态流转</summary>
         public static async ValueTask<ApiResult> ChangeStatusAsync(
-            int tenantId, long operatorId, long id, TenantStatusChangeRequest req)
+            int tenantId, long operatorId, long id, TenantStatusChangeReqDTO req)
         {
             var (getResult, tenants) = await TenantCRUD.GetListAsync(tenantId, operatorId);
-            if (!getResult.Success || tenants == null) return ApiResult.Fail("查询租户失败");
+            if (!getResult.Success || tenants == null) return ApiResult.Fail(ErrorCodes.TenantQueryFailed, Messages.TenantQueryFailed);
 
             Tenant? target = null;
             foreach (var t in tenants) { if (t.Id == id && t.DeletedAt == null) { target = t; break; } }
-            if (target == null) return ApiResult.Fail("租户不存在");
+            if (target == null) return ApiResult.Fail(ErrorCodes.TenantNotFound, Messages.TenantNotFound);
 
             var fromStatus = target.LifecycleStatus;
             var toStatus = req.TargetStatus;
 
             // 状态流转校验
             if (!IsValidTransition(fromStatus, toStatus))
-                return ApiResult.Fail("不允许从 " + fromStatus + " 转变为 " + toStatus);
+                return ApiResult.Fail(ErrorCodes.TenantStatusTransitionDenied, Messages.TenantStatusTransitionDenied);
 
             target.LifecycleStatus = toStatus;
             target.UpdatedAt = DateTime.UtcNow;
@@ -161,23 +162,23 @@ namespace YTStdTenantPlatform.Application.Services
             }
 
             var updResult = await TenantCRUD.UpdateAsync(tenantId, operatorId, target);
-            if (!updResult.Success) return ApiResult.Fail("状态变更失败");
+            if (!updResult.Success) return ApiResult.Fail(ErrorCodes.TenantStatusChangeFailed, Messages.TenantStatusChangeFailed);
 
             await RecordLifecycleEventAsync(tenantId, operatorId, id, "status_changed",
                 fromStatus, toStatus, req.Reason, operatorId);
 
             Logger.Info(tenantId, operatorId,
                 "[TenantLifecycleAppService] 租户状态变更: " + target.TenantCode + " " + fromStatus + " → " + toStatus);
-            return ApiResult.Ok();
+            return ApiResult.Ok(Messages.OperationSuccess);
         }
 
         /// <summary>获取租户生命周期事件列表</summary>
-        public static async ValueTask<PagedResult<TenantLifecycleEventDto>> GetLifecycleEventsAsync(
+        public static async ValueTask<PagedResult<TenantLifecycleEventRepDTO>> GetLifecycleEventsAsync(
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantLifecycleEventCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new PagedResult<TenantLifecycleEventDto> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
+                return new PagedResult<TenantLifecycleEventRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantLifecycleEvent>();
             foreach (var e in data)
@@ -186,13 +187,13 @@ namespace YTStdTenantPlatform.Application.Services
                     filtered.Add(e);
             }
 
-            var items = new List<TenantLifecycleEventDto>();
+            var items = new List<TenantLifecycleEventRepDTO>();
             var offset = request.Offset;
             var size = request.NormalizedPageSize;
             for (int i = offset; i < filtered.Count && i < offset + size; i++)
             {
                 var e = filtered[i];
-                items.Add(new TenantLifecycleEventDto
+                items.Add(new TenantLifecycleEventRepDTO
                 {
                     Id = e.Id, TenantRefId = e.TenantRefId,
                     EventType = e.EventType, FromStatus = e.FromStatus,
@@ -201,7 +202,7 @@ namespace YTStdTenantPlatform.Application.Services
                 });
             }
 
-            return new PagedResult<TenantLifecycleEventDto>
+            return new PagedResult<TenantLifecycleEventRepDTO>
             {
                 Items = items, Total = filtered.Count,
                 Page = request.NormalizedPage, PageSize = request.NormalizedPageSize
@@ -245,9 +246,9 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>映射实体到 DTO</summary>
-        private static TenantDto MapToDto(Tenant t)
+        private static TenantRepDTO MapToDto(Tenant t)
         {
-            return new TenantDto
+            return new TenantRepDTO
             {
                 Id = t.Id, TenantCode = t.TenantCode, TenantName = t.TenantName,
                 EnterpriseName = t.EnterpriseName, ContactName = t.ContactName,

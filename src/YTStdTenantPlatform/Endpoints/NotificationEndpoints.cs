@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Application.Services;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -30,24 +31,24 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword, Status = status };
                 var result = await NotificationAppService.GetTemplateListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<NotificationTemplateDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<NotificationTemplateRepDTO>>.Ok(result));
             }).WithSummary("获取通知模板分页列表");
 
             group.MapGet("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.GetTemplateByIdAsync(0, user.UserId, id);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<NotificationTemplateDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<NotificationTemplateRepDTO>.Ok(result));
             }).WithSummary("获取通知模板详情");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateNotificationTemplateRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<CreateNotificationTemplateReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await NotificationAppService.CreateTemplateAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建通知模板");
@@ -55,10 +56,10 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPut("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateNotificationTemplateRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<UpdateNotificationTemplateReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await NotificationAppService.UpdateTemplateAsync(0, user.UserId, id, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, result, 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("更新通知模板");
 
@@ -66,7 +67,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.SetTemplateStatusAsync(0, user.UserId, id, "active");
-                if (!result.Success) { await WriteJsonAsync(ctx, result, 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("启用通知模板");
 
@@ -74,7 +75,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.SetTemplateStatusAsync(0, user.UserId, id, "disabled");
-                if (!result.Success) { await WriteJsonAsync(ctx, result, 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("禁用通知模板");
         }
@@ -90,24 +91,24 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword, Status = status };
                 var result = await NotificationAppService.GetNotificationListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<NotificationDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<NotificationRepDTO>>.Ok(result));
             }).WithSummary("获取通知分页列表");
 
             group.MapGet("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.GetNotificationByIdAsync(0, user.UserId, id);
-                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail("资源不存在"), 404); return; }
-                await WriteJsonAsync(ctx, ApiResult<NotificationDto>.Ok(result));
+                if (result == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.ResourceNotFound, Messages.ResourceNotFound), 404); return; }
+                await WriteJsonAsync(ctx, ApiResult<NotificationRepDTO>.Ok(result));
             }).WithSummary("获取通知详情");
 
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateNotificationRequest>();
-                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail("请求体无效"), 400); return; }
+                var req = await ctx.Request.ReadFromJsonAsync<CreateNotificationReqDTO>();
+                if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await NotificationAppService.CreateNotificationAsync(0, user.UserId, req);
-                if (!result.Success) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Message), 400); return; }
+                if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
                 ctx.Response.StatusCode = 201;
                 await WriteJsonAsync(ctx, result);
             }).WithSummary("创建通知");
@@ -116,7 +117,7 @@ namespace YTStdTenantPlatform.Endpoints
             {
                 var user = GetCurrentUser(ctx);
                 var result = await NotificationAppService.MarkNotificationReadAsync(0, user.UserId, id);
-                await WriteJsonAsync(ctx, result, result.Success ? 200 : 400);
+                await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);
             }).WithSummary("标记通知已读");
         }
 

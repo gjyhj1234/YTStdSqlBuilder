@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Application.Services;
 using YTStdTenantPlatform.Infrastructure.Auth;
@@ -30,7 +31,7 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await PlatformOperationAppService.GetDailyStatListAsync(0, user.UserId, tenantRefId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantDailyStatDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<TenantDailyStatRepDTO>>.Ok(result));
             }).WithSummary("获取租户每日统计列表");
         }
 
@@ -45,7 +46,7 @@ namespace YTStdTenantPlatform.Endpoints
                 var user = GetCurrentUser(ctx);
                 var req = new PagedRequest { Page = page ?? 1, PageSize = pageSize ?? 20, Keyword = keyword };
                 var result = await PlatformOperationAppService.GetMonitorMetricListAsync(0, user.UserId, req);
-                await WriteJsonAsync(ctx, ApiResult<PagedResult<PlatformMonitorMetricDto>>.Ok(result));
+                await WriteJsonAsync(ctx, ApiResult<PagedResult<PlatformMonitorMetricRepDTO>>.Ok(result));
             }).WithSummary("获取平台监控指标列表");
         }
 

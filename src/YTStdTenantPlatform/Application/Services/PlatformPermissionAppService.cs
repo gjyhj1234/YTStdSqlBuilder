@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Entity.TenantPlatform;
 using YTStdTenantPlatform.Infrastructure.Cache;
+using YTStdTenantPlatform.Application.Constants;
 
 namespace YTStdTenantPlatform.Application.Services
 {
@@ -11,30 +12,30 @@ namespace YTStdTenantPlatform.Application.Services
     public static class PlatformPermissionAppService
     {
         /// <summary>获取权限树</summary>
-        public static async ValueTask<List<PlatformPermissionDto>> GetTreeAsync(int tenantId, long operatorId)
+        public static async ValueTask<List<PlatformPermissionRepDTO>> GetTreeAsync(int tenantId, long operatorId)
         {
             var (result, data) = await PlatformPermissionCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new List<PlatformPermissionDto>();
+                return new List<PlatformPermissionRepDTO>();
 
             return BuildTree(data);
         }
 
         /// <summary>获取权限平铺列表</summary>
-        public static async ValueTask<List<PlatformPermissionDto>> GetFlatListAsync(int tenantId, long operatorId)
+        public static async ValueTask<List<PlatformPermissionRepDTO>> GetFlatListAsync(int tenantId, long operatorId)
         {
             var (result, data) = await PlatformPermissionCRUD.GetListAsync(tenantId, operatorId);
             if (!result.Success || data == null)
-                return new List<PlatformPermissionDto>();
+                return new List<PlatformPermissionRepDTO>();
 
-            var list = new List<PlatformPermissionDto>(data.Count);
+            var list = new List<PlatformPermissionRepDTO>(data.Count);
             foreach (var p in data)
                 list.Add(MapToDto(p));
             return list;
         }
 
         /// <summary>获取权限详情</summary>
-        public static async ValueTask<PlatformPermissionDto?> GetByIdAsync(int tenantId, long operatorId, long id)
+        public static async ValueTask<PlatformPermissionRepDTO?> GetByIdAsync(int tenantId, long operatorId, long id)
         {
             var cache = PlatformCacheWarmer.PermissionCache;
             foreach (var kvp in cache)
@@ -54,7 +55,7 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>按权限编码查询</summary>
-        public static PlatformPermissionDto? GetByCode(string code)
+        public static PlatformPermissionRepDTO? GetByCode(string code)
         {
             var cache = PlatformCacheWarmer.PermissionCache;
             if (cache.TryGetValue(code, out var perm))
@@ -63,17 +64,17 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>构建权限树</summary>
-        private static List<PlatformPermissionDto> BuildTree(IReadOnlyList<PlatformPermission> data)
+        private static List<PlatformPermissionRepDTO> BuildTree(IReadOnlyList<PlatformPermission> data)
         {
-            var allDtos = new Dictionary<long, PlatformPermissionDto>(data.Count);
+            var allDtos = new Dictionary<long, PlatformPermissionRepDTO>(data.Count);
             foreach (var p in data)
             {
                 var dto = MapToDto(p);
-                dto.Children = new List<PlatformPermissionDto>();
+                dto.Children = new List<PlatformPermissionRepDTO>();
                 allDtos[p.Id] = dto;
             }
 
-            var roots = new List<PlatformPermissionDto>();
+            var roots = new List<PlatformPermissionRepDTO>();
             foreach (var p in data)
             {
                 var dto = allDtos[p.Id];
@@ -90,9 +91,9 @@ namespace YTStdTenantPlatform.Application.Services
         }
 
         /// <summary>映射实体到 DTO</summary>
-        private static PlatformPermissionDto MapToDto(PlatformPermission p)
+        private static PlatformPermissionRepDTO MapToDto(PlatformPermission p)
         {
-            return new PlatformPermissionDto
+            return new PlatformPermissionRepDTO
             {
                 Id = p.Id,
                 Code = p.Code,

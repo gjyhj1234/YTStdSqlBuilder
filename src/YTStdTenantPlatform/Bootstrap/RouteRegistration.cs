@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -10,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using YTStdAdo;
 using YTStdLogger.Core;
+using YTStdTenantPlatform.Application.Constants;
 using YTStdTenantPlatform.Application.Dtos;
 using YTStdTenantPlatform.Endpoints;
 using YTStdTenantPlatform.Entity.TenantPlatform;
@@ -111,8 +111,8 @@ namespace YTStdTenantPlatform.Bootstrap
                 var result = await HealthCheck.CheckAllAsync();
                 var statusCode = result.IsHealthy ? 200 : 503;
                 var apiResult = result.IsHealthy
-                    ? ApiResult.Ok(result.Message)
-                    : ApiResult.Fail(result.Message);
+                    ? ApiResult.Ok(Messages.OperationSuccess)
+                    : ApiResult.Fail(ErrorCodes.OperationFailed, result.Message);
                 await TenantPlatformJsonResponseWriter.WriteAsync(ctx, apiResult, statusCode);
             }).WithSummary("综合健康检查");
 
@@ -121,8 +121,8 @@ namespace YTStdTenantPlatform.Bootstrap
                 var result = await HealthCheck.CheckDatabaseAsync();
                 var statusCode = result.IsHealthy ? 200 : 503;
                 var apiResult = result.IsHealthy
-                    ? ApiResult.Ok(result.Message)
-                    : ApiResult.Fail(result.Message);
+                    ? ApiResult.Ok(Messages.OperationSuccess)
+                    : ApiResult.Fail(ErrorCodes.OperationFailed, result.Message);
                 await TenantPlatformJsonResponseWriter.WriteAsync(ctx, apiResult, statusCode);
             }).WithSummary("数据库健康检查");
 
@@ -131,8 +131,8 @@ namespace YTStdTenantPlatform.Bootstrap
                 var result = HealthCheck.CheckCache();
                 var statusCode = result.IsHealthy ? 200 : 503;
                 var apiResult = result.IsHealthy
-                    ? ApiResult.Ok(result.Message)
-                    : ApiResult.Fail(result.Message);
+                    ? ApiResult.Ok(Messages.OperationSuccess)
+                    : ApiResult.Fail(ErrorCodes.OperationFailed, result.Message);
                 await TenantPlatformJsonResponseWriter.WriteAsync(ctx, apiResult, statusCode);
             }).WithSummary("缓存健康检查");
         }
@@ -145,10 +145,19 @@ namespace YTStdTenantPlatform.Bootstrap
 
             group.MapPost("/login", async (HttpContext context, CancellationToken cancellationToken) =>
             {
-                var request = await ReadLoginRequestAsync(context.Request, cancellationToken);
+                LoginReqDTO? request;
+                try
+                {
+                    request = await context.Request.ReadFromJsonAsync<LoginReqDTO>(cancellationToken: cancellationToken);
+                }
+                catch
+                {
+                    request = null;
+                }
                 if (request == null || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                 {
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "用户名或密码不能为空", null, 0, 0, string.Empty, string.Empty, false), 400);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.AuthCredentialsRequired, Messages.AuthCredentialsRequired), 400);
                     return;
                 }
 
@@ -161,7 +170,8 @@ namespace YTStdTenantPlatform.Bootstrap
                 if (!queryResult.Success || users == null)
                 {
                     Logger.Error(0, 0, "[RouteRegistration] 查询平台用户失败: " + queryResult.ErrorMessage);
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "系统繁忙，请稍后再试", null, 0, 0, string.Empty, string.Empty, false), 500);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.SystemBusy, Messages.SystemBusy), 500);
                     return;
                 }
 
@@ -169,11 +179,7 @@ namespace YTStdTenantPlatform.Bootstrap
                 for (int i = 0; i < users.Count; i++)
                 {
                     var candidate = users[i];
-                    if (candidate.DeletedAt != null)
-                    {
-                        continue;
-                    }
-
+                    if (candidate.DeletedAt != null) continue;
                     if (string.Equals(candidate.Username, username, StringComparison.OrdinalIgnoreCase))
                     {
                         matchedUser = candidate;
@@ -188,14 +194,16 @@ namespace YTStdTenantPlatform.Bootstrap
                 if (matchedUser == null)
                 {
                     await RecordLoginAsync(null, username, remoteIp, userAgent, "password", "failed", "用户名或密码错误");
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "用户名或密码错误", null, 0, 0, string.Empty, string.Empty, false), 401);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.AuthInvalidCredentials, Messages.AuthInvalidCredentials), 401);
                     return;
                 }
 
                 if (string.Equals(matchedUser.Status, "disabled", StringComparison.OrdinalIgnoreCase))
                 {
                     await RecordLoginAsync(matchedUser, username, remoteIp, userAgent, "password", "disabled", "账户已禁用");
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "账户已禁用", null, 0, matchedUser.Id, matchedUser.Username, matchedUser.DisplayName, false), 403);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.AuthAccountDisabled, Messages.AuthAccountDisabled), 403);
                     return;
                 }
 
@@ -204,7 +212,8 @@ namespace YTStdTenantPlatform.Bootstrap
                     matchedUser.Status = "locked";
                     await PlatformUserCRUD.UpdateAsync(0, 0, matchedUser);
                     await RecordLoginAsync(matchedUser, username, remoteIp, userAgent, "password", "locked", "账户已锁定");
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "账户已锁定", null, 0, matchedUser.Id, matchedUser.Username, matchedUser.DisplayName, false), 423);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.AuthAccountLocked, Messages.AuthAccountLocked), 423);
                     return;
                 }
 
@@ -225,8 +234,12 @@ namespace YTStdTenantPlatform.Bootstrap
                     }
 
                     await PlatformUserCRUD.UpdateAsync(0, 0, matchedUser);
-                    await RecordLoginAsync(matchedUser, username, remoteIp, userAgent, "password", matchedUser.Status == "locked" ? "locked" : "failed", "用户名或密码错误");
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, matchedUser.Status == "locked" ? "账户已锁定" : "用户名或密码错误", null, 0, matchedUser.Id, matchedUser.Username, matchedUser.DisplayName, false), matchedUser.Status == "locked" ? 423 : 401);
+                    var isLocked = string.Equals(matchedUser.Status, "locked", StringComparison.Ordinal);
+                    await RecordLoginAsync(matchedUser, username, remoteIp, userAgent, "password", isLocked ? "locked" : "failed", "用户名或密码错误");
+                    var errCode = isLocked ? ErrorCodes.AuthAccountLocked : ErrorCodes.AuthInvalidCredentials;
+                    var errMsg = isLocked ? Messages.AuthAccountLocked : Messages.AuthInvalidCredentials;
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(errCode, errMsg), isLocked ? 423 : 401);
                     return;
                 }
 
@@ -241,14 +254,14 @@ namespace YTStdTenantPlatform.Bootstrap
                 if (!updateResult.Success)
                 {
                     Logger.Error(0, 0, "[RouteRegistration] 更新登录状态失败: " + updateResult.ErrorMessage);
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "登录状态更新失败", null, 0, matchedUser.Id, matchedUser.Username, matchedUser.DisplayName, false), 500);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.AuthLoginUpdateFailed, Messages.AuthLoginUpdateFailed), 500);
                     return;
                 }
 
                 var token = PlatformAuthHandler.GenerateToken(matchedUser.Id, matchedUser.Username);
                 var requirePasswordReset = matchedUser.PasswordExpiresAt.HasValue && matchedUser.PasswordExpiresAt.Value <= now;
 
-                // 从缓存获取用户角色、权限、超管标识
                 var userRoleCache = PlatformCacheWarmer.UserRoleCache;
                 IReadOnlyList<string> loginRoles = userRoleCache.TryGetValue(matchedUser.Id, out var cachedRoles)
                     ? cachedRoles
@@ -259,44 +272,75 @@ namespace YTStdTenantPlatform.Bootstrap
                 for (int ri = 0; ri < loginRoles.Count; ri++)
                 {
                     if (string.Equals(loginRoles[ri], "super_admin", StringComparison.OrdinalIgnoreCase))
-                    {
                         loginIsSuperAdmin = true;
-                    }
                     if (rolePermCache.TryGetValue(loginRoles[ri], out var rp))
-                    {
                         for (int pi = 0; pi < rp.Count; pi++) permSet.Add(rp[pi]);
-                    }
                 }
                 var loginPermissions = new List<string>(permSet.Count);
                 foreach (var p in permSet) loginPermissions.Add(p);
 
                 await RecordLoginAsync(matchedUser, username, remoteIp, userAgent, "password", "success", null);
-                await WriteAuthJsonAsync(context, new AuthResponse(true, requirePasswordReset ? "登录成功，需尽快修改密码" : "登录成功", token, PlatformAuthHandler.GetTokenExpirySeconds(), matchedUser.Id, matchedUser.Username, matchedUser.DisplayName, requirePasswordReset, loginRoles, loginPermissions, loginIsSuperAdmin));
+
+                var loginData = new LoginRepDTO
+                {
+                    Token = token,
+                    ExpiresIn = PlatformAuthHandler.GetTokenExpirySeconds(),
+                    UserId = matchedUser.Id,
+                    Username = matchedUser.Username,
+                    DisplayName = matchedUser.DisplayName,
+                    RequirePasswordReset = requirePasswordReset,
+                    Roles = loginRoles,
+                    Permissions = loginPermissions,
+                    IsSuperAdmin = loginIsSuperAdmin
+                };
+                var loginMsg = requirePasswordReset ? Messages.AuthLoginSuccessPasswordExpired : Messages.AuthLoginSuccess;
+                await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                    ApiResult<LoginRepDTO>.Ok(loginData, loginMsg));
             }).WithSummary("平台用户登录");
 
             group.MapPost("/refresh", async (HttpContext context, CancellationToken cancellationToken) =>
             {
-                var request = await ReadRefreshTokenRequestAsync(context.Request, cancellationToken);
+                RefreshTokenReqDTO? request;
+                try
+                {
+                    request = await context.Request.ReadFromJsonAsync<RefreshTokenReqDTO>(cancellationToken: cancellationToken);
+                }
+                catch
+                {
+                    request = null;
+                }
                 var token = request?.Token;
                 if (string.IsNullOrWhiteSpace(token))
                 {
                     var authHeader = context.Request.Headers.Authorization.ToString();
                     const string bearerPrefix = "Bearer ";
                     if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith(bearerPrefix, StringComparison.OrdinalIgnoreCase))
-                    {
                         token = authHeader.Substring(bearerPrefix.Length).Trim();
-                    }
                 }
 
                 var currentUser = PlatformAuthHandler.TryResolveToken(token ?? string.Empty, context.TraceIdentifier);
                 if (currentUser == null)
                 {
-                    await WriteAuthJsonAsync(context, new AuthResponse(false, "令牌无效或已过期", null, 0, 0, string.Empty, string.Empty, false), 401);
+                    await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                        ApiResult<LoginRepDTO>.Fail(ErrorCodes.AuthTokenInvalid, Messages.AuthTokenInvalid), 401);
                     return;
                 }
 
                 var refreshedToken = PlatformAuthHandler.GenerateToken(currentUser.UserId, currentUser.Username);
-                await WriteAuthJsonAsync(context, new AuthResponse(true, "刷新成功", refreshedToken, PlatformAuthHandler.GetTokenExpirySeconds(), currentUser.UserId, currentUser.Username, currentUser.DisplayName, false, currentUser.Roles, currentUser.Permissions, currentUser.IsSuperAdmin));
+                var refreshData = new LoginRepDTO
+                {
+                    Token = refreshedToken,
+                    ExpiresIn = PlatformAuthHandler.GetTokenExpirySeconds(),
+                    UserId = currentUser.UserId,
+                    Username = currentUser.Username,
+                    DisplayName = currentUser.DisplayName,
+                    RequirePasswordReset = false,
+                    Roles = currentUser.Roles,
+                    Permissions = currentUser.Permissions,
+                    IsSuperAdmin = currentUser.IsSuperAdmin
+                };
+                await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                    ApiResult<LoginRepDTO>.Ok(refreshData, Messages.AuthRefreshSuccess));
             }).WithSummary("刷新访问令牌");
 
             group.MapGet("/me", async (HttpContext context) =>
@@ -305,26 +349,15 @@ namespace YTStdTenantPlatform.Bootstrap
                     ? cu
                     : CurrentUser.Anonymous;
 
-                context.Response.ContentType = "application/json; charset=utf-8";
-                await Utf8JsonWriterHelper.WriteResponseAsync(
-                    context.Response,
-                    currentUser,
-                    static (writer, state) =>
-                    {
-                        writer.WriteStartObject();
-                        writer.WriteBoolean("success", true);
-                        writer.WriteString("message", "操作成功");
-                        writer.WritePropertyName("data");
-                        writer.WriteStartObject();
-                        writer.WriteNumber("userId", state.UserId);
-                        writer.WriteString("username", state.Username);
-                        writer.WriteString("displayName", state.DisplayName);
-                        writer.WriteBoolean("isSuperAdmin", state.IsSuperAdmin);
-                        writer.WriteEndObject();
-                        writer.WriteString("traceId", "");
-                        writer.WriteEndObject();
-                    },
-                    context.RequestAborted);
+                var meData = new CurrentUserRepDTO
+                {
+                    UserId = currentUser.UserId,
+                    Username = currentUser.Username,
+                    DisplayName = currentUser.DisplayName,
+                    IsSuperAdmin = currentUser.IsSuperAdmin
+                };
+                await TenantPlatformJsonResponseWriter.WriteAsync(context,
+                    ApiResult<CurrentUserRepDTO>.Ok(meData, Messages.OperationSuccess));
             }).WithSummary("获取当前登录用户信息");
         }
 
@@ -387,151 +420,5 @@ namespace YTStdTenantPlatform.Bootstrap
             }
         }
 
-        private static async Task<LoginRequest?> ReadLoginRequestAsync(HttpRequest request, CancellationToken cancellationToken)
-        {
-            try
-            {
-                using var document = await JsonDocument.ParseAsync(request.Body, cancellationToken: cancellationToken);
-                if (document.RootElement.ValueKind != JsonValueKind.Object)
-                {
-                    return null;
-                }
-
-                var root = document.RootElement;
-                return new LoginRequest
-                {
-                    Username = TryGetString(root, "username"),
-                    Password = TryGetString(root, "password")
-                };
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
-
-        private static async Task<RefreshTokenRequest?> ReadRefreshTokenRequestAsync(HttpRequest request, CancellationToken cancellationToken)
-        {
-            try
-            {
-                using var document = await JsonDocument.ParseAsync(request.Body, cancellationToken: cancellationToken);
-                if (document.RootElement.ValueKind != JsonValueKind.Object)
-                {
-                    return null;
-                }
-
-                var root = document.RootElement;
-                return new RefreshTokenRequest
-                {
-                    Token = TryGetString(root, "token")
-                };
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
-
-        private static string TryGetString(JsonElement root, string propertyName)
-        {
-            if (!root.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.String)
-            {
-                return string.Empty;
-            }
-
-            return property.GetString() ?? string.Empty;
-        }
-
-        private static async Task WriteAuthJsonAsync(HttpContext context, AuthResponse response, int statusCode = 200)
-        {
-            context.Response.StatusCode = statusCode;
-            context.Response.ContentType = "application/json; charset=utf-8";
-            await Utf8JsonWriterHelper.WriteResponseAsync(
-                context.Response,
-                response,
-                static (writer, state) =>
-                {
-                    writer.WriteStartObject();
-                    writer.WriteBoolean("success", state.Success);
-                    writer.WriteString("message", state.Message);
-                    writer.WritePropertyName("data");
-                    writer.WriteStartObject();
-                    if (string.IsNullOrEmpty(state.Token))
-                    {
-                        writer.WriteNull("token");
-                    }
-                    else
-                    {
-                        writer.WriteString("token", state.Token);
-                    }
-
-                    writer.WriteNumber("expiresIn", state.ExpiresIn);
-                    writer.WriteNumber("userId", state.UserId);
-                    writer.WriteString("username", state.Username);
-                    writer.WriteString("displayName", state.DisplayName);
-                    writer.WriteBoolean("requirePasswordReset", state.RequirePasswordReset);
-                    writer.WritePropertyName("roles");
-                    writer.WriteStartArray();
-                    for (int i = 0; i < state.Roles.Count; i++)
-                    {
-                        writer.WriteStringValue(state.Roles[i]);
-                    }
-                    writer.WriteEndArray();
-                    writer.WritePropertyName("permissions");
-                    writer.WriteStartArray();
-                    for (int i = 0; i < state.Permissions.Count; i++)
-                    {
-                        writer.WriteStringValue(state.Permissions[i]);
-                    }
-                    writer.WriteEndArray();
-                    writer.WriteBoolean("isSuperAdmin", state.IsSuperAdmin);
-                    writer.WriteEndObject();
-                    writer.WriteString("traceId", "");
-                    writer.WriteEndObject();
-                },
-                context.RequestAborted);
-        }
-
-        private sealed class LoginRequest
-        {
-            public string Username { get; set; } = string.Empty;
-            public string Password { get; set; } = string.Empty;
-        }
-
-        private sealed class RefreshTokenRequest
-        {
-            public string Token { get; set; } = string.Empty;
-        }
-
-        private sealed class AuthResponse
-        {
-            public bool Success { get; }
-            public string Message { get; }
-            public string? Token { get; }
-            public int ExpiresIn { get; }
-            public long UserId { get; }
-            public string Username { get; }
-            public string DisplayName { get; }
-            public bool RequirePasswordReset { get; }
-            public IReadOnlyList<string> Roles { get; }
-            public IReadOnlyList<string> Permissions { get; }
-            public bool IsSuperAdmin { get; }
-
-            public AuthResponse(bool success, string message, string? token, int expiresIn, long userId, string username, string displayName, bool requirePasswordReset,
-                IReadOnlyList<string>? roles = null, IReadOnlyList<string>? permissions = null, bool isSuperAdmin = false)
-            {
-                Success = success;
-                Message = message;
-                Token = token;
-                ExpiresIn = expiresIn;
-                UserId = userId;
-                Username = username;
-                DisplayName = displayName;
-                RequirePasswordReset = requirePasswordReset;
-                Roles = roles ?? Array.Empty<string>();
-                Permissions = permissions ?? Array.Empty<string>();
-                IsSuperAdmin = isSuperAdmin;
-            }
-        }
     }
 }

@@ -16,7 +16,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request, long? tenantRefId = null)
         {
             var (result, data) = await TenantResourceQuotaCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantResourceQuotaRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantResourceQuota>();
@@ -47,7 +47,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantResourceQuotaCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var q in data)
             {
                 if (q.Id == id)

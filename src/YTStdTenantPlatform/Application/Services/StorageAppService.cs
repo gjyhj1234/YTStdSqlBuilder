@@ -20,7 +20,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<StorageStrategyRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<StorageStrategy>();
@@ -50,7 +50,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var s in data)
             {
                 if (s.Id == id)
@@ -93,7 +93,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, UpdateStorageStrategyReqDTO req)
         {
             var (getResult, strategies) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || strategies == null) return ApiResult.Fail(ErrorCodes.StorageStrategyQueryFailed, Messages.StorageStrategyQueryFailed);
+            if (!getResult.Success || strategies == null) return ApiResult.Fail(ErrorCodes.StorageStrategyQueryFailed, Messages.StorageStrategyQueryFailed);
 
             StorageStrategy? target = null;
             foreach (var s in strategies) { if (s.Id == id) { target = s; break; } }
@@ -117,7 +117,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, strategies) = await StorageStrategyCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || strategies == null) return ApiResult.Fail(ErrorCodes.StorageStrategyQueryFailed, Messages.StorageStrategyQueryFailed);
+            if (!getResult.Success || strategies == null) return ApiResult.Fail(ErrorCodes.StorageStrategyQueryFailed, Messages.StorageStrategyQueryFailed);
 
             StorageStrategy? target = null;
             foreach (var s in strategies) { if (s.Id == id) { target = s; break; } }
@@ -143,7 +143,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantFileCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantFileRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantFile>();
@@ -174,7 +174,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantFileCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var f in data)
             {
                 if (f.Id == id)
@@ -203,7 +203,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long fileId, PagedRequest request)
         {
             var (result, data) = await FileAccessPolicyCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<FileAccessPolicyRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<FileAccessPolicy>();

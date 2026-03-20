@@ -2,7 +2,7 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>创建租户分组请求参数</summary>
+    /// <summary>创建租户分组请求</summary>
     public sealed class CreateTenantGroupReqDTO
     {
         /// <summary>分组编码</summary>
@@ -11,14 +11,14 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string GroupName { get; set; } = "";
         /// <summary>描述</summary>
         public string? Description { get; set; }
-        /// <summary>父级分组ID</summary>
+        /// <summary>父级分组 ID</summary>
         public long? ParentId { get; set; }
     }
 
-    /// <summary>创建租户域名请求参数</summary>
+    /// <summary>创建租户域名请求</summary>
     public sealed class CreateTenantDomainReqDTO
     {
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>域名</summary>
         public string Domain { get; set; } = "";
@@ -26,7 +26,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string DomainType { get; set; } = "custom";
     }
 
-    /// <summary>创建租户标签请求参数</summary>
+    /// <summary>创建租户标签请求</summary>
     public sealed class CreateTenantTagReqDTO
     {
         /// <summary>标签键</summary>
@@ -39,12 +39,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? Description { get; set; }
     }
 
-    /// <summary>标签绑定请求参数</summary>
+    /// <summary>标签绑定请求</summary>
     public sealed class TagBindReqDTO
     {
-        /// <summary>租户ID</summary>
+        /// <summary>租户 ID</summary>
         public long TenantRefId { get; set; }
-        /// <summary>标签ID列表</summary>
+        /// <summary>标签 ID 列表</summary>
         public long[] TagIds { get; set; } = Array.Empty<long>();
     }
 }

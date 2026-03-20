@@ -16,7 +16,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<Tenant>();
@@ -50,7 +50,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<TenantRepDTO?> GetByIdAsync(int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var t in data)
             {
                 if (t.Id == id && t.DeletedAt == null)
@@ -104,7 +104,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, UpdateTenantReqDTO req)
         {
             var (getResult, tenants) = await TenantCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || tenants == null) return ApiResult.Fail(ErrorCodes.TenantQueryFailed, Messages.TenantQueryFailed);
+            if (!getResult.Success || tenants == null) return ApiResult.Fail(ErrorCodes.TenantQueryFailed, Messages.TenantQueryFailed);
 
             Tenant? target = null;
             foreach (var t in tenants) { if (t.Id == id && t.DeletedAt == null) { target = t; break; } }
@@ -129,7 +129,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, TenantStatusChangeReqDTO req)
         {
             var (getResult, tenants) = await TenantCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || tenants == null) return ApiResult.Fail(ErrorCodes.TenantQueryFailed, Messages.TenantQueryFailed);
+            if (!getResult.Success || tenants == null) return ApiResult.Fail(ErrorCodes.TenantQueryFailed, Messages.TenantQueryFailed);
 
             Tenant? target = null;
             foreach (var t in tenants) { if (t.Id == id && t.DeletedAt == null) { target = t; break; } }
@@ -177,7 +177,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantLifecycleEventCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantLifecycleEventRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantLifecycleEvent>();

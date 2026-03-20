@@ -2,7 +2,7 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>创建SaaS套餐请求参数</summary>
+    /// <summary>创建 SaaS 套餐请求</summary>
     public sealed class CreateSaasPackageReqDTO
     {
         /// <summary>套餐编码</summary>
@@ -13,7 +13,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? Description { get; set; }
     }
 
-    /// <summary>更新SaaS套餐请求参数</summary>
+    /// <summary>更新 SaaS 套餐请求</summary>
     public sealed class UpdateSaasPackageReqDTO
     {
         /// <summary>套餐名称</summary>
@@ -22,10 +22,10 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? Description { get; set; }
     }
 
-    /// <summary>创建SaaS套餐版本请求参数</summary>
+    /// <summary>创建 SaaS 套餐版本请求</summary>
     public sealed class CreateSaasPackageVersionReqDTO
     {
-        /// <summary>套餐ID</summary>
+        /// <summary>套餐 ID</summary>
         public long PackageId { get; set; }
         /// <summary>版本编码</summary>
         public string VersionCode { get; set; } = "";
@@ -45,10 +45,10 @@ namespace YTStdTenantPlatform.Application.Dtos
         public bool IsDefault { get; set; } = false;
     }
 
-    /// <summary>保存SaaS套餐能力请求参数</summary>
+    /// <summary>创建/更新 SaaS 套餐能力请求</summary>
     public sealed class SaveSaasPackageCapabilityReqDTO
     {
-        /// <summary>套餐版本ID</summary>
+        /// <summary>套餐版本 ID</summary>
         public long PackageVersionId { get; set; }
         /// <summary>能力键</summary>
         public string CapabilityKey { get; set; } = "";
@@ -56,7 +56,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string CapabilityName { get; set; } = "";
         /// <summary>能力类型</summary>
         public string CapabilityType { get; set; } = "";
-        /// <summary>限制值</summary>
-        public string? LimitValue { get; set; }
+        /// <summary>能力值</summary>
+        public string CapabilityValue { get; set; } = "";
     }
 }

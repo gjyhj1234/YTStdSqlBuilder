@@ -20,7 +20,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantDailyStatCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantDailyStatRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantDailyStat>();
@@ -61,7 +61,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PlatformMonitorMetricCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<PlatformMonitorMetricRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<PlatformMonitorMetric>();

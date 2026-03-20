@@ -20,7 +20,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantSubscriptionCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantSubscriptionRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantSubscription>();
@@ -50,7 +50,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await TenantSubscriptionCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var s in data)
             {
                 if (s.Id == id)
@@ -97,7 +97,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, subscriptions) = await TenantSubscriptionCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || subscriptions == null) return ApiResult.Fail(ErrorCodes.SubscriptionQueryFailed, Messages.SubscriptionQueryFailed);
+            if (!getResult.Success || subscriptions == null) return ApiResult.Fail(ErrorCodes.SubscriptionQueryFailed, Messages.SubscriptionQueryFailed);
 
             TenantSubscription? target = null;
             foreach (var s in subscriptions) { if (s.Id == id) { target = s; break; } }
@@ -124,7 +124,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantTrialCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantTrialRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var items = new List<TenantTrialRepDTO>();
@@ -177,7 +177,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantSubscriptionChangeCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantSubscriptionChangeRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantSubscriptionChange>();

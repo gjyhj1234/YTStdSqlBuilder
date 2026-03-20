@@ -2,7 +2,7 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>创建平台角色请求参数</summary>
+    /// <summary>创建平台角色请求</summary>
     public sealed class CreatePlatformRoleReqDTO
     {
         /// <summary>角色编码</summary>
@@ -13,7 +13,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? Description { get; set; }
     }
 
-    /// <summary>更新平台角色请求参数</summary>
+    /// <summary>更新平台角色请求</summary>
     public sealed class UpdatePlatformRoleReqDTO
     {
         /// <summary>角色名称</summary>
@@ -22,17 +22,17 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? Description { get; set; }
     }
 
-    /// <summary>角色授权请求参数（批量绑定权限）</summary>
+    /// <summary>角色授权请求（批量绑定权限）</summary>
     public sealed class RolePermissionBindReqDTO
     {
-        /// <summary>权限ID列表</summary>
+        /// <summary>权限 ID 列表</summary>
         public long[] PermissionIds { get; set; } = Array.Empty<long>();
     }
 
-    /// <summary>角色成员请求参数（批量绑定用户）</summary>
+    /// <summary>角色成员请求（批量绑定用户）</summary>
     public sealed class RoleMemberBindReqDTO
     {
-        /// <summary>用户ID列表</summary>
+        /// <summary>用户 ID 列表</summary>
         public long[] UserIds { get; set; } = Array.Empty<long>();
     }
 }

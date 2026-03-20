@@ -20,7 +20,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await BillingInvoiceCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<BillingInvoiceRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<BillingInvoice>();
@@ -53,7 +53,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await BillingInvoiceCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var inv in data)
             {
                 if (inv.Id == id)
@@ -97,7 +97,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, invoices) = await BillingInvoiceCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || invoices == null) return ApiResult.Fail(ErrorCodes.InvoiceQueryFailed, Messages.InvoiceQueryFailed);
+            if (!getResult.Success || invoices == null) return ApiResult.Fail(ErrorCodes.InvoiceQueryFailed, Messages.InvoiceQueryFailed);
 
             BillingInvoice? target = null;
             foreach (var inv in invoices) { if (inv.Id == id) { target = inv; break; } }
@@ -123,7 +123,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long invoiceId, PagedRequest request)
         {
             var (result, data) = await BillingInvoiceItemCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<BillingInvoiceItemRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<BillingInvoiceItem>();
@@ -164,7 +164,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PaymentOrderCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<PaymentOrderRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<PaymentOrder>();
@@ -228,7 +228,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PaymentRefundCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<PaymentRefundRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var items = new List<PaymentRefundRepDTO>();

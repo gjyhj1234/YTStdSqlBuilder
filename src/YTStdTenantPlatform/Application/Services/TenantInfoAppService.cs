@@ -19,7 +19,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<List<TenantGroupRepDTO>> GetGroupTreeAsync(int tenantId, long operatorId)
         {
             var (result, data) = await TenantGroupCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return new List<TenantGroupRepDTO>();
+            if (!result.Success || data == null) return new List<TenantGroupRepDTO>();
             return BuildGroupTree(data);
         }
 
@@ -27,7 +27,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<List<TenantGroupRepDTO>> GetGroupListAsync(int tenantId, long operatorId)
         {
             var (result, data) = await TenantGroupCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return new List<TenantGroupRepDTO>();
+            if (!result.Success || data == null) return new List<TenantGroupRepDTO>();
 
             var list = new List<TenantGroupRepDTO>(data.Count);
             foreach (var g in data)
@@ -69,7 +69,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId)
         {
             var (result, data) = await TenantDomainCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return new List<TenantDomainRepDTO>();
+            if (!result.Success || data == null) return new List<TenantDomainRepDTO>();
 
             var list = new List<TenantDomainRepDTO>();
             foreach (var d in data)
@@ -113,7 +113,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await TenantTagCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantTagRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantTag>();

@@ -2,16 +2,16 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>租户系统配置响应数据</summary>
+    /// <summary>租户系统配置</summary>
     public sealed class TenantSystemConfigRepDTO
     {
-        /// <summary>配置ID</summary>
+        /// <summary>配置 ID</summary>
         public long Id { get; set; }
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>系统名称</summary>
         public string? SystemName { get; set; }
-        /// <summary>Logo地址</summary>
+        /// <summary>Logo 地址</summary>
         public string? LogoUrl { get; set; }
         /// <summary>系统主题</summary>
         public string? SystemTheme { get; set; }
@@ -23,12 +23,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime UpdatedAt { get; set; }
     }
 
-    /// <summary>租户功能开关响应数据</summary>
+    /// <summary>租户功能开关列表项</summary>
     public sealed class TenantFeatureFlagRepDTO
     {
-        /// <summary>功能开关ID</summary>
+        /// <summary>功能开关 ID</summary>
         public long Id { get; set; }
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>功能键</summary>
         public string FeatureKey { get; set; } = "";
@@ -42,12 +42,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime UpdatedAt { get; set; }
     }
 
-    /// <summary>租户参数响应数据</summary>
+    /// <summary>租户参数列表项</summary>
     public sealed class TenantParameterRepDTO
     {
-        /// <summary>参数ID</summary>
+        /// <summary>参数 ID</summary>
         public long Id { get; set; }
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>参数键</summary>
         public string ParamKey { get; set; } = "";

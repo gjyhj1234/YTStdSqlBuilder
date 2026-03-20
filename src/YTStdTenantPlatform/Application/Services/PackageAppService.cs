@@ -20,7 +20,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await SaasPackageCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<SaasPackageRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<SaasPackage>();
@@ -53,7 +53,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<SaasPackageRepDTO?> GetPackageByIdAsync(int tenantId, long operatorId, long id)
         {
             var (result, data) = await SaasPackageCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var p in data)
             {
                 if (p.Id == id)
@@ -94,7 +94,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, UpdateSaasPackageReqDTO req)
         {
             var (getResult, packages) = await SaasPackageCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || packages == null) return ApiResult.Fail(ErrorCodes.PackageQueryFailed, Messages.PackageQueryFailed);
+            if (!getResult.Success || packages == null) return ApiResult.Fail(ErrorCodes.PackageQueryFailed, Messages.PackageQueryFailed);
 
             SaasPackage? target = null;
             foreach (var p in packages) { if (p.Id == id) { target = p; break; } }
@@ -116,7 +116,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, packages) = await SaasPackageCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || packages == null) return ApiResult.Fail(ErrorCodes.PackageQueryFailed, Messages.PackageQueryFailed);
+            if (!getResult.Success || packages == null) return ApiResult.Fail(ErrorCodes.PackageQueryFailed, Messages.PackageQueryFailed);
 
             SaasPackage? target = null;
             foreach (var p in packages) { if (p.Id == id) { target = p; break; } }
@@ -142,7 +142,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long packageId, PagedRequest request)
         {
             var (result, data) = await SaasPackageVersionCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<SaasPackageVersionRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<SaasPackageVersion>();
@@ -206,7 +206,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long packageVersionId, PagedRequest request)
         {
             var (result, data) = await SaasPackageCapabilityCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<SaasPackageCapabilityRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<SaasPackageCapability>();

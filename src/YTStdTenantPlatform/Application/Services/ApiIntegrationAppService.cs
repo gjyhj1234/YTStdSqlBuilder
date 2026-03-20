@@ -22,7 +22,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantApiKeyCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantApiKeyRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantApiKey>();
@@ -89,7 +89,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, keys) = await TenantApiKeyCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || keys == null) return ApiResult.Fail(ErrorCodes.ApiKeyQueryFailed, Messages.ApiKeyQueryFailed);
+            if (!getResult.Success || keys == null) return ApiResult.Fail(ErrorCodes.ApiKeyQueryFailed, Messages.ApiKeyQueryFailed);
 
             TenantApiKey? target = null;
             foreach (var k in keys) { if (k.Id == id) { target = k; break; } }
@@ -115,7 +115,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantApiUsageStatCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantApiUsageStatRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantApiUsageStat>();
@@ -147,7 +147,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await WebhookEventCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<WebhookEventRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var items = new List<WebhookEventRepDTO>();
@@ -179,7 +179,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, PagedRequest request)
         {
             var (result, data) = await TenantWebhookCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantWebhookRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantWebhook>();
@@ -236,7 +236,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, UpdateWebhookReqDTO req)
         {
             var (getResult, webhooks) = await TenantWebhookCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || webhooks == null) return ApiResult.Fail(ErrorCodes.WebhookQueryFailed, Messages.WebhookQueryFailed);
+            if (!getResult.Success || webhooks == null) return ApiResult.Fail(ErrorCodes.WebhookQueryFailed, Messages.WebhookQueryFailed);
 
             TenantWebhook? target = null;
             foreach (var w in webhooks) { if (w.Id == id) { target = w; break; } }
@@ -259,7 +259,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, webhooks) = await TenantWebhookCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || webhooks == null) return ApiResult.Fail(ErrorCodes.WebhookQueryFailed, Messages.WebhookQueryFailed);
+            if (!getResult.Success || webhooks == null) return ApiResult.Fail(ErrorCodes.WebhookQueryFailed, Messages.WebhookQueryFailed);
 
             TenantWebhook? target = null;
             foreach (var w in webhooks) { if (w.Id == id) { target = w; break; } }
@@ -285,7 +285,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long webhookId, PagedRequest request)
         {
             var (result, data) = await WebhookDeliveryLogCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<WebhookDeliveryLogRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<WebhookDeliveryLog>();

@@ -21,7 +21,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId)
         {
             var (result, data) = await TenantSystemConfigCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var c in data)
             {
                 if (c.TenantRefId == tenantRefId)
@@ -35,7 +35,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long tenantRefId, UpdateTenantSystemConfigReqDTO req)
         {
             var (getResult, configs) = await TenantSystemConfigCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || configs == null) return ApiResult.Fail(ErrorCodes.ConfigQueryFailed, Messages.ConfigQueryFailed);
+            if (!getResult.Success || configs == null) return ApiResult.Fail(ErrorCodes.ConfigQueryFailed, Messages.ConfigQueryFailed);
 
             TenantSystemConfig? target = null;
             foreach (var c in configs) { if (c.TenantRefId == tenantRefId) { target = c; break; } }
@@ -82,7 +82,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request, long? tenantRefId = null)
         {
             var (result, data) = await TenantFeatureFlagCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantFeatureFlagRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantFeatureFlag>();
@@ -143,7 +143,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, bool enabled)
         {
             var (getResult, flags) = await TenantFeatureFlagCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || flags == null) return ApiResult.Fail(ErrorCodes.ConfigQueryFailed, Messages.ConfigQueryFailed);
+            if (!getResult.Success || flags == null) return ApiResult.Fail(ErrorCodes.ConfigQueryFailed, Messages.ConfigQueryFailed);
 
             TenantFeatureFlag? target = null;
             foreach (var f in flags) { if (f.Id == id) { target = f; break; } }
@@ -169,7 +169,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request, long? tenantRefId = null)
         {
             var (result, data) = await TenantParameterCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<TenantParameterRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<TenantParameter>();

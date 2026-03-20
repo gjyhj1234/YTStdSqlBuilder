@@ -15,7 +15,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<List<PlatformPermissionRepDTO>> GetTreeAsync(int tenantId, long operatorId)
         {
             var (result, data) = await PlatformPermissionCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new List<PlatformPermissionRepDTO>();
 
             return BuildTree(data);
@@ -25,7 +25,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<List<PlatformPermissionRepDTO>> GetFlatListAsync(int tenantId, long operatorId)
         {
             var (result, data) = await PlatformPermissionCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new List<PlatformPermissionRepDTO>();
 
             var list = new List<PlatformPermissionRepDTO>(data.Count);
@@ -45,7 +45,7 @@ namespace YTStdTenantPlatform.Application.Services
             }
 
             var (result, data) = await PlatformPermissionCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var p in data)
             {
                 if (p.Id == id)

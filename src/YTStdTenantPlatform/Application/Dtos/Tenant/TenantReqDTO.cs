@@ -2,7 +2,7 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>创建租户请求参数</summary>
+    /// <summary>创建租户请求</summary>
     public sealed class CreateTenantReqDTO
     {
         /// <summary>租户编码</summary>
@@ -27,7 +27,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string DefaultTimezone { get; set; } = "Asia/Shanghai";
     }
 
-    /// <summary>更新租户请求参数</summary>
+    /// <summary>更新租户请求</summary>
     public sealed class UpdateTenantReqDTO
     {
         /// <summary>租户名称</summary>
@@ -42,7 +42,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? ContactEmail { get; set; }
     }
 
-    /// <summary>租户状态变更请求参数</summary>
+    /// <summary>租户状态变更请求</summary>
     public sealed class TenantStatusChangeReqDTO
     {
         /// <summary>目标状态（active/suspended/closed）</summary>

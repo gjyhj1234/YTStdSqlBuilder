@@ -17,7 +17,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await PlatformRoleCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<PlatformRoleRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<PlatformRole>();
@@ -58,7 +58,7 @@ namespace YTStdTenantPlatform.Application.Services
         public static async ValueTask<PlatformRoleRepDTO?> GetByIdAsync(int tenantId, long operatorId, long id)
         {
             var (result, data) = await PlatformRoleCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var r in data)
             {
                 if (r.Id == id)
@@ -108,7 +108,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, UpdatePlatformRoleReqDTO req)
         {
             var (getResult, roles) = await PlatformRoleCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || roles == null) return ApiResult.Fail(ErrorCodes.RoleQueryFailed, Messages.RoleQueryFailed);
+            if (!getResult.Success || roles == null) return ApiResult.Fail(ErrorCodes.RoleQueryFailed, Messages.RoleQueryFailed);
 
             PlatformRole? target = null;
             foreach (var r in roles) { if (r.Id == id) { target = r; break; } }
@@ -132,7 +132,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, roles) = await PlatformRoleCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || roles == null) return ApiResult.Fail(ErrorCodes.RoleQueryFailed, Messages.RoleQueryFailed);
+            if (!getResult.Success || roles == null) return ApiResult.Fail(ErrorCodes.RoleQueryFailed, Messages.RoleQueryFailed);
 
             PlatformRole? target = null;
             foreach (var r in roles) { if (r.Id == id) { target = r; break; } }

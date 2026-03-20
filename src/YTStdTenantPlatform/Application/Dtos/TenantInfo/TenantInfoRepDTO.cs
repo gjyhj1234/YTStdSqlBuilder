@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>租户分组响应数据</summary>
+    /// <summary>租户分组列表项</summary>
     public sealed class TenantGroupRepDTO
     {
-        /// <summary>分组ID</summary>
+        /// <summary>分组 ID</summary>
         public long Id { get; set; }
         /// <summary>分组编码</summary>
         public string GroupCode { get; set; } = "";
@@ -14,7 +14,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string GroupName { get; set; } = "";
         /// <summary>描述</summary>
         public string? Description { get; set; }
-        /// <summary>父级分组ID</summary>
+        /// <summary>父级分组 ID</summary>
         public long? ParentId { get; set; }
         /// <summary>子节点列表</summary>
         public List<TenantGroupRepDTO>? Children { get; set; }
@@ -22,12 +22,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime CreatedAt { get; set; }
     }
 
-    /// <summary>租户域名响应数据</summary>
+    /// <summary>租户域名列表项</summary>
     public sealed class TenantDomainRepDTO
     {
-        /// <summary>域名ID</summary>
+        /// <summary>域名 ID</summary>
         public long Id { get; set; }
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>域名</summary>
         public string Domain { get; set; } = "";
@@ -41,10 +41,10 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime CreatedAt { get; set; }
     }
 
-    /// <summary>租户标签响应数据</summary>
+    /// <summary>租户标签列表项</summary>
     public sealed class TenantTagRepDTO
     {
-        /// <summary>标签ID</summary>
+        /// <summary>标签 ID</summary>
         public long Id { get; set; }
         /// <summary>标签键</summary>
         public string TagKey { get; set; } = "";

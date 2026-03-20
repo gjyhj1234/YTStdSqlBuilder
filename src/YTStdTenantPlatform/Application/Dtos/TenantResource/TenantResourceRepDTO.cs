@@ -2,12 +2,12 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>租户资源配额响应数据</summary>
+    /// <summary>租户资源配额列表项</summary>
     public sealed class TenantResourceQuotaRepDTO
     {
-        /// <summary>配额ID</summary>
+        /// <summary>配额 ID</summary>
         public long Id { get; set; }
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>配额类型</summary>
         public string QuotaType { get; set; } = "";

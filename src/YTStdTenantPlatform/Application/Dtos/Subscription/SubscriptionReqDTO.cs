@@ -2,25 +2,25 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>创建订阅请求参数</summary>
+    /// <summary>创建订阅请求</summary>
     public sealed class CreateSubscriptionReqDTO
     {
-        /// <summary>租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
-        /// <summary>套餐版本ID</summary>
+        /// <summary>套餐版本 ID</summary>
         public long PackageVersionId { get; set; }
-        /// <summary>订阅来源</summary>
-        public string SubscriptionSource { get; set; } = "manual";
+        /// <summary>订阅类型（standard/enterprise/custom）</summary>
+        public string SubscriptionType { get; set; } = "standard";
+        /// <summary>是否自动续费</summary>
+        public bool AutoRenew { get; set; } = false;
     }
 
-    /// <summary>创建试用请求参数</summary>
+    /// <summary>创建试用请求</summary>
     public sealed class CreateTrialReqDTO
     {
-        /// <summary>租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
-        /// <summary>套餐版本ID</summary>
+        /// <summary>套餐版本 ID</summary>
         public long PackageVersionId { get; set; }
-        /// <summary>试用天数</summary>
-        public int TrialDays { get; set; } = 14;
     }
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>创建平台用户请求参数</summary>
+    /// <summary>创建平台用户请求</summary>
     public sealed class CreatePlatformUserReqDTO
     {
         /// <summary>用户名</summary>
@@ -19,7 +19,7 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? Remark { get; set; }
     }
 
-    /// <summary>更新平台用户请求参数</summary>
+    /// <summary>更新平台用户请求</summary>
     public sealed class UpdatePlatformUserReqDTO
     {
         /// <summary>显示名称</summary>

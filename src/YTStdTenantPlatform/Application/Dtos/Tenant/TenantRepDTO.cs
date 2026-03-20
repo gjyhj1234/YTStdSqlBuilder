@@ -2,10 +2,10 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>租户响应数据</summary>
+    /// <summary>租户列表项</summary>
     public sealed class TenantRepDTO
     {
-        /// <summary>租户ID</summary>
+        /// <summary>租户 ID</summary>
         public long Id { get; set; }
         /// <summary>租户编码</summary>
         public string TenantCode { get; set; } = "";
@@ -31,12 +31,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime CreatedAt { get; set; }
     }
 
-    /// <summary>租户生命周期事件响应数据</summary>
+    /// <summary>租户生命周期事件列表项</summary>
     public sealed class TenantLifecycleEventRepDTO
     {
-        /// <summary>事件ID</summary>
+        /// <summary>事件 ID</summary>
         public long Id { get; set; }
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>事件类型</summary>
         public string EventType { get; set; } = "";

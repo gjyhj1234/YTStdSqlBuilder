@@ -2,12 +2,12 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>更新租户系统配置请求参数</summary>
+    /// <summary>更新租户系统配置请求</summary>
     public sealed class UpdateTenantSystemConfigReqDTO
     {
         /// <summary>系统名称</summary>
         public string? SystemName { get; set; }
-        /// <summary>Logo地址</summary>
+        /// <summary>Logo 地址</summary>
         public string? LogoUrl { get; set; }
         /// <summary>系统主题</summary>
         public string? SystemTheme { get; set; }
@@ -17,10 +17,10 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string? DefaultTimezone { get; set; }
     }
 
-    /// <summary>创建/更新租户功能开关请求参数</summary>
+    /// <summary>创建/更新租户功能开关请求</summary>
     public sealed class SaveTenantFeatureFlagReqDTO
     {
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>功能键</summary>
         public string FeatureKey { get; set; } = "";
@@ -32,10 +32,10 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string RolloutType { get; set; } = "all";
     }
 
-    /// <summary>创建/更新租户参数请求参数</summary>
+    /// <summary>创建/更新租户参数请求</summary>
     public sealed class SaveTenantParameterReqDTO
     {
-        /// <summary>关联租户ID</summary>
+        /// <summary>关联租户 ID</summary>
         public long TenantRefId { get; set; }
         /// <summary>参数键</summary>
         public string ParamKey { get; set; } = "";

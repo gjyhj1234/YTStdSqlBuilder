@@ -2,10 +2,10 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>平台角色响应数据</summary>
+    /// <summary>平台角色列表项</summary>
     public sealed class PlatformRoleRepDTO
     {
-        /// <summary>角色ID</summary>
+        /// <summary>角色 ID</summary>
         public long Id { get; set; }
         /// <summary>角色编码</summary>
         public string Code { get; set; } = "";

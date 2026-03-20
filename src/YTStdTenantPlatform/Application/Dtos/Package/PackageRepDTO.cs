@@ -2,10 +2,10 @@ using System;
 
 namespace YTStdTenantPlatform.Application.Dtos
 {
-    /// <summary>SaaS套餐响应数据</summary>
+    /// <summary>SaaS 套餐列表项</summary>
     public sealed class SaasPackageRepDTO
     {
-        /// <summary>套餐ID</summary>
+        /// <summary>套餐 ID</summary>
         public long Id { get; set; }
         /// <summary>套餐编码</summary>
         public string PackageCode { get; set; } = "";
@@ -19,12 +19,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime CreatedAt { get; set; }
     }
 
-    /// <summary>SaaS套餐版本响应数据</summary>
+    /// <summary>SaaS 套餐版本列表项</summary>
     public sealed class SaasPackageVersionRepDTO
     {
-        /// <summary>版本ID</summary>
+        /// <summary>版本 ID</summary>
         public long Id { get; set; }
-        /// <summary>套餐ID</summary>
+        /// <summary>套餐 ID</summary>
         public long PackageId { get; set; }
         /// <summary>版本编码</summary>
         public string VersionCode { get; set; } = "";
@@ -52,12 +52,12 @@ namespace YTStdTenantPlatform.Application.Dtos
         public DateTime CreatedAt { get; set; }
     }
 
-    /// <summary>SaaS套餐能力响应数据</summary>
+    /// <summary>SaaS 套餐能力列表项</summary>
     public sealed class SaasPackageCapabilityRepDTO
     {
-        /// <summary>能力ID</summary>
+        /// <summary>能力 ID</summary>
         public long Id { get; set; }
-        /// <summary>套餐版本ID</summary>
+        /// <summary>套餐版本 ID</summary>
         public long PackageVersionId { get; set; }
         /// <summary>能力键</summary>
         public string CapabilityKey { get; set; } = "";
@@ -65,8 +65,8 @@ namespace YTStdTenantPlatform.Application.Dtos
         public string CapabilityName { get; set; } = "";
         /// <summary>能力类型</summary>
         public string CapabilityType { get; set; } = "";
-        /// <summary>限制值</summary>
-        public string? LimitValue { get; set; }
+        /// <summary>能力值</summary>
+        public string CapabilityValue { get; set; } = "";
         /// <summary>创建时间</summary>
         public DateTime CreatedAt { get; set; }
     }

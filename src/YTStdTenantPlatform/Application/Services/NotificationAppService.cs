@@ -20,7 +20,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await NotificationTemplateCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<NotificationTemplateRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<NotificationTemplate>();
@@ -51,7 +51,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await NotificationTemplateCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var t in data)
             {
                 if (t.Id == id)
@@ -94,7 +94,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, UpdateNotificationTemplateReqDTO req)
         {
             var (getResult, templates) = await NotificationTemplateCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || templates == null) return ApiResult.Fail(ErrorCodes.NotificationTemplateQueryFailed, Messages.NotificationTemplateQueryFailed);
+            if (!getResult.Success || templates == null) return ApiResult.Fail(ErrorCodes.NotificationTemplateQueryFailed, Messages.NotificationTemplateQueryFailed);
 
             NotificationTemplate? target = null;
             foreach (var t in templates) { if (t.Id == id) { target = t; break; } }
@@ -118,7 +118,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id, string status)
         {
             var (getResult, templates) = await NotificationTemplateCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || templates == null) return ApiResult.Fail(ErrorCodes.NotificationTemplateQueryFailed, Messages.NotificationTemplateQueryFailed);
+            if (!getResult.Success || templates == null) return ApiResult.Fail(ErrorCodes.NotificationTemplateQueryFailed, Messages.NotificationTemplateQueryFailed);
 
             NotificationTemplate? target = null;
             foreach (var t in templates) { if (t.Id == id) { target = t; break; } }
@@ -144,7 +144,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, PagedRequest request)
         {
             var (result, data) = await NotificationCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null)
+            if (!result.Success || data == null)
                 return new PagedResult<NotificationRepDTO> { Page = request.NormalizedPage, PageSize = request.NormalizedPageSize };
 
             var filtered = new List<Notification>();
@@ -174,7 +174,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (result, data) = await NotificationCRUD.GetListAsync(tenantId, operatorId);
-            if (result.Code != 0 || data == null) return null;
+            if (!result.Success || data == null) return null;
             foreach (var n in data)
             {
                 if (n.Id == id)
@@ -220,7 +220,7 @@ namespace YTStdTenantPlatform.Application.Services
             int tenantId, long operatorId, long id)
         {
             var (getResult, notifications) = await NotificationCRUD.GetListAsync(tenantId, operatorId);
-            if (getResult.Code != 0 || notifications == null) return ApiResult.Fail(ErrorCodes.NotificationQueryFailed, Messages.NotificationQueryFailed);
+            if (!getResult.Success || notifications == null) return ApiResult.Fail(ErrorCodes.NotificationQueryFailed, Messages.NotificationQueryFailed);
 
             Notification? target = null;
             foreach (var n in notifications) { if (n.Id == id) { target = n; break; } }

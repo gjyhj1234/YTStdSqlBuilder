@@ -1,31 +1,9 @@
-import { getCurrentLocale } from '@/locales'
+import { getCurrentLocale, translateText } from '@/locales'
+import { ApiError, handleApiError } from '@/utils/errorHandler'
+import type { ApiResult, PagedResult } from '@/types/base'
 
-/** HTTP 请求封装层 — 统一 Token 注入、错误处理、响应解包 */
-
-/** 后端标准响应格式 */
-export interface ApiResult<T = unknown> {
-  success: boolean
-  message: string
-  data: T
-  traceId?: string
-}
-
-/** 分页请求参数 */
-export interface PagedRequest {
-  page: number
-  pageSize: number
-  keyword?: string
-  status?: string
-}
-
-/** 分页响应 */
-export interface PagedResult<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-}
+export type { ApiResult, PagedResult }
+export type { PagedRequest } from '@/types/base'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
@@ -52,13 +30,16 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<ApiRe
 
   if (response.status === 401) {
     localStorage.removeItem('platform_token')
+    localStorage.removeItem('platform_user')
     window.location.href = '/login'
-    throw new Error('未授权，请重新登录')
+    throw new ApiError(2006, 'auth.token_invalid')
   }
 
   const result: ApiResult<T> = await response.json()
-  if (!result.success) {
-    throw new Error(result.message || '请求失败')
+  if (result.code !== 0) {
+    const error = new ApiError(result.code, result.message)
+    handleApiError(error)
+    throw error
   }
   return result
 }

@@ -14,7 +14,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaasPackageDto_HasExpectedProperties()
         {
-            var dto = new SaasPackageDto
+            var dto = new SaasPackageRepDTO
             {
                 Id = 1,
                 PackageCode = "basic",
@@ -31,7 +31,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateSaasPackageRequest_DefaultValues()
         {
-            var req = new CreateSaasPackageRequest();
+            var req = new CreateSaasPackageReqDTO();
             Assert.Equal("", req.PackageCode);
             Assert.Equal("", req.PackageName);
             Assert.Null(req.Description);
@@ -40,7 +40,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdateSaasPackageRequest_NullableProperties()
         {
-            var req = new UpdateSaasPackageRequest();
+            var req = new UpdateSaasPackageReqDTO();
             Assert.Null(req.PackageName);
             Assert.Null(req.Description);
         }
@@ -48,7 +48,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaasPackageVersionDto_HasExpectedProperties()
         {
-            var dto = new SaasPackageVersionDto
+            var dto = new SaasPackageVersionRepDTO
             {
                 VersionCode = "v1.0",
                 EditionType = "standard",
@@ -68,7 +68,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateSaasPackageVersionRequest_DefaultValues()
         {
-            var req = new CreateSaasPackageVersionRequest();
+            var req = new CreateSaasPackageVersionReqDTO();
             Assert.Equal("monthly", req.BillingCycle);
             Assert.Equal("CNY", req.CurrencyCode);
             Assert.Equal(0, req.TrialDays);
@@ -78,7 +78,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaasPackageCapabilityDto_HasExpectedProperties()
         {
-            var dto = new SaasPackageCapabilityDto
+            var dto = new SaasPackageCapabilityRepDTO
             {
                 CapabilityKey = "max_users",
                 CapabilityType = "limit",
@@ -92,7 +92,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaveSaasPackageCapabilityRequest_DefaultValues()
         {
-            var req = new SaveSaasPackageCapabilityRequest();
+            var req = new SaveSaasPackageCapabilityReqDTO();
             Assert.Equal("", req.CapabilityKey);
             Assert.Equal("", req.CapabilityName);
         }
@@ -104,7 +104,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantSubscriptionDto_HasExpectedProperties()
         {
-            var dto = new TenantSubscriptionDto
+            var dto = new TenantSubscriptionRepDTO
             {
                 SubscriptionStatus = "active",
                 SubscriptionType = "standard",
@@ -118,7 +118,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateSubscriptionRequest_DefaultValues()
         {
-            var req = new CreateSubscriptionRequest();
+            var req = new CreateSubscriptionReqDTO();
             Assert.Equal("standard", req.SubscriptionType);
             Assert.False(req.AutoRenew);
         }
@@ -126,7 +126,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantTrialDto_HasExpectedProperties()
         {
-            var dto = new TenantTrialDto
+            var dto = new TenantTrialRepDTO
             {
                 Status = "active",
                 ConvertedSubscriptionId = null
@@ -138,7 +138,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateTrialRequest_DefaultValues()
         {
-            var req = new CreateTrialRequest();
+            var req = new CreateTrialReqDTO();
             Assert.Equal(0, req.TenantRefId);
             Assert.Equal(0, req.PackageVersionId);
         }
@@ -146,7 +146,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantSubscriptionChangeDto_HasExpectedProperties()
         {
-            var dto = new TenantSubscriptionChangeDto
+            var dto = new TenantSubscriptionChangeRepDTO
             {
                 ChangeType = "upgrade"
             };
@@ -160,7 +160,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void BillingInvoiceDto_HasExpectedProperties()
         {
-            var dto = new BillingInvoiceDto
+            var dto = new BillingInvoiceRepDTO
             {
                 InvoiceNo = "INV-001",
                 InvoiceStatus = "draft",
@@ -176,14 +176,14 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateBillingInvoiceRequest_DefaultValues()
         {
-            var req = new CreateBillingInvoiceRequest();
+            var req = new CreateBillingInvoiceReqDTO();
             Assert.Equal("CNY", req.CurrencyCode);
         }
 
         [Fact]
         public void BillingInvoiceItemDto_HasExpectedProperties()
         {
-            var dto = new BillingInvoiceItemDto
+            var dto = new BillingInvoiceItemRepDTO
             {
                 ItemType = "subscription",
                 Amount = 100.00m
@@ -195,7 +195,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void PaymentOrderDto_HasExpectedProperties()
         {
-            var dto = new PaymentOrderDto
+            var dto = new PaymentOrderRepDTO
             {
                 OrderNo = "PAY-001",
                 PaymentChannel = "alipay",
@@ -211,7 +211,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreatePaymentOrderRequest_DefaultValues()
         {
-            var req = new CreatePaymentOrderRequest();
+            var req = new CreatePaymentOrderReqDTO();
             Assert.Equal("manual", req.PaymentChannel);
             Assert.Equal("CNY", req.CurrencyCode);
         }
@@ -219,7 +219,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void PaymentRefundDto_HasExpectedProperties()
         {
-            var dto = new PaymentRefundDto
+            var dto = new PaymentRefundRepDTO
             {
                 RefundNo = "REF-001",
                 RefundStatus = "pending",
@@ -233,7 +233,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateRefundRequest_DefaultValues()
         {
-            var req = new CreateRefundRequest();
+            var req = new CreateRefundReqDTO();
             Assert.Equal(0, req.RefundAmount);
             Assert.Null(req.RefundReason);
         }
@@ -245,7 +245,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantApiKeyDto_HasExpectedProperties()
         {
-            var dto = new TenantApiKeyDto
+            var dto = new TenantApiKeyRepDTO
             {
                 KeyName = "Test Key",
                 AccessKey = "ak_123",
@@ -259,7 +259,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateApiKeyRequest_DefaultValues()
         {
-            var req = new CreateApiKeyRequest();
+            var req = new CreateApiKeyReqDTO();
             Assert.Equal("", req.KeyName);
             Assert.Null(req.ExpiresAt);
         }
@@ -267,7 +267,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void ApiKeyCreatedResult_HasExpectedProperties()
         {
-            var result = new ApiKeyCreatedResult
+            var result = new ApiKeyCreatedRepDTO
             {
                 Id = 1,
                 AccessKey = "ak_abc123",
@@ -281,7 +281,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantApiUsageStatDto_HasExpectedProperties()
         {
-            var dto = new TenantApiUsageStatDto
+            var dto = new TenantApiUsageStatRepDTO
             {
                 RequestCount = 1000,
                 SuccessCount = 950,
@@ -295,7 +295,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void WebhookEventDto_HasExpectedProperties()
         {
-            var dto = new WebhookEventDto
+            var dto = new WebhookEventRepDTO
             {
                 EventCode = "tenant.created",
                 EventName = "租户创建"
@@ -307,7 +307,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantWebhookDto_HasExpectedProperties()
         {
-            var dto = new TenantWebhookDto
+            var dto = new TenantWebhookRepDTO
             {
                 WebhookName = "通知",
                 TargetUrl = "https://example.com/hook",
@@ -321,7 +321,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateWebhookRequest_DefaultValues()
         {
-            var req = new CreateWebhookRequest();
+            var req = new CreateWebhookReqDTO();
             Assert.Equal("", req.WebhookName);
             Assert.Equal("", req.TargetUrl);
         }
@@ -329,7 +329,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdateWebhookRequest_NullableProperties()
         {
-            var req = new UpdateWebhookRequest();
+            var req = new UpdateWebhookReqDTO();
             Assert.Null(req.WebhookName);
             Assert.Null(req.TargetUrl);
         }
@@ -337,7 +337,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void WebhookDeliveryLogDto_HasExpectedProperties()
         {
-            var dto = new WebhookDeliveryLogDto
+            var dto = new WebhookDeliveryLogRepDTO
             {
                 DeliveryStatus = "success",
                 RetryCount = 0
@@ -353,7 +353,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantDailyStatDto_HasExpectedProperties()
         {
-            var dto = new TenantDailyStatDto
+            var dto = new TenantDailyStatRepDTO
             {
                 ActiveUserCount = 100,
                 ApiCallCount = 50000,
@@ -367,7 +367,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void PlatformMonitorMetricDto_HasExpectedProperties()
         {
-            var dto = new PlatformMonitorMetricDto
+            var dto = new PlatformMonitorMetricRepDTO
             {
                 MetricType = "cpu",
                 MetricKey = "usage",
@@ -387,7 +387,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void OperationLogDto_HasExpectedProperties()
         {
-            var dto = new OperationLogDto
+            var dto = new OperationLogRepDTO
             {
                 OperatorType = "platform",
                 Action = "create_tenant",
@@ -401,7 +401,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void AuditLogDto_HasExpectedProperties()
         {
-            var dto = new AuditLogDto
+            var dto = new AuditLogRepDTO
             {
                 AuditType = "data_change",
                 Severity = "high"
@@ -413,7 +413,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SystemLogDto_HasExpectedProperties()
         {
-            var dto = new SystemLogDto
+            var dto = new SystemLogRepDTO
             {
                 ServiceName = "TenantPlatform",
                 LogLevel = "error",
@@ -431,7 +431,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void NotificationTemplateDto_HasExpectedProperties()
         {
-            var dto = new NotificationTemplateDto
+            var dto = new NotificationTemplateRepDTO
             {
                 TemplateCode = "welcome",
                 Channel = "email",
@@ -447,7 +447,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateNotificationTemplateRequest_DefaultValues()
         {
-            var req = new CreateNotificationTemplateRequest();
+            var req = new CreateNotificationTemplateReqDTO();
             Assert.Equal("email", req.Channel);
             Assert.Equal("", req.TemplateCode);
             Assert.Equal("", req.TemplateName);
@@ -456,7 +456,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void UpdateNotificationTemplateRequest_NullableProperties()
         {
-            var req = new UpdateNotificationTemplateRequest();
+            var req = new UpdateNotificationTemplateReqDTO();
             Assert.Null(req.TemplateName);
             Assert.Null(req.SubjectTemplate);
             Assert.Null(req.BodyTemplate);
@@ -465,7 +465,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void NotificationDto_HasExpectedProperties()
         {
-            var dto = new NotificationDto
+            var dto = new NotificationRepDTO
             {
                 Channel = "email",
                 Recipient = "test@test.com",
@@ -479,7 +479,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateNotificationRequest_DefaultValues()
         {
-            var req = new CreateNotificationRequest();
+            var req = new CreateNotificationReqDTO();
             Assert.Equal("email", req.Channel);
             Assert.Equal("", req.Recipient);
         }
@@ -491,7 +491,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void StorageStrategyDto_HasExpectedProperties()
         {
-            var dto = new StorageStrategyDto
+            var dto = new StorageStrategyRepDTO
             {
                 StrategyCode = "default",
                 ProviderType = "local",
@@ -505,14 +505,14 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void CreateStorageStrategyRequest_DefaultValues()
         {
-            var req = new CreateStorageStrategyRequest();
+            var req = new CreateStorageStrategyReqDTO();
             Assert.Equal("local", req.ProviderType);
         }
 
         [Fact]
         public void UpdateStorageStrategyRequest_NullableProperties()
         {
-            var req = new UpdateStorageStrategyRequest();
+            var req = new UpdateStorageStrategyReqDTO();
             Assert.Null(req.StrategyName);
             Assert.Null(req.BucketName);
             Assert.Null(req.BasePath);
@@ -521,7 +521,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void TenantFileDto_HasExpectedProperties()
         {
-            var dto = new TenantFileDto
+            var dto = new TenantFileRepDTO
             {
                 FileName = "test.pdf",
                 FilePath = "/files/test.pdf",
@@ -539,7 +539,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void FileAccessPolicyDto_HasExpectedProperties()
         {
-            var dto = new FileAccessPolicyDto
+            var dto = new FileAccessPolicyRepDTO
             {
                 SubjectType = "user",
                 PermissionCode = "read"
@@ -551,7 +551,7 @@ namespace YTStdTenantPlatform.Tests
         [Fact]
         public void SaveFileAccessPolicyRequest_DefaultValues()
         {
-            var req = new SaveFileAccessPolicyRequest();
+            var req = new SaveFileAccessPolicyReqDTO();
             Assert.Equal("read", req.PermissionCode);
         }
     }

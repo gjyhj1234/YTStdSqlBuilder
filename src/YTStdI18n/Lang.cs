@@ -17,4 +17,7 @@ public enum Lang : byte
 
     /// <summary>繁体中文</summary>
     ZhTw = 3,
+
+    /// <summary>马来语</summary>
+    MsMy = 4,
 }

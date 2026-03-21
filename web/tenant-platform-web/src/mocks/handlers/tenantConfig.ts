@@ -4,16 +4,16 @@ import {
   mockTenantFeatureFlags,
   mockTenantParameters,
 } from '../data/tenantConfig'
-import { ok, paged, getPageParams } from '../data/common'
+import { ok, fail, paged, getPageParams } from '../data/common'
 
 export const tenantConfigHandlers = [
   http.get('/api/tenant-system-configs/:tenantRefId', ({ params }) => {
     const config = mockTenantSystemConfigs.find(
-      (c) => c.tenantRefId === Number(params['tenantRefId']),
+      (c) => c.TenantRefId === Number(params['tenantRefId']),
     )
     if (!config)
       return HttpResponse.json(
-        { success: false, message: '配置不存在', data: null, traceId: '' },
+        fail('error.config_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(config))
@@ -21,7 +21,7 @@ export const tenantConfigHandlers = [
 
   http.put('/api/tenant-system-configs/:tenantRefId', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '更新成功'))
+    return HttpResponse.json(ok(body, 'operation.update_success'))
   }),
 
   http.get('/api/tenant-feature-flags', ({ request }) => {
@@ -33,19 +33,19 @@ export const tenantConfigHandlers = [
   http.post('/api/tenant-feature-flags', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const flag = {
-      id: mockTenantFeatureFlags.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      featureKey: body['featureKey'] as string,
-      featureName: body['featureName'] as string,
-      enabled: (body['enabled'] as boolean) ?? false,
-      description: (body['description'] as string) ?? '',
-      createdAt: new Date().toISOString(),
+      Id: mockTenantFeatureFlags.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      FeatureKey: body['FeatureKey'] as string,
+      FeatureName: body['FeatureName'] as string,
+      Enabled: (body['Enabled'] as boolean) ?? false,
+      Description: (body['Description'] as string) ?? '',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(flag, '创建成功'))
+    return HttpResponse.json(ok(flag, 'operation.create_success'))
   }),
 
   http.put('/api/tenant-feature-flags/:id/toggle', () => {
-    return HttpResponse.json(ok(null, '切换成功'))
+    return HttpResponse.json(ok(null, 'operation.toggle_success'))
   }),
 
   http.get('/api/tenant-parameters', ({ request }) => {
@@ -57,18 +57,18 @@ export const tenantConfigHandlers = [
   http.post('/api/tenant-parameters', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const param = {
-      id: mockTenantParameters.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      paramKey: body['paramKey'] as string,
-      paramValue: body['paramValue'] as string,
-      paramType: body['paramType'] as string,
-      description: (body['description'] as string) ?? '',
-      createdAt: new Date().toISOString(),
+      Id: mockTenantParameters.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      ParamKey: body['ParamKey'] as string,
+      ParamValue: body['ParamValue'] as string,
+      ParamType: body['ParamType'] as string,
+      Description: (body['Description'] as string) ?? '',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(param, '创建成功'))
+    return HttpResponse.json(ok(param, 'operation.create_success'))
   }),
 
   http.delete('/api/tenant-parameters/:id', () => {
-    return HttpResponse.json(ok(null, '删除成功'))
+    return HttpResponse.json(ok(null, 'operation.delete_success'))
   }),
 ]

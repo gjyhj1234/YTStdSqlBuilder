@@ -48,24 +48,24 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="invoiceNo" caption="账单号" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="subscriptionId" caption="订阅ID" :width="80" />
-        <DxColumn data-field="invoiceStatus" caption="账单状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="billingPeriodStart" caption="账期开始" cell-template="dateCell" />
-        <DxColumn data-field="billingPeriodEnd" caption="账期结束" cell-template="dateCell" />
-        <DxColumn data-field="subtotalAmount" caption="小计金额" cell-template="amountCell" :width="100" />
-        <DxColumn data-field="extraAmount" caption="附加金额" cell-template="amountCell" :width="100" />
-        <DxColumn data-field="discountAmount" caption="折扣金额" cell-template="amountCell" :width="100" />
-        <DxColumn data-field="totalAmount" caption="总金额" cell-template="amountCell" :width="100" />
-        <DxColumn data-field="currencyCode" caption="币种" :width="60" />
-        <DxColumn data-field="issuedAt" caption="开具时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="dueAt" caption="到期时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="paidAt" caption="支付时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="InvoiceNo" caption="账单号" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="SubscriptionId" caption="订阅ID" :width="80" />
+        <DxColumn data-field="InvoiceStatus" caption="账单状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="BillingPeriodStart" caption="账期开始" cell-template="dateCell" />
+        <DxColumn data-field="BillingPeriodEnd" caption="账期结束" cell-template="dateCell" />
+        <DxColumn data-field="SubtotalAmount" caption="小计金额" cell-template="amountCell" :width="100" />
+        <DxColumn data-field="ExtraAmount" caption="附加金额" cell-template="amountCell" :width="100" />
+        <DxColumn data-field="DiscountAmount" caption="折扣金额" cell-template="amountCell" :width="100" />
+        <DxColumn data-field="TotalAmount" caption="总金额" cell-template="amountCell" :width="100" />
+        <DxColumn data-field="CurrencyCode" caption="币种" :width="60" />
+        <DxColumn data-field="IssuedAt" caption="开具时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="DueAt" caption="到期时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="PaidAt" caption="支付时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateTimeCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="100" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -81,11 +81,11 @@
         </template>
         <template #actionCell="{ data: cellData }">
           <DxButton
-            v-if="!['Voided', 'Paid'].includes(cellData.data.invoiceStatus) && perm.has(BILLING_INVOICE_VOID)"
+            v-if="!['Voided', 'Paid'].includes(cellData.data.InvoiceStatus) && perm.has(BILLING_INVOICE_VOID)"
             text="作废"
             styling-mode="text"
             type="danger"
-            @click="onVoid(cellData.data.id)"
+            @click="onVoid(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -107,19 +107,19 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="subscriptionId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="SubscriptionId" editor-type="dxNumberBox">
           <DxLabel text="订阅ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="billingPeriodStart" editor-type="dxDateBox">
+        <DxSimpleItem data-field="BillingPeriodStart" editor-type="dxDateBox">
           <DxLabel text="账期开始" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="billingPeriodEnd" editor-type="dxDateBox">
+        <DxSimpleItem data-field="BillingPeriodEnd" editor-type="dxDateBox">
           <DxLabel text="账期结束" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="currencyCode">
+        <DxSimpleItem data-field="CurrencyCode">
           <DxLabel text="币种" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -157,8 +157,8 @@ import {
   getInvoices,
   createInvoice,
   voidInvoice,
-  type BillingInvoiceDto,
-  type CreateBillingInvoiceRequest,
+  type BillingInvoiceRepDTO,
+  type CreateBillingInvoiceReqDTO,
 } from '@/api/billing'
 import {
   BILLING_INVOICE_CREATE,
@@ -178,25 +178,25 @@ const statusOptions = [
   { text: '已作废', value: 'Voided' },
 ]
 
-const gridData = ref<BillingInvoiceDto[]>([])
+const gridData = ref<BillingInvoiceRepDTO[]>([])
 
-const createForm = reactive<CreateBillingInvoiceRequest>({
-  tenantRefId: 0,
-  subscriptionId: 0,
-  billingPeriodStart: '',
-  billingPeriodEnd: '',
-  currencyCode: 'CNY',
+const createForm = reactive<CreateBillingInvoiceReqDTO>({
+  TenantRefId: 0,
+  SubscriptionId: 0,
+  BillingPeriodStart: '',
+  BillingPeriodEnd: '',
+  CurrencyCode: 'CNY',
 })
 
 async function loadData() {
   try {
     const res = await getInvoices({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -207,9 +207,9 @@ async function handleCreate() {
     await createInvoice(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      tenantRefId: 0, subscriptionId: 0,
-      billingPeriodStart: '', billingPeriodEnd: '',
-      currencyCode: 'CNY',
+      TenantRefId: 0, SubscriptionId: 0,
+      BillingPeriodStart: '', BillingPeriodEnd: '',
+      CurrencyCode: 'CNY',
     })
     await loadData()
   } catch {

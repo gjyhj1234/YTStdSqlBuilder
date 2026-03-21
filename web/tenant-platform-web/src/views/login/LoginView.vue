@@ -8,10 +8,10 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="username" :editor-options="{ placeholder: $t('请输入用户名') }">
+        <DxSimpleItem data-field="Username" :editor-options="{ placeholder: $t('请输入用户名') }">
           <DxLabel :text="$t('用户名')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="password" :editor-options="{ mode: 'password', placeholder: $t('请输入密码') }">
+        <DxSimpleItem data-field="Password" :editor-options="{ mode: 'password', placeholder: $t('请输入密码') }">
           <DxLabel :text="$t('密码')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -40,17 +40,17 @@ const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
-const formData = reactive({ username: '', password: '' })
+const formData = reactive({ Username: '', Password: '' })
 const errorMsg = ref('')
 
 async function handleLogin() {
   errorMsg.value = ''
-  if (!formData.username || !formData.password) {
+  if (!formData.Username || !formData.Password) {
     errorMsg.value = t('请输入用户名和密码')
     return
   }
   try {
-    await authStore.login(formData.username, formData.password)
+    await authStore.login(formData.Username, formData.Password)
     const redirect = (route.query.redirect as string) || '/dashboard'
     router.push(redirect)
   } catch (e: unknown) {

@@ -16,20 +16,20 @@ export const apiIntegrationHandlers = [
   http.post('/api/tenant-api-keys', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const result = {
-      id: mockTenantApiKeys.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      keyName: body['keyName'] as string,
-      accessKey: `ak_new_${Date.now()}`,
-      secretKey: `sk_new_${Date.now()}`,
-      status: 'Active',
-      expiresAt: '2026-12-31T00:00:00Z',
-      createdAt: new Date().toISOString(),
+      Id: mockTenantApiKeys.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      KeyName: body['KeyName'] as string,
+      AccessKey: `ak_new_${Date.now()}`,
+      SecretKey: `sk_new_${Date.now()}`,
+      Status: 'Active',
+      ExpiresAt: '2026-12-31T00:00:00Z',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(result, '创建成功'))
+    return HttpResponse.json(ok(result, 'operation.create_success'))
   }),
 
   http.put('/api/tenant-api-keys/:id/disable', () => {
-    return HttpResponse.json(ok(null, '禁用成功'))
+    return HttpResponse.json(ok(null, 'operation.disable_success'))
   }),
 
   http.get('/api/tenant-api-usage-stats', ({ request }) => {
@@ -37,13 +37,13 @@ export const apiIntegrationHandlers = [
     const { page, pageSize } = getPageParams(url)
     const stats = [
       {
-        id: 1,
-        tenantRefId: 1,
-        apiKeyId: 1,
-        statDate: '2025-06-10',
-        callCount: 1580,
-        errorCount: 12,
-        createdAt: '2025-06-11T00:05:00Z',
+        Id: 1,
+        TenantRefId: 1,
+        ApiKeyId: 1,
+        StatDate: '2025-06-10',
+        CallCount: 1580,
+        ErrorCount: 12,
+        CreatedAt: '2025-06-11T00:05:00Z',
       },
     ]
     return HttpResponse.json(paged(stats, page, pageSize))
@@ -51,9 +51,9 @@ export const apiIntegrationHandlers = [
 
   http.get('/api/webhook-events', () => {
     const events = [
-      { id: 1, eventCode: 'subscription.created', eventName: '订阅创建', createdAt: '2025-01-01T00:00:00Z' },
-      { id: 2, eventCode: 'invoice.paid', eventName: '账单已支付', createdAt: '2025-01-01T00:00:00Z' },
-      { id: 3, eventCode: 'payment.success', eventName: '支付成功', createdAt: '2025-01-01T00:00:00Z' },
+      { Id: 1, EventCode: 'subscription.created', EventName: '订阅创建', CreatedAt: '2025-01-01T00:00:00Z' },
+      { Id: 2, EventCode: 'invoice.paid', EventName: '账单已支付', CreatedAt: '2025-01-01T00:00:00Z' },
+      { Id: 3, EventCode: 'payment.success', EventName: '支付成功', CreatedAt: '2025-01-01T00:00:00Z' },
     ]
     return HttpResponse.json(ok(events))
   }),
@@ -67,28 +67,28 @@ export const apiIntegrationHandlers = [
   http.post('/api/tenant-webhooks', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newWebhook = {
-      id: mockTenantWebhooks.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      webhookUrl: body['webhookUrl'] as string,
-      eventTypes: body['eventTypes'] as string,
-      secret: `whsec_${Date.now()}`,
-      status: 'Active',
-      createdAt: new Date().toISOString(),
+      Id: mockTenantWebhooks.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      WebhookUrl: body['WebhookUrl'] as string,
+      EventTypes: body['EventTypes'] as string,
+      Secret: `whsec_${Date.now()}`,
+      Status: 'Active',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newWebhook, '创建成功'))
+    return HttpResponse.json(ok(newWebhook, 'operation.create_success'))
   }),
 
   http.put('/api/tenant-webhooks/:id', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '更新成功'))
+    return HttpResponse.json(ok(body, 'operation.update_success'))
   }),
 
   http.put('/api/tenant-webhooks/:id/enable', () => {
-    return HttpResponse.json(ok(null, '启用成功'))
+    return HttpResponse.json(ok(null, 'operation.enable_success'))
   }),
 
   http.put('/api/tenant-webhooks/:id/disable', () => {
-    return HttpResponse.json(ok(null, '禁用成功'))
+    return HttpResponse.json(ok(null, 'operation.disable_success'))
   }),
 
   http.get('/api/webhook-delivery-logs', ({ request }) => {

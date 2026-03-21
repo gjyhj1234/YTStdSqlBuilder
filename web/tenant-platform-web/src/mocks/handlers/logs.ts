@@ -4,7 +4,7 @@ import {
   mockAuditLogs,
   mockSystemLogs,
 } from '../data/logs'
-import { ok, paged, getPageParams } from '../data/common'
+import { ok, fail, paged, getPageParams } from '../data/common'
 
 export const logsHandlers = [
   http.get('/api/operation-logs', ({ request }) => {
@@ -14,10 +14,10 @@ export const logsHandlers = [
   }),
 
   http.get('/api/operation-logs/:id', ({ params }) => {
-    const log = mockOperationLogs.find((l) => l.id === Number(params['id']))
+    const log = mockOperationLogs.find((l) => l.Id === Number(params['id']))
     if (!log)
       return HttpResponse.json(
-        { success: false, message: '日志不存在', data: null, traceId: '' },
+        fail('error.log_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(log))
@@ -30,10 +30,10 @@ export const logsHandlers = [
   }),
 
   http.get('/api/audit-logs/:id', ({ params }) => {
-    const log = mockAuditLogs.find((l) => l.id === Number(params['id']))
+    const log = mockAuditLogs.find((l) => l.Id === Number(params['id']))
     if (!log)
       return HttpResponse.json(
-        { success: false, message: '日志不存在', data: null, traceId: '' },
+        fail('error.log_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(log))
@@ -46,10 +46,10 @@ export const logsHandlers = [
   }),
 
   http.get('/api/system-logs/:id', ({ params }) => {
-    const log = mockSystemLogs.find((l) => l.id === Number(params['id']))
+    const log = mockSystemLogs.find((l) => l.Id === Number(params['id']))
     if (!log)
       return HttpResponse.json(
-        { success: false, message: '日志不存在', data: null, traceId: '' },
+        fail('error.log_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(log))

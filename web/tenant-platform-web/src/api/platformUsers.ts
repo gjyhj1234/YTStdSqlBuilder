@@ -1,43 +1,23 @@
 /** API — 平台用户 */
-import { get, post, put, type PagedResult } from '@/utils/http'
+import { get, post, put } from '@/utils/http'
+import type { PagedResult } from '@/types/base'
+import type { PlatformUserRepDTO, CreatePlatformUserReqDTO, UpdatePlatformUserReqDTO } from '@/types/platformUser'
 
-export interface PlatformUserDto {
-  id: number
-  username: string
-  email: string
-  phone: string
-  displayName: string
-  status: string
-  mfaEnabled: boolean
-  lastLoginAt: string | null
-  createdAt: string
-}
-
-export interface CreatePlatformUserRequest {
-  username: string
-  email: string
-  phone: string
-  displayName: string
-  password: string
-  remark?: string
-}
-
-export interface UpdatePlatformUserRequest {
-  displayName: string
-  phone: string
-  email: string
-  remark?: string
-}
+export type { PlatformUserRepDTO, CreatePlatformUserReqDTO }
 
 export function getPlatformUsers(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<PlatformUserDto>>('/api/platform-users', params)
+  return get<PagedResult<PlatformUserRepDTO>>('/api/platform-users', params)
 }
 
-export function createPlatformUser(data: CreatePlatformUserRequest) {
-  return post<{ id: number }>('/api/platform-users', data)
+export function getPlatformUser(id: number) {
+  return get<PlatformUserRepDTO>(`/api/platform-users/${id}`)
 }
 
-export function updatePlatformUser(id: number, data: UpdatePlatformUserRequest) {
+export function createPlatformUser(data: CreatePlatformUserReqDTO) {
+  return post<void>('/api/platform-users', data)
+}
+
+export function updatePlatformUser(id: number, data: UpdatePlatformUserReqDTO) {
   return put<void>(`/api/platform-users/${id}`, data)
 }
 

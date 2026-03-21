@@ -39,15 +39,15 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="domain" caption="域名" />
-        <DxColumn data-field="domainType" caption="域名类型" :width="100" />
-        <DxColumn data-field="isPrimary" caption="主域名" cell-template="booleanCell" :width="80" />
-        <DxColumn data-field="verificationStatus" caption="验证状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="Domain" caption="域名" />
+        <DxColumn data-field="DomainType" caption="域名类型" :width="100" />
+        <DxColumn data-field="IsPrimary" caption="主域名" cell-template="booleanCell" :width="80" />
+        <DxColumn data-field="VerificationStatus" caption="验证状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="160" />
         <template #booleanCell="{ data: cellData }">
           <span>{{ cellData.value ? '是' : '否' }}</span>
@@ -66,18 +66,18 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="perm.has(TENANT_DOMAIN_VERIFY) && cellData.data.verificationStatus !== 'Verified'"
+            v-if="perm.has(TENANT_DOMAIN_VERIFY) && cellData.data.VerificationStatus !== 'Verified'"
             text="验证"
             styling-mode="text"
             type="success"
-            @click="onVerify(cellData.data.id)"
+            @click="onVerify(cellData.data.Id)"
           />
           <DxButton
             v-if="perm.has(TENANT_DOMAIN_DELETE)"
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -99,13 +99,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="domain">
+        <DxSimpleItem data-field="Domain">
           <DxLabel text="域名" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="domainType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="DomainType" editor-type="dxSelectBox"
           :editor-options="{ items: domainTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="域名类型" />
         </DxSimpleItem>
@@ -142,8 +142,8 @@ import { formatDateTime } from '@/utils/format'
 import {
   getTenantDomains,
   createTenantDomain,
-  type TenantDomainDto,
-  type CreateTenantDomainRequest,
+  type TenantDomainRepDTO,
+  type CreateTenantDomainReqDTO,
 } from '@/api/tenantDomains'
 import {
   TENANT_DOMAIN_CREATE,
@@ -162,22 +162,20 @@ const domainTypes = [
   { text: '别名', value: 'Alias' },
 ]
 
-const gridData = ref<TenantDomainDto[]>([])
+const gridData = ref<TenantDomainRepDTO[]>([])
 
-const createForm = reactive<CreateTenantDomainRequest>({
-  tenantRefId: 0,
-  domain: '',
-  domainType: 'Primary',
+const createForm = reactive<CreateTenantDomainReqDTO>({
+  TenantRefId: 0,
+  Domain: '',
+  DomainType: 'Primary',
 })
 
 async function loadData() {
   try {
-    const res = await getTenantDomains({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-    })
-    gridData.value = res.data.items
+    const res = await getTenantDomains()
+    const all = res.data!
+    const kw = filterKeyword.value?.toLowerCase()
+    gridData.value = kw ? all.filter(d => d.Domain.toLowerCase().includes(kw)) : all
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -187,14 +185,14 @@ async function handleCreate() {
   try {
     await createTenantDomain(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { tenantRefId: 0, domain: '', domainType: 'Primary' })
+    Object.assign(createForm, { TenantRefId: 0, Domain: '', DomainType: 'Primary' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function onEdit(_domain: TenantDomainDto) {
+function onEdit(_domain: TenantDomainRepDTO) {
   // 后续阶段完善编辑功能
 }
 

@@ -12,29 +12,29 @@ export const platformUsersHandlers = [
   http.post('/api/platform-users', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newUser = {
-      id: mockPlatformUsers.length + 1,
-      username: body['username'] as string,
-      displayName: body['displayName'] as string,
-      email: body['email'] as string,
-      phone: body['phone'] as string,
-      status: 'Active',
-      isSuperAdmin: false,
-      lastLoginAt: '',
-      createdAt: new Date().toISOString(),
+      Id: mockPlatformUsers.length + 1,
+      Username: body['Username'] as string,
+      DisplayName: body['DisplayName'] as string,
+      Email: body['Email'] as string,
+      Phone: body['Phone'] as string,
+      Status: 'Active',
+      IsSuperAdmin: false,
+      LastLoginAt: '',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newUser, '创建成功'))
+    return HttpResponse.json(ok(newUser, 'operation.create_success'))
   }),
 
   http.put('/api/platform-users/:id', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '更新成功'))
+    return HttpResponse.json(ok(body, 'operation.update_success'))
   }),
 
   http.put('/api/platform-users/:id/enable', () => {
-    return HttpResponse.json(ok(null, '启用成功'))
+    return HttpResponse.json(ok(null, 'operation.enable_success'))
   }),
 
   http.put('/api/platform-users/:id/disable', () => {
-    return HttpResponse.json(ok(null, '禁用成功'))
+    return HttpResponse.json(ok(null, 'operation.disable_success'))
   }),
 ]

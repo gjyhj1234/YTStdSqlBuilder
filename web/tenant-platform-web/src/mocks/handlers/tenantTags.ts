@@ -12,16 +12,16 @@ export const tenantTagsHandlers = [
   http.post('/api/tenant-tags', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newTag = {
-      id: mockTenantTags.length + 1,
-      tagCode: body['tagCode'] as string,
-      tagName: body['tagName'] as string,
-      tagCategory: body['tagCategory'] as string,
-      createdAt: new Date().toISOString(),
+      Id: mockTenantTags.length + 1,
+      TagCode: body['TagCode'] as string,
+      TagName: body['TagName'] as string,
+      TagCategory: body['TagCategory'] as string,
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newTag, '创建成功'))
+    return HttpResponse.json(ok(newTag, 'operation.create_success'))
   }),
 
   http.post('/api/tenant-tags/bind', () => {
-    return HttpResponse.json(ok(null, '绑定成功'))
+    return HttpResponse.json(ok(null, 'operation.bind_success'))
   }),
 ]

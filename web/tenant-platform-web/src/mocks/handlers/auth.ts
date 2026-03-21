@@ -4,15 +4,15 @@ import { ok, fail } from '../data/common'
 
 export const authHandlers = [
   http.post('/api/auth/login', async ({ request }) => {
-    const body = (await request.json()) as { username: string; password: string }
-    if (body.username === 'admin' && body.password === 'admin123') {
-      return HttpResponse.json(ok(mockLoginResult, '登录成功'))
+    const body = (await request.json()) as { Username: string; Password: string }
+    if (body.Username === 'admin' && body.Password === 'admin123') {
+      return HttpResponse.json(ok(mockLoginResult, 'auth.login_success'))
     }
-    return HttpResponse.json(fail('用户名或密码错误'), { status: 401 })
+    return HttpResponse.json(fail('auth.invalid_credentials', 2002), { status: 401 })
   }),
 
-  http.post('/api/auth/logout', () => {
-    return HttpResponse.json(ok(null, '登出成功'))
+  http.post('/api/auth/refresh', () => {
+    return HttpResponse.json(ok(mockLoginResult, 'auth.refresh_success'))
   }),
 
   http.get('/api/auth/me', () => {

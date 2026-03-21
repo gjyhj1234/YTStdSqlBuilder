@@ -41,15 +41,15 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
         @row-click="onRowClick"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="serviceName" caption="服务名称" />
-        <DxColumn data-field="logLevel" caption="日志等级" cell-template="levelCell" :width="100" />
-        <DxColumn data-field="traceId" caption="TraceId" />
-        <DxColumn data-field="message" caption="消息" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="ServiceName" caption="服务名称" />
+        <DxColumn data-field="LogLevel" caption="日志等级" cell-template="levelCell" :width="100" />
+        <DxColumn data-field="TraceId" caption="TraceId" />
+        <DxColumn data-field="Message" caption="消息" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <template #levelCell="{ data: cellData }">
           <StatusTag :status="cellData.value" :label-map="levelLabelMap" />
         </template>
@@ -71,12 +71,12 @@
       @hiding="showDetail = false"
     >
       <div v-if="detailData" class="detail-grid">
-        <p><strong>ID：</strong>{{ detailData.id }}</p>
-        <p><strong>服务名称：</strong>{{ detailData.serviceName }}</p>
-        <p><strong>日志等级：</strong><StatusTag :status="detailData.logLevel" :label-map="levelLabelMap" /></p>
-        <p><strong>TraceId：</strong>{{ detailData.traceId }}</p>
-        <p><strong>消息：</strong>{{ detailData.message }}</p>
-        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.createdAt) }}</p>
+        <p><strong>ID：</strong>{{ detailData.Id }}</p>
+        <p><strong>服务名称：</strong>{{ detailData.ServiceName }}</p>
+        <p><strong>日志等级：</strong><StatusTag :status="detailData.LogLevel" :label-map="levelLabelMap" /></p>
+        <p><strong>TraceId：</strong>{{ detailData.TraceId }}</p>
+        <p><strong>消息：</strong>{{ detailData.Message }}</p>
+        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.CreatedAt) }}</p>
       </div>
     </DxPopup>
 
@@ -106,14 +106,14 @@ import { formatDateTime } from '@/utils/format'
 import {
   getSystemLogs,
   getSystemLog,
-  type SystemLogDto,
+  type SystemLogRepDTO,
 } from '@/api/logs'
 
 const showGuide = ref(false)
 const showDetail = ref(false)
 const filterKeyword = ref('')
 const filterLevel = ref<string | undefined>(undefined)
-const detailData = ref<SystemLogDto | null>(null)
+const detailData = ref<SystemLogRepDTO | null>(null)
 
 const levelLabelMap: Record<string, string> = {
   Error: '错误',
@@ -129,26 +129,26 @@ const levelOptions = [
   { text: '调试', value: 'Debug' },
 ]
 
-const gridData = ref<SystemLogDto[]>([])
+const gridData = ref<SystemLogRepDTO[]>([])
 
 async function loadData() {
   try {
     const res = await getSystemLogs({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      logLevel: filterLevel.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      LogLevel: filterLevel.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
 }
 
-async function onRowClick(e: { data: SystemLogDto }) {
+async function onRowClick(e: { data: SystemLogRepDTO }) {
   try {
-    const res = await getSystemLog(e.data.id)
-    detailData.value = res.data
+    const res = await getSystemLog(e.data.Id)
+    detailData.value = res.data!
     showDetail.value = true
   } catch {
     // 错误由 http 层统一处理

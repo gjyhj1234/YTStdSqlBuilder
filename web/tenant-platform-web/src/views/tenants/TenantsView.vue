@@ -48,18 +48,18 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="tenantCode" :caption="$t('common.tenantCode')" />
-        <DxColumn data-field="tenantName" :caption="$t('common.tenantName')" />
-        <DxColumn data-field="enterpriseName" :caption="$t('common.enterpriseName')" />
-        <DxColumn data-field="contactName" :caption="$t('common.contactName')" />
-        <DxColumn data-field="contactEmail" :caption="$t('common.contactEmail')" />
-        <DxColumn data-field="lifecycleStatus" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="isolationMode" :caption="$t('common.isolationMode')" :width="120" />
-        <DxColumn data-field="openedAt" :caption="$t('common.openedAt')" cell-template="dateCell" />
-        <DxColumn data-field="expiresAt" :caption="$t('common.expiresAt')" cell-template="dateCell" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="TenantCode" :caption="$t('common.tenantCode')" />
+        <DxColumn data-field="TenantName" :caption="$t('common.tenantName')" />
+        <DxColumn data-field="EnterpriseName" :caption="$t('common.enterpriseName')" />
+        <DxColumn data-field="ContactName" :caption="$t('common.contactName')" />
+        <DxColumn data-field="ContactEmail" :caption="$t('common.contactEmail')" />
+        <DxColumn data-field="LifecycleStatus" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="IsolationMode" :caption="$t('common.isolationMode')" :width="120" />
+        <DxColumn data-field="OpenedAt" :caption="$t('common.openedAt')" cell-template="dateCell" />
+        <DxColumn data-field="ExpiresAt" :caption="$t('common.expiresAt')" cell-template="dateCell" />
         <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="200" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -75,25 +75,25 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.lifecycleStatus === 'Trial' && perm.has(TENANT_LIST_ACTIVATE)"
+            v-if="cellData.data.LifecycleStatus === 'Trial' && perm.has(TENANT_LIST_ACTIVATE)"
             :text="$t('激活')"
             styling-mode="text"
             type="success"
-            @click="onStatusChange(cellData.data.id, 'Active', '激活租户')"
+            @click="onStatusChange(cellData.data.Id, 'Active', '激活租户')"
           />
           <DxButton
-            v-if="cellData.data.lifecycleStatus === 'Active' && perm.has(TENANT_LIST_SUSPEND)"
+            v-if="cellData.data.LifecycleStatus === 'Active' && perm.has(TENANT_LIST_SUSPEND)"
             :text="$t('暂停')"
             styling-mode="text"
             type="danger"
-            @click="onStatusChange(cellData.data.id, 'Suspended', '暂停租户服务')"
+            @click="onStatusChange(cellData.data.Id, 'Suspended', '暂停租户服务')"
           />
           <DxButton
-            v-if="perm.has(TENANT_LIST_CLOSE) && !['Closed'].includes(cellData.data.lifecycleStatus)"
+            v-if="perm.has(TENANT_LIST_CLOSE) && !['Closed'].includes(cellData.data.LifecycleStatus)"
             :text="$t('关闭')"
             styling-mode="text"
             type="danger"
-            @click="onStatusChange(cellData.data.id, 'Closed', '关闭租户')"
+            @click="onStatusChange(cellData.data.Id, 'Closed', '关闭租户')"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -115,29 +115,29 @@
         :col-count="2"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantCode">
+        <DxSimpleItem data-field="TenantCode">
           <DxLabel :text="$t('租户编码')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="tenantName">
+        <DxSimpleItem data-field="TenantName">
           <DxLabel :text="$t('租户名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="enterpriseName" :col-span="2">
+        <DxSimpleItem data-field="EnterpriseName" :col-span="2">
           <DxLabel :text="$t('企业名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="contactName">
+        <DxSimpleItem data-field="ContactName">
           <DxLabel :text="$t('联系人')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="contactPhone">
+        <DxSimpleItem data-field="ContactPhone">
           <DxLabel :text="$t('联系电话')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="contactEmail" :col-span="2">
+        <DxSimpleItem data-field="ContactEmail" :col-span="2">
           <DxLabel :text="$t('联系邮箱')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="sourceType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="SourceType" editor-type="dxSelectBox"
           :editor-options="{ items: sourceTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel :text="$t('来源')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="isolationMode" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="IsolationMode" editor-type="dxSelectBox"
           :editor-options="{ items: isolationModes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel :text="$t('隔离模式')" />
         </DxSimpleItem>
@@ -177,8 +177,8 @@ import {
   getTenants,
   createTenant,
   changeTenantStatus,
-  type TenantDto,
-  type CreateTenantRequest,
+  type TenantRepDTO,
+  type CreateTenantReqDTO,
 } from '@/api/tenants'
 import {
   TENANT_LIST_CREATE,
@@ -217,28 +217,28 @@ const isolationModes = computed(() => [
   { text: t('enum.isolationMode.Hybrid'), value: 'Hybrid' },
 ])
 
-const gridData = ref<TenantDto[]>([])
+const gridData = ref<TenantRepDTO[]>([])
 
-const createForm = reactive<CreateTenantRequest>({
-  tenantCode: '',
-  tenantName: '',
-  enterpriseName: '',
-  contactName: '',
-  contactPhone: '',
-  contactEmail: '',
-  sourceType: 'Admin',
-  isolationMode: 'SharedDatabase',
+const createForm = reactive<CreateTenantReqDTO>({
+  TenantCode: '',
+  TenantName: '',
+  EnterpriseName: '',
+  ContactName: '',
+  ContactPhone: '',
+  ContactEmail: '',
+  SourceType: 'Admin',
+  IsolationMode: 'SharedDatabase',
 })
 
 async function loadData() {
   try {
     const res = await getTenants({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -249,9 +249,9 @@ async function handleCreate() {
     await createTenant(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      tenantCode: '', tenantName: '', enterpriseName: '',
-      contactName: '', contactPhone: '', contactEmail: '',
-      sourceType: 'Admin', isolationMode: 'SharedDatabase',
+      TenantCode: '', TenantName: '', EnterpriseName: '',
+      ContactName: '', ContactPhone: '', ContactEmail: '',
+      SourceType: 'Admin', IsolationMode: 'SharedDatabase',
     })
     await loadData()
   } catch {
@@ -259,13 +259,13 @@ async function handleCreate() {
   }
 }
 
-function onEdit(_tenant: TenantDto) {
+function onEdit(_tenant: TenantRepDTO) {
   // 后续阶段完善编辑功能
 }
 
 async function onStatusChange(id: number, targetStatus: string, reason: string) {
   try {
-    await changeTenantStatus(id, { targetStatus, reason })
+    await changeTenantStatus(id, { TargetStatus: targetStatus, Reason: reason })
     await loadData()
   } catch {
     // 错误由 http 层统一处理

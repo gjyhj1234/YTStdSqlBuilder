@@ -48,17 +48,17 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="subjectType" caption="主体类型" :width="120" />
-        <DxColumn data-field="subjectKey" caption="主体标识" :width="180" />
-        <DxColumn data-field="windowSeconds" caption="窗口秒数" :width="100" />
-        <DxColumn data-field="limitCount" caption="限制次数" :width="100" />
-        <DxColumn data-field="burstLimit" caption="突发限制" :width="100" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" :width="160" />
-        <DxColumn data-field="updatedAt" caption="更新时间" cell-template="dateTimeCell" :width="160" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="SubjectType" caption="主体类型" :width="120" />
+        <DxColumn data-field="SubjectKey" caption="主体标识" :width="180" />
+        <DxColumn data-field="WindowSeconds" caption="窗口秒数" :width="100" />
+        <DxColumn data-field="LimitCount" caption="限制次数" :width="100" />
+        <DxColumn data-field="BurstLimit" caption="突发限制" :width="100" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateTimeCell" :width="160" />
+        <DxColumn data-field="UpdatedAt" caption="更新时间" cell-template="dateTimeCell" :width="160" />
         <DxColumn caption="操作" cell-template="actionCell" :width="120" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -79,7 +79,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -101,20 +101,20 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="subjectType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="SubjectType" editor-type="dxSelectBox"
           :editor-options="{ items: subjectTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="主体类型" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="subjectKey" editor-type="dxTextBox">
+        <DxSimpleItem data-field="SubjectKey" editor-type="dxTextBox">
           <DxLabel text="主体标识" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="windowSeconds" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
+        <DxSimpleItem data-field="WindowSeconds" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
           <DxLabel text="窗口秒数" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="limitCount" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
+        <DxSimpleItem data-field="LimitCount" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
           <DxLabel text="限制次数" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="burstLimit" editor-type="dxNumberBox" :editor-options="{ min: 0 }">
+        <DxSimpleItem data-field="BurstLimit" editor-type="dxNumberBox" :editor-options="{ min: 0 }">
           <DxLabel text="突发限制" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -137,13 +137,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="windowSeconds" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
+        <DxSimpleItem data-field="WindowSeconds" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
           <DxLabel text="窗口秒数" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="limitCount" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
+        <DxSimpleItem data-field="LimitCount" editor-type="dxNumberBox" :editor-options="{ min: 1 }">
           <DxLabel text="限制次数" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="burstLimit" editor-type="dxNumberBox" :editor-options="{ min: 0 }">
+        <DxSimpleItem data-field="BurstLimit" editor-type="dxNumberBox" :editor-options="{ min: 0 }">
           <DxLabel text="突发限制" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -185,30 +185,30 @@ import {
 } from '@/constants/permissions'
 
 /* ---------- 类型 ---------- */
-interface RateLimitPolicyDto {
-  id: number
-  subjectType: string
-  subjectKey: string
-  windowSeconds: number
-  limitCount: number
-  burstLimit: number | null
-  status: string
-  createdAt: string
-  updatedAt: string
+interface RateLimitPolicyRepDTO {
+  Id: number
+  SubjectType: string
+  SubjectKey: string
+  WindowSeconds: number
+  LimitCount: number
+  BurstLimit: number | null
+  Status: string
+  CreatedAt: string
+  UpdatedAt: string
 }
 
-interface CreateRateLimitPolicyRequest {
-  subjectType: string
-  subjectKey: string
-  windowSeconds: number
-  limitCount: number
-  burstLimit: number | null
+interface CreateRateLimitPolicyReqDTO {
+  SubjectType: string
+  SubjectKey: string
+  WindowSeconds: number
+  LimitCount: number
+  BurstLimit: number | null
 }
 
-interface UpdateRateLimitPolicyRequest {
-  windowSeconds: number
-  limitCount: number
-  burstLimit: number | null
+interface UpdateRateLimitPolicyReqDTO {
+  WindowSeconds: number
+  LimitCount: number
+  BurstLimit: number | null
 }
 
 const perm = usePermission()
@@ -232,31 +232,31 @@ const subjectTypes = [
   { text: '全局', value: 'Global' },
 ]
 
-const gridData = ref<RateLimitPolicyDto[]>([])
+const gridData = ref<RateLimitPolicyRepDTO[]>([])
 
-const createForm = reactive<CreateRateLimitPolicyRequest>({
-  subjectType: 'Tenant',
-  subjectKey: '',
-  windowSeconds: 60,
-  limitCount: 100,
-  burstLimit: null,
+const createForm = reactive<CreateRateLimitPolicyReqDTO>({
+  SubjectType: 'Tenant',
+  SubjectKey: '',
+  WindowSeconds: 60,
+  LimitCount: 100,
+  BurstLimit: null,
 })
 
-const editForm = reactive<UpdateRateLimitPolicyRequest>({
-  windowSeconds: 60,
-  limitCount: 100,
-  burstLimit: null,
+const editForm = reactive<UpdateRateLimitPolicyReqDTO>({
+  WindowSeconds: 60,
+  LimitCount: 100,
+  BurstLimit: null,
 })
 
 async function loadData() {
   try {
-    const res = await get<PagedResult<RateLimitPolicyDto>>('/api/rate-limit-policies', {
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+    const res = await get<PagedResult<RateLimitPolicyRepDTO>>('/api/rate-limit-policies', {
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -266,18 +266,18 @@ async function handleCreate() {
   try {
     await post('/api/rate-limit-policies', createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { subjectType: 'Tenant', subjectKey: '', windowSeconds: 60, limitCount: 100, burstLimit: null })
+    Object.assign(createForm, { SubjectType: 'Tenant', SubjectKey: '', WindowSeconds: 60, LimitCount: 100, BurstLimit: null })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function openEdit(row: RateLimitPolicyDto) {
-  editingId.value = row.id
-  editForm.windowSeconds = row.windowSeconds
-  editForm.limitCount = row.limitCount
-  editForm.burstLimit = row.burstLimit
+function openEdit(row: RateLimitPolicyRepDTO) {
+  editingId.value = row.Id
+  editForm.WindowSeconds = row.WindowSeconds
+  editForm.LimitCount = row.LimitCount
+  editForm.BurstLimit = row.BurstLimit
   showEditPopup.value = true
 }
 

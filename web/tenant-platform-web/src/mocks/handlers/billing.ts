@@ -4,7 +4,7 @@ import {
   mockPaymentOrders,
   mockPaymentRefunds,
 } from '../data/billing'
-import { ok, paged, getPageParams } from '../data/common'
+import { ok, fail, paged, getPageParams } from '../data/common'
 
 export const billingHandlers = [
   http.get('/api/billing-invoices', ({ request }) => {
@@ -14,10 +14,10 @@ export const billingHandlers = [
   }),
 
   http.get('/api/billing-invoices/:id', ({ params }) => {
-    const inv = mockBillingInvoices.find((i) => i.id === Number(params['id']))
+    const inv = mockBillingInvoices.find((i) => i.Id === Number(params['id']))
     if (!inv)
       return HttpResponse.json(
-        { success: false, message: '账单不存在', data: null, traceId: '' },
+        fail('error.invoice_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(inv))
@@ -29,11 +29,11 @@ export const billingHandlers = [
 
   http.post('/api/billing-invoices', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '创建成功'))
+    return HttpResponse.json(ok(body, 'operation.create_success'))
   }),
 
   http.put('/api/billing-invoices/:id/void', () => {
-    return HttpResponse.json(ok(null, '作废成功'))
+    return HttpResponse.json(ok(null, 'operation.void_success'))
   }),
 
   http.get('/api/payment-orders', ({ request }) => {
@@ -44,7 +44,7 @@ export const billingHandlers = [
 
   http.post('/api/payment-orders', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '创建成功'))
+    return HttpResponse.json(ok(body, 'operation.create_success'))
   }),
 
   http.get('/api/payment-refunds', ({ request }) => {
@@ -55,6 +55,6 @@ export const billingHandlers = [
 
   http.post('/api/payment-refunds', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '创建成功'))
+    return HttpResponse.json(ok(body, 'operation.create_success'))
   }),
 ]

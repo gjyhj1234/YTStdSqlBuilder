@@ -48,19 +48,19 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="orderNo" caption="订单号" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="invoiceId" caption="账单ID" :width="80" />
-        <DxColumn data-field="paymentChannel" caption="支付渠道" cell-template="channelCell" :width="100" />
-        <DxColumn data-field="paymentStatus" caption="支付状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="amount" caption="金额" cell-template="amountCell" :width="100" />
-        <DxColumn data-field="currencyCode" caption="币种" :width="60" />
-        <DxColumn data-field="thirdPartyTxnNo" caption="第三方交易号" />
-        <DxColumn data-field="paidAt" caption="支付时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="OrderNo" caption="订单号" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="InvoiceId" caption="账单ID" :width="80" />
+        <DxColumn data-field="PaymentChannel" caption="支付渠道" cell-template="channelCell" :width="100" />
+        <DxColumn data-field="PaymentStatus" caption="支付状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="Amount" caption="金额" cell-template="amountCell" :width="100" />
+        <DxColumn data-field="CurrencyCode" caption="币种" :width="60" />
+        <DxColumn data-field="ThirdPartyTxnNo" caption="第三方交易号" />
+        <DxColumn data-field="PaidAt" caption="支付时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateTimeCell" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -92,21 +92,21 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="invoiceId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="InvoiceId" editor-type="dxNumberBox">
           <DxLabel text="账单ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="paymentChannel" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="PaymentChannel" editor-type="dxSelectBox"
           :editor-options="{ items: paymentChannels, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="支付渠道" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="amount" editor-type="dxNumberBox"
+        <DxSimpleItem data-field="Amount" editor-type="dxNumberBox"
           :editor-options="{ min: 0, format: '#,##0.00' }">
           <DxLabel text="金额" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="currencyCode">
+        <DxSimpleItem data-field="CurrencyCode">
           <DxLabel text="币种" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -143,8 +143,8 @@ import { formatDateTime, formatAmount } from '@/utils/format'
 import {
   getPaymentOrders,
   createPaymentOrder,
-  type PaymentOrderDto,
-  type CreatePaymentOrderRequest,
+  type PaymentOrderRepDTO,
+  type CreatePaymentOrderReqDTO,
 } from '@/api/billing'
 import {
   BILLING_PAYMENT_VIEW,
@@ -177,25 +177,25 @@ const channelMap: Record<string, string> = {
   Stripe: 'Stripe',
 }
 
-const gridData = ref<PaymentOrderDto[]>([])
+const gridData = ref<PaymentOrderRepDTO[]>([])
 
-const createForm = reactive<CreatePaymentOrderRequest>({
-  tenantRefId: 0,
-  invoiceId: 0,
-  paymentChannel: 'Alipay',
-  amount: 0,
-  currencyCode: 'CNY',
+const createForm = reactive<CreatePaymentOrderReqDTO>({
+  TenantRefId: 0,
+  InvoiceId: 0,
+  PaymentChannel: 'Alipay',
+  Amount: 0,
+  CurrencyCode: 'CNY',
 })
 
 async function loadData() {
   try {
     const res = await getPaymentOrders({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -206,9 +206,9 @@ async function handleCreate() {
     await createPaymentOrder(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
-      tenantRefId: 0, invoiceId: 0,
-      paymentChannel: 'Alipay', amount: 0,
-      currencyCode: 'CNY',
+      TenantRefId: 0, InvoiceId: 0,
+      PaymentChannel: 'Alipay', Amount: 0,
+      CurrencyCode: 'CNY',
     })
     await loadData()
   } catch {

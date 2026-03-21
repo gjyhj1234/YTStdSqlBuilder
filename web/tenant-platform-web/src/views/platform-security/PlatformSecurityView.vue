@@ -124,12 +124,12 @@ interface SecurityInfo {
     expirationDays: number
   }
   ipWhitelist: {
-    enabled: boolean
+    Enabled: boolean
     entryCount: number
     lastUpdatedAt: string
   }
   mfa: {
-    enabled: boolean
+    Enabled: boolean
     enforced: boolean
     supportedMethods: string[]
   }
@@ -147,12 +147,12 @@ const securityInfo = reactive<SecurityInfo>({
     expirationDays: 90,
   },
   ipWhitelist: {
-    enabled: false,
+    Enabled: false,
     entryCount: 0,
     lastUpdatedAt: '',
   },
   mfa: {
-    enabled: false,
+    Enabled: false,
     enforced: false,
     supportedMethods: [],
   },

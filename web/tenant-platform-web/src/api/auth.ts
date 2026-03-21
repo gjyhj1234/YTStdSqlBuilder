@@ -1,27 +1,17 @@
 /** API — 认证登录 */
-import { post } from '@/utils/http'
+import { get, post } from '@/utils/http'
+import type { LoginReqDTO, LoginRepDTO, RefreshTokenReqDTO, CurrentUserRepDTO } from '@/types/auth'
 
-export interface LoginRequest {
-  username: string
-  password: string
+export type { LoginRepDTO }
+
+export function login(data: LoginReqDTO) {
+  return post<LoginRepDTO>('/api/auth/login', data)
 }
 
-export interface LoginResult {
-  token: string
-  expiresIn: number
-  userId: number
-  username: string
-  displayName: string
-  requirePasswordReset: boolean
-  roles: string[]
-  permissions: string[]
-  isSuperAdmin: boolean
+export function refreshToken(data?: RefreshTokenReqDTO) {
+  return post<LoginRepDTO>('/api/auth/refresh', data)
 }
 
-export function login(data: LoginRequest) {
-  return post<LoginResult>('/api/auth/login', data)
-}
-
-export function logout() {
-  return post<void>('/api/auth/logout')
+export function getCurrentUser() {
+  return get<CurrentUserRepDTO>('/api/auth/me')
 }

@@ -39,15 +39,14 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
-        parent-id-expr="parentId"
-        has-items-expr="hasChildren"
+        key-expr="Id"
+        parent-id-expr="ParentId"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="groupCode" caption="分组编码" />
-        <DxColumn data-field="groupName" caption="分组名称" />
-        <DxColumn data-field="description" caption="描述" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="GroupCode" caption="分组编码" />
+        <DxColumn data-field="GroupName" caption="分组名称" />
+        <DxColumn data-field="Description" caption="描述" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="120" />
         <template #dateCell="{ data: cellData }">
           <span>{{ formatDateTime(cellData.value) }}</span>
@@ -64,7 +63,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
       </DxTreeList>
@@ -84,16 +83,16 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="groupCode">
+        <DxSimpleItem data-field="GroupCode">
           <DxLabel text="分组编码" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="groupName">
+        <DxSimpleItem data-field="GroupName">
           <DxLabel text="分组名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="description" editor-type="dxTextArea">
+        <DxSimpleItem data-field="Description" editor-type="dxTextArea">
           <DxLabel text="描述" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="parentId" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="ParentId" editor-type="dxSelectBox"
           :editor-options="{ items: parentOptions, displayExpr: 'text', valueExpr: 'value', showClearButton: true, placeholder: '无（顶级分组）' }">
           <DxLabel text="上级分组" />
         </DxSimpleItem>
@@ -129,8 +128,8 @@ import { formatDateTime } from '@/utils/format'
 import {
   getTenantGroups,
   createTenantGroup,
-  type TenantGroupDto,
-  type CreateTenantGroupRequest,
+  type TenantGroupRepDTO,
+  type CreateTenantGroupReqDTO,
 } from '@/api/tenantGroups'
 import {
   TENANT_GROUP_CREATE,
@@ -143,31 +142,31 @@ const showGuide = ref(false)
 const showCreatePopup = ref(false)
 const filterKeyword = ref('')
 
-const allGroups = ref<TenantGroupDto[]>([])
+const allGroups = ref<TenantGroupRepDTO[]>([])
 
 const treeData = computed(() => {
   const kw = filterKeyword.value.toLowerCase()
   if (!kw) return allGroups.value
   return allGroups.value.filter(
-    (g) => g.groupCode.toLowerCase().includes(kw) || g.groupName.toLowerCase().includes(kw),
+    (g) => g.GroupCode.toLowerCase().includes(kw) || g.GroupName.toLowerCase().includes(kw),
   )
 })
 
 const parentOptions = computed(() =>
-  allGroups.value.map((g) => ({ text: `${g.groupCode} - ${g.groupName}`, value: g.id })),
+  allGroups.value.map((g) => ({ text: `${g.GroupCode} - ${g.GroupName}`, value: g.Id })),
 )
 
-const createForm = reactive<CreateTenantGroupRequest>({
-  groupCode: '',
-  groupName: '',
-  description: '',
-  parentId: undefined,
+const createForm = reactive<CreateTenantGroupReqDTO>({
+  GroupCode: '',
+  GroupName: '',
+  Description: '',
+  ParentId: undefined,
 })
 
 async function loadData() {
   try {
     const res = await getTenantGroups()
-    allGroups.value = res.data
+    allGroups.value = res.data!
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -177,14 +176,14 @@ async function handleCreate() {
   try {
     await createTenantGroup(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { groupCode: '', groupName: '', description: '', parentId: undefined })
+    Object.assign(createForm, { GroupCode: '', GroupName: '', Description: '', ParentId: undefined })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function onEdit(_group: TenantGroupDto) {
+function onEdit(_group: TenantGroupRepDTO) {
   // 后续阶段完善编辑功能
 }
 

@@ -46,14 +46,14 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tagKey" caption="标签键" />
-        <DxColumn data-field="tagValue" caption="标签值" />
-        <DxColumn data-field="tagType" caption="标签类型" :width="100" />
-        <DxColumn data-field="description" caption="描述" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TagKey" caption="标签键" />
+        <DxColumn data-field="TagValue" caption="标签值" />
+        <DxColumn data-field="TagType" caption="标签类型" :width="100" />
+        <DxColumn data-field="Description" caption="描述" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateCell" />
         <DxColumn caption="操作" cell-template="actionCell" :width="120" />
         <template #dateCell="{ data: cellData }">
           <span>{{ formatDateTime(cellData.value) }}</span>
@@ -70,7 +70,7 @@
             text="删除"
             styling-mode="text"
             type="danger"
-            @click="onDelete(cellData.data.id)"
+            @click="onDelete(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -92,17 +92,17 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tagKey">
+        <DxSimpleItem data-field="TagKey">
           <DxLabel text="标签键" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="tagValue">
+        <DxSimpleItem data-field="TagValue">
           <DxLabel text="标签值" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="tagType" editor-type="dxSelectBox"
+        <DxSimpleItem data-field="TagType" editor-type="dxSelectBox"
           :editor-options="{ items: tagTypes, displayExpr: 'text', valueExpr: 'value' }">
           <DxLabel text="标签类型" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="description" editor-type="dxTextArea">
+        <DxSimpleItem data-field="Description" editor-type="dxTextArea">
           <DxLabel text="描述" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -125,10 +125,10 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="tagIds" editor-type="dxTagBox"
+        <DxSimpleItem data-field="TagIds" editor-type="dxTagBox"
           :editor-options="{ items: tagOptions, displayExpr: 'text', valueExpr: 'value', placeholder: '选择标签' }">
           <DxLabel text="标签" />
         </DxSimpleItem>
@@ -165,9 +165,9 @@ import {
   getTenantTags,
   createTenantTag,
   bindTags,
-  type TenantTagDto,
-  type CreateTenantTagRequest,
-  type TagBindRequest,
+  type TenantTagRepDTO,
+  type CreateTenantTagReqDTO,
+  type TagBindReqDTO,
 } from '@/api/tenantTags'
 import {
   TENANT_TAG_CREATE,
@@ -189,32 +189,32 @@ const tagTypes = [
   { text: '自定义标签', value: 'Custom' },
 ]
 
-const gridData = ref<TenantTagDto[]>([])
+const gridData = ref<TenantTagRepDTO[]>([])
 
 const tagOptions = computed(() =>
-  gridData.value.map((t) => ({ text: `${t.tagKey}: ${t.tagValue}`, value: t.id })),
+  gridData.value.map((t) => ({ text: `${t.TagKey}: ${t.TagValue}`, value: t.Id })),
 )
 
-const createForm = reactive<CreateTenantTagRequest>({
-  tagKey: '',
-  tagValue: '',
-  tagType: 'Business',
-  description: '',
+const createForm = reactive<CreateTenantTagReqDTO>({
+  TagKey: '',
+  TagValue: '',
+  TagType: 'Business',
+  Description: '',
 })
 
-const bindForm = reactive<TagBindRequest>({
-  tenantRefId: 0,
-  tagIds: [],
+const bindForm = reactive<TagBindReqDTO>({
+  TenantRefId: 0,
+  TagIds: [],
 })
 
 async function loadData() {
   try {
     const res = await getTenantTags({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -224,7 +224,7 @@ async function handleCreate() {
   try {
     await createTenantTag(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { tagKey: '', tagValue: '', tagType: 'Business', description: '' })
+    Object.assign(createForm, { TagKey: '', TagValue: '', TagType: 'Business', Description: '' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
@@ -235,13 +235,13 @@ async function handleBind() {
   try {
     await bindTags(bindForm)
     showBindPopup.value = false
-    Object.assign(bindForm, { tenantRefId: 0, tagIds: [] })
+    Object.assign(bindForm, { TenantRefId: 0, TagIds: [] })
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function onEdit(_tag: TenantTagDto) {
+function onEdit(_tag: TenantTagRepDTO) {
   // 后续阶段完善编辑功能
 }
 

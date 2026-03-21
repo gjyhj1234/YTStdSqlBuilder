@@ -48,16 +48,16 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" caption="ID" :width="60" />
-        <DxColumn data-field="tenantRefId" caption="租户ID" :width="80" />
-        <DxColumn data-field="packageVersionId" caption="套餐版本ID" :width="100" />
-        <DxColumn data-field="status" caption="状态" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="startedAt" caption="开始时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="expiresAt" caption="到期时间" cell-template="dateTimeCell" />
-        <DxColumn data-field="convertedSubscriptionId" caption="转正订阅ID" :width="100" />
-        <DxColumn data-field="createdAt" caption="创建时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="Id" caption="ID" :width="60" />
+        <DxColumn data-field="TenantRefId" caption="租户ID" :width="80" />
+        <DxColumn data-field="PackageVersionId" caption="套餐版本ID" :width="100" />
+        <DxColumn data-field="Status" caption="状态" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="StartedAt" caption="开始时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="ExpiresAt" caption="到期时间" cell-template="dateTimeCell" />
+        <DxColumn data-field="ConvertedSubscriptionId" caption="转正订阅ID" :width="100" />
+        <DxColumn data-field="CreatedAt" caption="创建时间" cell-template="dateTimeCell" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
         </template>
@@ -83,10 +83,10 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="tenantRefId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="TenantRefId" editor-type="dxNumberBox">
           <DxLabel text="租户ID" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="packageVersionId" editor-type="dxNumberBox">
+        <DxSimpleItem data-field="PackageVersionId" editor-type="dxNumberBox">
           <DxLabel text="套餐版本ID" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -123,8 +123,8 @@ import { formatDateTime } from '@/utils/format'
 import {
   getTrials,
   createTrial,
-  type TenantTrialDto,
-  type CreateTrialRequest,
+  type TenantTrialRepDTO,
+  type CreateTrialReqDTO,
 } from '@/api/subscriptions'
 import {
   SUBSCRIPTION_TRIAL_CREATE,
@@ -142,22 +142,22 @@ const statusOptions = [
   { text: '已转正', value: 'Converted' },
 ]
 
-const gridData = ref<TenantTrialDto[]>([])
+const gridData = ref<TenantTrialRepDTO[]>([])
 
-const createForm = reactive<CreateTrialRequest>({
-  tenantRefId: 0,
-  packageVersionId: 0,
+const createForm = reactive<CreateTrialReqDTO>({
+  TenantRefId: 0,
+  PackageVersionId: 0,
 })
 
 async function loadData() {
   try {
     const res = await getTrials({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -167,7 +167,7 @@ async function handleCreate() {
   try {
     await createTrial(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { tenantRefId: 0, packageVersionId: 0 })
+    Object.assign(createForm, { TenantRefId: 0, PackageVersionId: 0 })
     await loadData()
   } catch {
     // 错误由 http 层统一处理

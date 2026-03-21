@@ -1,9 +1,9 @@
-export function ok<T>(data: T, message = '操作成功') {
-  return { success: true, message, data, traceId: '' }
+export function ok<T>(data: T, message = 'operation.success') {
+  return { code: 0, message, data }
 }
 
-export function fail(message = '操作失败') {
-  return { success: false, message, data: null, traceId: '' }
+export function fail(message = 'operation.failed', code = 1003) {
+  return { code, message, data: null }
 }
 
 export function paged<T>(items: T[], page: number, pageSize: number) {
@@ -19,7 +19,7 @@ export function paged<T>(items: T[], page: number, pageSize: number) {
 }
 
 export function getPageParams(url: URL) {
-  const page = Number(url.searchParams.get('page') ?? '1')
-  const pageSize = Number(url.searchParams.get('pageSize') ?? '20')
+  const page = Number(url.searchParams.get('Page') ?? url.searchParams.get('page') ?? '1')
+  const pageSize = Number(url.searchParams.get('PageSize') ?? url.searchParams.get('pageSize') ?? '20')
   return { page, pageSize }
 }

@@ -12,14 +12,14 @@ export const tenantDomainsHandlers = [
   http.post('/api/tenant-domains', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newDomain = {
-      id: mockTenantDomains.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      domain: body['domain'] as string,
-      domainType: body['domainType'] as string,
-      isPrimary: false,
-      verificationStatus: 'Pending',
-      createdAt: new Date().toISOString(),
+      Id: mockTenantDomains.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      Domain: body['Domain'] as string,
+      DomainType: body['DomainType'] as string,
+      IsPrimary: false,
+      VerificationStatus: 'Pending',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newDomain, '创建成功'))
+    return HttpResponse.json(ok(newDomain, 'operation.create_success'))
   }),
 ]

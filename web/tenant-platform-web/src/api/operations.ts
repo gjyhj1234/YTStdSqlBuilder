@@ -1,32 +1,14 @@
 /** API — 平台运营 */
-import { get, type PagedResult } from '@/utils/http'
+import { get } from '@/utils/http'
+import type { PagedResult } from '@/types/base'
+import type { TenantDailyStatRepDTO, PlatformMonitorMetricRepDTO } from '@/types/operations'
 
-export interface TenantDailyStatDto {
-  id: number
-  tenantRefId: number
-  statDate: string
-  activeUserCount: number
-  newUserCount: number
-  apiCallCount: number
-  storageBytes: number
-  resourceScore: number
-  createdAt: string
-}
-
-export interface PlatformMonitorMetricDto {
-  id: number
-  componentName: string
-  metricType: string
-  metricKey: string
-  metricValue: number
-  metricUnit: string
-  collectedAt: string
-}
+export type { TenantDailyStatRepDTO, PlatformMonitorMetricRepDTO }
 
 export function getDailyStats(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<TenantDailyStatDto>>('/api/tenant-daily-stats', params)
+  return get<PagedResult<TenantDailyStatRepDTO>>('/api/tenant-daily-stats', params)
 }
 
 export function getMonitorMetrics(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<PlatformMonitorMetricDto>>('/api/platform-monitor-metrics', params)
+  return get<PagedResult<PlatformMonitorMetricRepDTO>>('/api/platform-monitor-metrics', params)
 }

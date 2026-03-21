@@ -1,26 +1,13 @@
 /** API — 租户域名 */
-import { get, post, type PagedResult } from '@/utils/http'
+import { get, post } from '@/utils/http'
+import type { TenantDomainRepDTO, CreateTenantDomainReqDTO } from '@/types/tenantInfo'
 
-export interface TenantDomainDto {
-  id: number
-  tenantRefId: number
-  domain: string
-  domainType: string
-  isPrimary: boolean
-  verificationStatus: string
-  createdAt: string
+export type { TenantDomainRepDTO, CreateTenantDomainReqDTO }
+
+export function getTenantDomains() {
+  return get<TenantDomainRepDTO[]>('/api/tenant-domains')
 }
 
-export interface CreateTenantDomainRequest {
-  tenantRefId: number
-  domain: string
-  domainType: string
-}
-
-export function getTenantDomains(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<TenantDomainDto>>('/api/tenant-domains', params)
-}
-
-export function createTenantDomain(data: CreateTenantDomainRequest) {
-  return post<{ id: number }>('/api/tenant-domains', data)
+export function createTenantDomain(data: CreateTenantDomainReqDTO) {
+  return post<void>('/api/tenant-domains', data)
 }

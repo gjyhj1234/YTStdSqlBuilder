@@ -4,7 +4,7 @@ import {
   mockTenantFiles,
   mockFileAccessPolicies,
 } from '../data/storage'
-import { ok, paged, getPageParams } from '../data/common'
+import { ok, fail, paged, getPageParams } from '../data/common'
 
 export const storageHandlers = [
   http.get('/api/storage-strategies', ({ request }) => {
@@ -14,10 +14,10 @@ export const storageHandlers = [
   }),
 
   http.get('/api/storage-strategies/:id', ({ params }) => {
-    const s = mockStorageStrategies.find((s) => s.id === Number(params['id']))
+    const s = mockStorageStrategies.find((s) => s.Id === Number(params['id']))
     if (!s)
       return HttpResponse.json(
-        { success: false, message: '存储策略不存在', data: null, traceId: '' },
+        fail('error.storage_strategy_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(s))
@@ -26,29 +26,29 @@ export const storageHandlers = [
   http.post('/api/storage-strategies', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newStrategy = {
-      id: mockStorageStrategies.length + 1,
-      strategyCode: body['strategyCode'] as string,
-      strategyName: body['strategyName'] as string,
-      providerType: body['providerType'] as string,
-      bucketName: body['bucketName'] as string,
-      basePath: body['basePath'] as string,
-      status: 'Active',
-      createdAt: new Date().toISOString(),
+      Id: mockStorageStrategies.length + 1,
+      StrategyCode: body['StrategyCode'] as string,
+      StrategyName: body['StrategyName'] as string,
+      ProviderType: body['ProviderType'] as string,
+      BucketName: body['BucketName'] as string,
+      BasePath: body['BasePath'] as string,
+      Status: 'Active',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newStrategy, '创建成功'))
+    return HttpResponse.json(ok(newStrategy, 'operation.create_success'))
   }),
 
   http.put('/api/storage-strategies/:id', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
-    return HttpResponse.json(ok(body, '更新成功'))
+    return HttpResponse.json(ok(body, 'operation.update_success'))
   }),
 
   http.put('/api/storage-strategies/:id/enable', () => {
-    return HttpResponse.json(ok(null, '启用成功'))
+    return HttpResponse.json(ok(null, 'operation.enable_success'))
   }),
 
   http.put('/api/storage-strategies/:id/disable', () => {
-    return HttpResponse.json(ok(null, '禁用成功'))
+    return HttpResponse.json(ok(null, 'operation.disable_success'))
   }),
 
   http.get('/api/tenant-files', ({ request }) => {
@@ -58,17 +58,17 @@ export const storageHandlers = [
   }),
 
   http.get('/api/tenant-files/:id', ({ params }) => {
-    const f = mockTenantFiles.find((f) => f.id === Number(params['id']))
+    const f = mockTenantFiles.find((f) => f.Id === Number(params['id']))
     if (!f)
       return HttpResponse.json(
-        { success: false, message: '文件不存在', data: null, traceId: '' },
+        fail('error.file_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(f))
   }),
 
   http.delete('/api/tenant-files/:id', () => {
-    return HttpResponse.json(ok(null, '删除成功'))
+    return HttpResponse.json(ok(null, 'operation.delete_success'))
   }),
 
   http.get('/api/file-access-policies', ({ request }) => {
@@ -80,13 +80,13 @@ export const storageHandlers = [
   http.post('/api/file-access-policies', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newPolicy = {
-      id: mockFileAccessPolicies.length + 1,
-      fileId: body['fileId'] as number,
-      subjectType: body['subjectType'] as string,
-      subjectId: body['subjectId'] as number,
-      permissionCode: body['permissionCode'] as string,
-      createdAt: new Date().toISOString(),
+      Id: mockFileAccessPolicies.length + 1,
+      FileId: body['FileId'] as number,
+      SubjectType: body['SubjectType'] as string,
+      SubjectId: body['SubjectId'] as number,
+      PermissionCode: body['PermissionCode'] as string,
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newPolicy, '创建成功'))
+    return HttpResponse.json(ok(newPolicy, 'operation.create_success'))
   }),
 ]

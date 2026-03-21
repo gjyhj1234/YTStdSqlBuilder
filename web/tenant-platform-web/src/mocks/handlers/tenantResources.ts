@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { mockTenantResourceQuotas } from '../data/tenantResources'
-import { ok, paged, getPageParams } from '../data/common'
+import { ok, fail, paged, getPageParams } from '../data/common'
 
 export const tenantResourcesHandlers = [
   http.get('/api/tenant-resource-quotas', ({ request }) => {
@@ -10,22 +10,22 @@ export const tenantResourcesHandlers = [
   }),
 
   http.get('/api/tenant-resource-quotas/:id', ({ params }) => {
-    const q = mockTenantResourceQuotas.find((r) => r.id === Number(params['id']))
-    if (!q) return HttpResponse.json({ success: false, message: '资源配额不存在', data: null, traceId: '' }, { status: 404 })
+    const q = mockTenantResourceQuotas.find((r) => r.Id === Number(params['id']))
+    if (!q) return HttpResponse.json(fail('error.resource_quota_not_found'), { status: 404 })
     return HttpResponse.json(ok(q))
   }),
 
   http.post('/api/tenant-resource-quotas', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newQuota = {
-      id: mockTenantResourceQuotas.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      quotaType: body['quotaType'] as string,
-      quotaLimit: body['quotaLimit'] as number,
-      warningThreshold: body['warningThreshold'] as number,
-      resetCycle: body['resetCycle'] as string,
-      createdAt: new Date().toISOString(),
+      Id: mockTenantResourceQuotas.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      QuotaType: body['QuotaType'] as string,
+      QuotaLimit: body['QuotaLimit'] as number,
+      WarningThreshold: body['WarningThreshold'] as number,
+      ResetCycle: body['ResetCycle'] as string,
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newQuota, '创建成功'))
+    return HttpResponse.json(ok(newQuota, 'operation.create_success'))
   }),
 ]

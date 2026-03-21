@@ -1,31 +1,17 @@
 /** API — 租户分组 */
 import { get, post } from '@/utils/http'
+import type { TenantGroupRepDTO, CreateTenantGroupReqDTO } from '@/types/tenantInfo'
 
-export interface TenantGroupDto {
-  id: number
-  groupCode: string
-  groupName: string
-  description: string
-  parentId: number | null
-  children: TenantGroupDto[]
-  createdAt: string
-}
-
-export interface CreateTenantGroupRequest {
-  groupCode: string
-  groupName: string
-  description: string
-  parentId?: number
-}
+export type { TenantGroupRepDTO, CreateTenantGroupReqDTO }
 
 export function getTenantGroupTree() {
-  return get<TenantGroupDto[]>('/api/tenant-groups/tree')
+  return get<TenantGroupRepDTO[]>('/api/tenant-groups/tree')
 }
 
 export function getTenantGroups() {
-  return get<TenantGroupDto[]>('/api/tenant-groups')
+  return get<TenantGroupRepDTO[]>('/api/tenant-groups')
 }
 
-export function createTenantGroup(data: CreateTenantGroupRequest) {
-  return post<{ id: number }>('/api/tenant-groups', data)
+export function createTenantGroup(data: CreateTenantGroupReqDTO) {
+  return post<void>('/api/tenant-groups', data)
 }

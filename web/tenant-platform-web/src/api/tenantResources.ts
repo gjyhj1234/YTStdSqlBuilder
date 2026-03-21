@@ -1,32 +1,18 @@
 /** API — 租户资源配额 */
-import { get, post, type PagedResult } from '@/utils/http'
+import { get, post } from '@/utils/http'
+import type { PagedResult } from '@/types/base'
+import type { TenantResourceQuotaRepDTO, SaveTenantResourceQuotaReqDTO } from '@/types/tenantResource'
 
-export interface TenantResourceQuotaDto {
-  id: number
-  tenantRefId: number
-  quotaType: string
-  quotaLimit: number
-  warningThreshold: number
-  resetCycle: string
-  createdAt: string
-}
-
-export interface SaveTenantResourceQuotaRequest {
-  tenantRefId: number
-  quotaType: string
-  quotaLimit: number
-  warningThreshold: number
-  resetCycle: string
-}
+export type { TenantResourceQuotaRepDTO, SaveTenantResourceQuotaReqDTO }
 
 export function getTenantResourceQuotas(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<TenantResourceQuotaDto>>('/api/tenant-resource-quotas', params)
+  return get<PagedResult<TenantResourceQuotaRepDTO>>('/api/tenant-resource-quotas', params)
 }
 
 export function getTenantResourceQuota(id: number) {
-  return get<TenantResourceQuotaDto>(`/api/tenant-resource-quotas/${id}`)
+  return get<TenantResourceQuotaRepDTO>(`/api/tenant-resource-quotas/${id}`)
 }
 
-export function saveTenantResourceQuota(data: SaveTenantResourceQuotaRequest) {
-  return post<{ id: number }>('/api/tenant-resource-quotas', data)
+export function saveTenantResourceQuota(data: SaveTenantResourceQuotaReqDTO) {
+  return post<void>('/api/tenant-resource-quotas', data)
 }

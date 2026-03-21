@@ -34,19 +34,19 @@
         label-mode="floating"
         :read-only="!perm.has(TENANT_CONFIG_UPDATE)"
       >
-        <DxSimpleItem data-field="systemName">
+        <DxSimpleItem data-field="SystemName">
           <DxLabel text="系统名称" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="logoUrl">
+        <DxSimpleItem data-field="LogoUrl">
           <DxLabel text="Logo 地址" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="systemTheme">
+        <DxSimpleItem data-field="SystemTheme">
           <DxLabel text="系统主题" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="defaultLanguage">
+        <DxSimpleItem data-field="DefaultLanguage">
           <DxLabel text="默认语言" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="defaultTimezone">
+        <DxSimpleItem data-field="DefaultTimezone">
           <DxLabel text="默认时区" />
         </DxSimpleItem>
         <DxButtonItem v-if="perm.has(TENANT_CONFIG_UPDATE)" :col-span="2">
@@ -80,7 +80,7 @@ import { usePermission } from '@/composables/usePermission'
 import {
   getTenantSystemConfig,
   updateTenantSystemConfig,
-  type UpdateTenantSystemConfigRequest,
+  type UpdateTenantSystemConfigReqDTO,
 } from '@/api/tenantConfig'
 import {
   TENANT_CONFIG_UPDATE,
@@ -91,12 +91,12 @@ const showGuide = ref(false)
 const tenantRefId = ref<number | undefined>(undefined)
 const configLoaded = ref(false)
 
-const configForm = reactive<UpdateTenantSystemConfigRequest>({
-  systemName: '',
-  logoUrl: '',
-  systemTheme: '',
-  defaultLanguage: '',
-  defaultTimezone: '',
+const configForm = reactive<UpdateTenantSystemConfigReqDTO>({
+  SystemName: '',
+  LogoUrl: '',
+  SystemTheme: '',
+  DefaultLanguage: '',
+  DefaultTimezone: '',
 })
 
 async function loadConfig() {
@@ -104,11 +104,11 @@ async function loadConfig() {
   try {
     const res = await getTenantSystemConfig(tenantRefId.value)
     Object.assign(configForm, {
-      systemName: res.data.systemName,
-      logoUrl: res.data.logoUrl,
-      systemTheme: res.data.systemTheme,
-      defaultLanguage: res.data.defaultLanguage,
-      defaultTimezone: res.data.defaultTimezone,
+      SystemName: res.data!.SystemName,
+      LogoUrl: res.data!.LogoUrl,
+      SystemTheme: res.data!.SystemTheme,
+      DefaultLanguage: res.data!.DefaultLanguage,
+      DefaultTimezone: res.data!.DefaultTimezone,
     })
     configLoaded.value = true
   } catch {

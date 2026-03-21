@@ -1,46 +1,25 @@
 /** API — 通知管理 */
-import { get, post, put, type PagedResult } from '@/utils/http'
+import { get, post, put } from '@/utils/http'
+import type { PagedResult } from '@/types/base'
+import type { NotificationTemplateRepDTO, CreateNotificationTemplateReqDTO, UpdateNotificationTemplateReqDTO, NotificationRepDTO, CreateNotificationReqDTO } from '@/types/notification'
+
+export type { NotificationTemplateRepDTO, NotificationRepDTO, CreateNotificationTemplateReqDTO, CreateNotificationReqDTO }
 
 /* ---------- 通知模板 ---------- */
 
-export interface NotificationTemplateDto {
-  id: number
-  templateCode: string
-  templateName: string
-  channel: string
-  subjectTemplate: string
-  bodyTemplate: string
-  status: string
-  createdAt: string
-}
-
-export interface CreateNotificationTemplateRequest {
-  templateCode: string
-  templateName: string
-  channel: string
-  subjectTemplate: string
-  bodyTemplate: string
-}
-
-export interface UpdateNotificationTemplateRequest {
-  templateName?: string
-  subjectTemplate?: string
-  bodyTemplate?: string
-}
-
 export function getNotificationTemplates(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<NotificationTemplateDto>>('/api/notification-templates', params)
+  return get<PagedResult<NotificationTemplateRepDTO>>('/api/notification-templates', params)
 }
 
 export function getNotificationTemplate(id: number) {
-  return get<NotificationTemplateDto>(`/api/notification-templates/${id}`)
+  return get<NotificationTemplateRepDTO>(`/api/notification-templates/${id}`)
 }
 
-export function createNotificationTemplate(data: CreateNotificationTemplateRequest) {
-  return post<{ id: number }>('/api/notification-templates', data)
+export function createNotificationTemplate(data: CreateNotificationTemplateReqDTO) {
+  return post<void>('/api/notification-templates', data)
 }
 
-export function updateNotificationTemplate(id: number, data: UpdateNotificationTemplateRequest) {
+export function updateNotificationTemplate(id: number, data: UpdateNotificationTemplateReqDTO) {
   return put<void>(`/api/notification-templates/${id}`, data)
 }
 
@@ -54,39 +33,16 @@ export function disableNotificationTemplate(id: number) {
 
 /* ---------- 通知 ---------- */
 
-export interface NotificationDto {
-  id: number
-  tenantRefId: number
-  templateId: number
-  channel: string
-  recipient: string
-  subject: string
-  body: string
-  sendStatus: string
-  sentAt: string | null
-  readAt: string | null
-  createdAt: string
-}
-
-export interface CreateNotificationRequest {
-  tenantRefId: number
-  templateId: number
-  channel: string
-  recipient: string
-  subject: string
-  body: string
-}
-
 export function getNotifications(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<NotificationDto>>('/api/notifications', params)
+  return get<PagedResult<NotificationRepDTO>>('/api/notifications', params)
 }
 
 export function getNotification(id: number) {
-  return get<NotificationDto>(`/api/notifications/${id}`)
+  return get<NotificationRepDTO>(`/api/notifications/${id}`)
 }
 
-export function createNotification(data: CreateNotificationRequest) {
-  return post<{ id: number }>('/api/notifications', data)
+export function createNotification(data: CreateNotificationReqDTO) {
+  return post<void>('/api/notifications', data)
 }
 
 export function markNotificationRead(id: number) {

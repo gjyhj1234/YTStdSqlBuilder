@@ -4,7 +4,7 @@ import {
   mockTenantTrials,
   mockTenantSubscriptionChanges,
 } from '../data/subscriptions'
-import { ok, paged, getPageParams } from '../data/common'
+import { ok, fail, paged, getPageParams } from '../data/common'
 
 export const subscriptionsHandlers = [
   http.get('/api/tenant-subscriptions', ({ request }) => {
@@ -14,10 +14,10 @@ export const subscriptionsHandlers = [
   }),
 
   http.get('/api/tenant-subscriptions/:id', ({ params }) => {
-    const sub = mockTenantSubscriptions.find((s) => s.id === Number(params['id']))
+    const sub = mockTenantSubscriptions.find((s) => s.Id === Number(params['id']))
     if (!sub)
       return HttpResponse.json(
-        { success: false, message: '订阅不存在', data: null, traceId: '' },
+        fail('error.subscription_not_found'),
         { status: 404 },
       )
     return HttpResponse.json(ok(sub))
@@ -26,22 +26,22 @@ export const subscriptionsHandlers = [
   http.post('/api/tenant-subscriptions', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newSub = {
-      id: mockTenantSubscriptions.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      packageVersionId: body['packageVersionId'] as number,
-      subscriptionStatus: 'Active',
-      subscriptionType: 'Paid',
-      startedAt: new Date().toISOString(),
-      expiresAt: '2026-12-31T23:59:59Z',
-      autoRenew: (body['autoRenew'] as boolean) ?? false,
-      cancelledAt: '',
-      createdAt: new Date().toISOString(),
+      Id: mockTenantSubscriptions.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      PackageVersionId: body['PackageVersionId'] as number,
+      SubscriptionStatus: 'Active',
+      SubscriptionType: 'Paid',
+      StartedAt: new Date().toISOString(),
+      ExpiresAt: '2026-12-31T23:59:59Z',
+      AutoRenew: (body['AutoRenew'] as boolean) ?? false,
+      CancelledAt: '',
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newSub, '创建成功'))
+    return HttpResponse.json(ok(newSub, 'operation.create_success'))
   }),
 
   http.put('/api/tenant-subscriptions/:id/cancel', () => {
-    return HttpResponse.json(ok(null, '取消成功'))
+    return HttpResponse.json(ok(null, 'operation.cancel_success'))
   }),
 
   http.get('/api/tenant-trials', ({ request }) => {
@@ -53,16 +53,16 @@ export const subscriptionsHandlers = [
   http.post('/api/tenant-trials', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newTrial = {
-      id: mockTenantTrials.length + 1,
-      tenantRefId: body['tenantRefId'] as number,
-      packageVersionId: body['packageVersionId'] as number,
-      status: 'Active',
-      startedAt: new Date().toISOString(),
-      expiresAt: '2025-12-31T23:59:59Z',
-      convertedSubscriptionId: null,
-      createdAt: new Date().toISOString(),
+      Id: mockTenantTrials.length + 1,
+      TenantRefId: body['TenantRefId'] as number,
+      PackageVersionId: body['PackageVersionId'] as number,
+      Status: 'Active',
+      StartedAt: new Date().toISOString(),
+      ExpiresAt: '2025-12-31T23:59:59Z',
+      ConvertedSubscriptionId: null,
+      CreatedAt: new Date().toISOString(),
     }
-    return HttpResponse.json(ok(newTrial, '创建成功'))
+    return HttpResponse.json(ok(newTrial, 'operation.create_success'))
   }),
 
   http.get('/api/tenant-subscription-changes', ({ request }) => {

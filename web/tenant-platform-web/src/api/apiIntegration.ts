@@ -1,109 +1,47 @@
 /** API — API 密钥与 Webhook */
-import { get, post, put, type PagedResult } from '@/utils/http'
+import { get, post, put } from '@/utils/http'
+import type { PagedResult } from '@/types/base'
+import type { TenantApiKeyRepDTO, CreateApiKeyReqDTO, ApiKeyCreatedRepDTO, TenantApiUsageStatRepDTO, WebhookEventRepDTO, TenantWebhookRepDTO, CreateWebhookReqDTO, UpdateWebhookReqDTO, WebhookDeliveryLogRepDTO } from '@/types/apiIntegration'
+
+export type { TenantApiKeyRepDTO, ApiKeyCreatedRepDTO, TenantApiUsageStatRepDTO, WebhookEventRepDTO, TenantWebhookRepDTO, WebhookDeliveryLogRepDTO, CreateApiKeyReqDTO, CreateWebhookReqDTO }
 
 /* ---------- API 密钥 ---------- */
 
-export interface TenantApiKeyDto {
-  id: number
-  tenantRefId: number
-  keyName: string
-  accessKey: string
-  status: string
-  quotaLimit: number
-  rateLimit: number
-  lastUsedAt: string | null
-  expiresAt: string | null
-  createdAt: string
-}
-
-export interface CreateApiKeyRequest {
-  tenantRefId: number
-  keyName: string
-  expiresAt: string
-}
-
-export interface ApiKeyCreatedResult {
-  id: number
-  accessKey: string
-  secretKey: string
-}
-
 export function getApiKeys(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<TenantApiKeyDto>>('/api/tenant-api-keys', params)
+  return get<PagedResult<TenantApiKeyRepDTO>>('/api/tenant-api-keys', params)
 }
 
-export function createApiKey(data: CreateApiKeyRequest) {
-  return post<ApiKeyCreatedResult>('/api/tenant-api-keys', data)
+export function createApiKey(data: CreateApiKeyReqDTO) {
+  return post<ApiKeyCreatedRepDTO>('/api/tenant-api-keys', data)
 }
 
 export function disableApiKey(id: number) {
-  return put<void>(`/api/tenant-api-keys/${id}/disable`)
+  return put<void>(`/api/tenant-api-keys/${id}`)
 }
 
 /* ---------- API 使用统计 ---------- */
 
-export interface TenantApiUsageStatDto {
-  id: number
-  tenantRefId: number
-  apiKeyId: number
-  statDate: string
-  apiPath: string
-  requestCount: number
-  successCount: number
-  errorCount: number
-  averageLatencyMs: number
-  createdAt: string
-}
-
 export function getApiUsageStats(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<TenantApiUsageStatDto>>('/api/tenant-api-usage-stats', params)
+  return get<PagedResult<TenantApiUsageStatRepDTO>>('/api/tenant-api-usage-stats', params)
 }
 
 /* ---------- Webhook 事件 ---------- */
 
-export interface WebhookEventDto {
-  id: number
-  eventCode: string
-  eventName: string
-  description: string
-  createdAt: string
-}
-
 export function getWebhookEvents(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<WebhookEventDto>>('/api/webhook-events', params)
+  return get<PagedResult<WebhookEventRepDTO>>('/api/webhook-events', params)
 }
 
 /* ---------- Webhook ---------- */
 
-export interface TenantWebhookDto {
-  id: number
-  tenantRefId: number
-  webhookName: string
-  targetUrl: string
-  status: string
-  createdAt: string
-}
-
-export interface CreateWebhookRequest {
-  tenantRefId: number
-  webhookName: string
-  targetUrl: string
-}
-
-export interface UpdateWebhookRequest {
-  webhookName?: string
-  targetUrl?: string
-}
-
 export function getWebhooks(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<TenantWebhookDto>>('/api/tenant-webhooks', params)
+  return get<PagedResult<TenantWebhookRepDTO>>('/api/tenant-webhooks', params)
 }
 
-export function createWebhook(data: CreateWebhookRequest) {
-  return post<{ id: number }>('/api/tenant-webhooks', data)
+export function createWebhook(data: CreateWebhookReqDTO) {
+  return post<void>('/api/tenant-webhooks', data)
 }
 
-export function updateWebhook(id: number, data: UpdateWebhookRequest) {
+export function updateWebhook(id: number, data: UpdateWebhookReqDTO) {
   return put<void>(`/api/tenant-webhooks/${id}`, data)
 }
 
@@ -117,17 +55,6 @@ export function disableWebhook(id: number) {
 
 /* ---------- Webhook 投递日志 ---------- */
 
-export interface WebhookDeliveryLogDto {
-  id: number
-  webhookId: number
-  eventId: number
-  deliveryStatus: string
-  responseStatusCode: number
-  retryCount: number
-  deliveredAt: string | null
-  createdAt: string
-}
-
 export function getWebhookDeliveryLogs(params: Record<string, string | number | undefined>) {
-  return get<PagedResult<WebhookDeliveryLogDto>>('/api/webhook-delivery-logs', params)
+  return get<PagedResult<WebhookDeliveryLogRepDTO>>('/api/webhook-delivery-logs', params)
 }

@@ -1,12 +1,12 @@
 export const mockLoginResult = {
-  token: 'mock-token-eyJhbGciOiJIUzI1NiJ9',
-  expiresIn: 7200,
-  userId: 1,
-  username: 'admin',
-  displayName: '超级管理员',
-  requirePasswordReset: false,
-  roles: ['super_admin'],
-  permissions: [
+  Token: 'mock-token-eyJhbGciOiJIUzI1NiJ9',
+  ExpiresIn: 7200,
+  UserId: 1,
+  Username: 'admin',
+  DisplayName: '超级管理员',
+  RequirePasswordReset: false,
+  Roles: ['super_admin'],
+  Permissions: [
     'platform:user:list',
     'platform:user:create',
     'platform:user:update',
@@ -26,12 +26,12 @@ export const mockLoginResult = {
     'platform:tenant:update',
     'platform:tenant:status',
   ],
-  isSuperAdmin: true,
+  IsSuperAdmin: true,
 }
 
 export const mockCurrentUser = {
-  userId: 1,
-  username: 'admin',
-  displayName: '超级管理员',
-  isSuperAdmin: true,
+  UserId: 1,
+  Username: 'admin',
+  DisplayName: '超级管理员',
+  IsSuperAdmin: true,
 }

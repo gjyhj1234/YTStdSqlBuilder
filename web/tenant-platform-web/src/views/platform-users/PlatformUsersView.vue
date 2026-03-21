@@ -48,16 +48,16 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="username" :caption="$t('common.username')" />
-        <DxColumn data-field="displayName" :caption="$t('common.displayName')" />
-        <DxColumn data-field="email" :caption="$t('common.email')" />
-        <DxColumn data-field="phone" :caption="$t('common.phone')" />
-        <DxColumn data-field="status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="lastLoginAt" :caption="$t('common.lastLoginAt')" cell-template="dateCell" />
-        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="Username" :caption="$t('common.username')" />
+        <DxColumn data-field="DisplayName" :caption="$t('common.displayName')" />
+        <DxColumn data-field="Email" :caption="$t('common.email')" />
+        <DxColumn data-field="Phone" :caption="$t('common.phone')" />
+        <DxColumn data-field="Status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="LastLoginAt" :caption="$t('common.lastLoginAt')" cell-template="dateCell" />
+        <DxColumn data-field="CreatedAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
         <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="160" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -73,18 +73,18 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(PLATFORM_USER_LOCK)"
+            v-if="cellData.data.Status === 'Active' && perm.has(PLATFORM_USER_LOCK)"
             :text="$t('common.disable')"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
           <DxButton
-            v-if="cellData.data.status !== 'Active' && perm.has(PLATFORM_USER_UNLOCK)"
+            v-if="cellData.data.Status !== 'Active' && perm.has(PLATFORM_USER_UNLOCK)"
             :text="$t('common.enable')"
             styling-mode="text"
             type="success"
-            @click="onEnable(cellData.data.id)"
+            @click="onEnable(cellData.data.Id)"
           />
         </template>
         <DxPaging :page-size="20" />
@@ -106,22 +106,22 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="username">
+        <DxSimpleItem data-field="Username">
           <DxLabel :text="$t('用户名')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="displayName">
+        <DxSimpleItem data-field="DisplayName">
           <DxLabel :text="$t('显示名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="email">
+        <DxSimpleItem data-field="Email">
           <DxLabel :text="$t('邮箱')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="phone">
+        <DxSimpleItem data-field="Phone">
           <DxLabel :text="$t('手机号')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="password" :editor-options="{ mode: 'password' }">
+        <DxSimpleItem data-field="Password" :editor-options="{ mode: 'password' }">
           <DxLabel :text="$t('密码')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="remark" editor-type="dxTextArea">
+        <DxSimpleItem data-field="Remark" editor-type="dxTextArea">
           <DxLabel :text="$t('备注')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -161,8 +161,8 @@ import {
   createPlatformUser,
   enablePlatformUser,
   disablePlatformUser,
-  type PlatformUserDto,
-  type CreatePlatformUserRequest,
+  type PlatformUserRepDTO,
+  type CreatePlatformUserReqDTO,
 } from '@/api/platformUsers'
 import {
   PLATFORM_USER_CREATE,
@@ -184,26 +184,26 @@ const statusOptions = computed(() => [
   { text: t('status.Locked'), value: 'Locked' },
 ])
 
-const gridData = ref<PlatformUserDto[]>([])
+const gridData = ref<PlatformUserRepDTO[]>([])
 
-const createForm = reactive<CreatePlatformUserRequest>({
-  username: '',
-  displayName: '',
-  email: '',
-  phone: '',
-  password: '',
-  remark: '',
+const createForm = reactive<CreatePlatformUserReqDTO>({
+  Username: '',
+  DisplayName: '',
+  Email: '',
+  Phone: '',
+  Password: '',
+  Remark: '',
 })
 
 async function loadData() {
   try {
     const res = await getPlatformUsers({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -213,14 +213,14 @@ async function handleCreate() {
   try {
     await createPlatformUser(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { username: '', displayName: '', email: '', phone: '', password: '', remark: '' })
+    Object.assign(createForm, { Username: '', DisplayName: '', Email: '', Phone: '', Password: '', Remark: '' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function onEdit(_user: PlatformUserDto) {
+function onEdit(_user: PlatformUserRepDTO) {
   // 后续阶段完善编辑功能
 }
 

@@ -32,18 +32,18 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
-        parent-id-expr="parentId"
+        key-expr="Id"
+        parent-id-expr="ParentId"
         :auto-expand-all="true"
         :filter-mode="'fullBranch'"
         :search-panel="{ visible: false }"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="code" :caption="$t('权限编码')" />
-        <DxColumn data-field="name" :caption="$t('权限名称')" />
-        <DxColumn data-field="permissionType" :caption="$t('权限类型')" cell-template="typeCell" :width="120" />
-        <DxColumn data-field="path" :caption="$t('路径')" />
-        <DxColumn data-field="method" :caption="$t('HTTP方法')" :width="100" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="Code" :caption="$t('权限编码')" />
+        <DxColumn data-field="Name" :caption="$t('权限名称')" />
+        <DxColumn data-field="PermissionType" :caption="$t('权限类型')" cell-template="typeCell" :width="120" />
+        <DxColumn data-field="Path" :caption="$t('路径')" />
+        <DxColumn data-field="Method" :caption="$t('HTTP方法')" :width="100" />
         <template #typeCell="{ data: cellData }">
           <span class="permission-type-tag" :class="permissionTypeClass(cellData.value)">
             {{ permissionTypeLabel(cellData.value) }}
@@ -73,17 +73,17 @@ import OperationGuideDrawer from '@/components/help/OperationGuideDrawer.vue'
 import PageHelpEntry from '@/components/help/PageHelpEntry.vue'
 import {
   getPermissions,
-  type PlatformPermissionDto,
+  type PlatformPermissionRepDTO,
 } from '@/api/platformPermissions'
 
 interface FlatPermission {
-  id: number
-  code: string
-  name: string
-  permissionType: string
-  parentId: number | null
-  path: string
-  method: string
+  Id: number
+  Code: string
+  Name: string
+  PermissionType: string
+  ParentId: number | null
+  Path: string
+  Method: string
 }
 
 const filterKeyword = ref('')
@@ -93,20 +93,20 @@ const { t } = useI18n()
 const allData = ref<FlatPermission[]>([])
 const treeData = ref<FlatPermission[]>([])
 
-function flattenTree(nodes: PlatformPermissionDto[]): FlatPermission[] {
+function flattenTree(nodes: PlatformPermissionRepDTO[]): FlatPermission[] {
   const result: FlatPermission[] = []
   for (const node of nodes) {
     result.push({
-      id: node.id,
-      code: node.code,
-      name: node.name,
-      permissionType: node.permissionType,
-      parentId: node.parentId,
-      path: node.path,
-      method: node.method,
+      Id: node.Id,
+      Code: node.Code,
+      Name: node.Name,
+      PermissionType: node.PermissionType,
+      ParentId: node.ParentId,
+      Path: node.Path,
+      Method: node.Method,
     })
-    if (node.children && node.children.length > 0) {
-      result.push(...flattenTree(node.children))
+    if (node.Children && node.Children.length > 0) {
+      result.push(...flattenTree(node.Children))
     }
   }
   return result
@@ -151,25 +151,25 @@ function onFilterChanged() {
   // Include matching nodes and their ancestors
   const matchedIds = new Set<number>()
   for (const item of allData.value) {
-    if (item.code.toLowerCase().includes(keyword) || item.name.toLowerCase().includes(keyword)) {
-      matchedIds.add(item.id)
+    if (item.Code.toLowerCase().includes(keyword) || item.Name.toLowerCase().includes(keyword)) {
+      matchedIds.add(item.Id)
       // Walk up to include ancestors
       let current = item
-      while (current.parentId !== null) {
-        matchedIds.add(current.parentId)
-        const parent = allData.value.find(p => p.id === current.parentId)
+      while (current.ParentId !== null) {
+        matchedIds.add(current.ParentId)
+        const parent = allData.value.find(p => p.Id === current.ParentId)
         if (!parent) break
         current = parent
       }
     }
   }
-  treeData.value = allData.value.filter(item => matchedIds.has(item.id))
+  treeData.value = allData.value.filter(item => matchedIds.has(item.Id))
 }
 
 async function loadData() {
   try {
     const res = await getPermissions()
-    allData.value = flattenTree(res.data)
+    allData.value = flattenTree(res.data!)
     treeData.value = allData.value
   } catch {
     // 接口未就绪时保持空列表

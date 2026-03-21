@@ -16,15 +16,15 @@ export const tenantGroupsHandlers = [
   http.post('/api/tenant-groups', async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>
     const newGroup = {
-      id: mockFlatTenantGroups.length + 1,
-      groupCode: body['groupCode'] as string,
-      groupName: body['groupName'] as string,
-      parentId: (body['parentId'] as number | null) ?? null,
-      sortOrder: (body['sortOrder'] as number) ?? 0,
-      description: (body['description'] as string) ?? '',
-      createdAt: new Date().toISOString(),
-      children: [],
+      Id: mockFlatTenantGroups.length + 1,
+      GroupCode: body['GroupCode'] as string,
+      GroupName: body['GroupName'] as string,
+      ParentId: (body['ParentId'] as number | null) ?? null,
+      SortOrder: (body['SortOrder'] as number) ?? 0,
+      Description: (body['Description'] as string) ?? '',
+      CreatedAt: new Date().toISOString(),
+      Children: [],
     }
-    return HttpResponse.json(ok(newGroup, '创建成功'))
+    return HttpResponse.json(ok(newGroup, 'operation.create_success'))
   }),
 ]

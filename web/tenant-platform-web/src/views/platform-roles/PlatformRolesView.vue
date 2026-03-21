@@ -48,14 +48,14 @@
         :show-borders="true"
         :column-auto-width="true"
         :hover-state-enabled="true"
-        key-expr="id"
+        key-expr="Id"
       >
-        <DxColumn data-field="id" :caption="$t('common.id')" :width="60" />
-        <DxColumn data-field="code" :caption="$t('角色编码')" />
-        <DxColumn data-field="name" :caption="$t('角色名称')" />
-        <DxColumn data-field="description" :caption="$t('common.description')" />
-        <DxColumn data-field="status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
-        <DxColumn data-field="createdAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
+        <DxColumn data-field="Id" :caption="$t('common.id')" :width="60" />
+        <DxColumn data-field="Code" :caption="$t('角色编码')" />
+        <DxColumn data-field="Name" :caption="$t('角色名称')" />
+        <DxColumn data-field="Description" :caption="$t('common.description')" />
+        <DxColumn data-field="Status" :caption="$t('common.status')" cell-template="statusCell" :width="100" />
+        <DxColumn data-field="CreatedAt" :caption="$t('common.createdAt')" cell-template="dateCell" />
         <DxColumn :caption="$t('common.actions')" cell-template="actionCell" :width="280" />
         <template #statusCell="{ data: cellData }">
           <StatusTag :status="cellData.value" />
@@ -71,18 +71,18 @@
             @click="onEdit(cellData.data)"
           />
           <DxButton
-            v-if="cellData.data.status === 'Active' && perm.has(PLATFORM_ROLE_DISABLE)"
+            v-if="cellData.data.Status === 'Active' && perm.has(PLATFORM_ROLE_DISABLE)"
             :text="$t('common.disable')"
             styling-mode="text"
             type="danger"
-            @click="onDisable(cellData.data.id)"
+            @click="onDisable(cellData.data.Id)"
           />
           <DxButton
-            v-if="cellData.data.status !== 'Active' && perm.has(PLATFORM_ROLE_ENABLE)"
+            v-if="cellData.data.Status !== 'Active' && perm.has(PLATFORM_ROLE_ENABLE)"
             :text="$t('common.enable')"
             styling-mode="text"
             type="success"
-            @click="onEnable(cellData.data.id)"
+            @click="onEnable(cellData.data.Id)"
           />
           <DxButton
             v-if="perm.has(PLATFORM_ROLE_ASSIGN_PERMISSION)"
@@ -116,13 +116,13 @@
         :col-count="1"
         label-mode="floating"
       >
-        <DxSimpleItem data-field="code">
+        <DxSimpleItem data-field="Code">
           <DxLabel :text="$t('角色编码')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="name">
+        <DxSimpleItem data-field="Name">
           <DxLabel :text="$t('角色名称')" />
         </DxSimpleItem>
-        <DxSimpleItem data-field="description" editor-type="dxTextArea">
+        <DxSimpleItem data-field="Description" editor-type="dxTextArea">
           <DxLabel :text="$t('common.description')" />
         </DxSimpleItem>
         <DxButtonItem>
@@ -162,8 +162,8 @@ import {
   createPlatformRole,
   enablePlatformRole,
   disablePlatformRole,
-  type PlatformRoleDto,
-  type CreatePlatformRoleRequest,
+  type PlatformRoleRepDTO,
+  type CreatePlatformRoleReqDTO,
 } from '@/api/platformRoles'
 import {
   PLATFORM_ROLE_CREATE,
@@ -186,23 +186,23 @@ const statusOptions = computed(() => [
   { text: t('status.Disabled'), value: 'Disabled' },
 ])
 
-const gridData = ref<PlatformRoleDto[]>([])
+const gridData = ref<PlatformRoleRepDTO[]>([])
 
-const createForm = reactive<CreatePlatformRoleRequest>({
-  code: '',
-  name: '',
-  description: '',
+const createForm = reactive<CreatePlatformRoleReqDTO>({
+  Code: '',
+  Name: '',
+  Description: '',
 })
 
 async function loadData() {
   try {
     const res = await getPlatformRoles({
-      page: 1,
-      pageSize: 20,
-      keyword: filterKeyword.value || undefined,
-      status: filterStatus.value || undefined,
+      Page: 1,
+      PageSize: 20,
+      Keyword: filterKeyword.value || undefined,
+      Status: filterStatus.value || undefined,
     })
-    gridData.value = res.data.items
+    gridData.value = res.data!.items
   } catch {
     // 接口未就绪时保持空列表
   }
@@ -212,14 +212,14 @@ async function handleCreate() {
   try {
     await createPlatformRole(createForm)
     showCreatePopup.value = false
-    Object.assign(createForm, { code: '', name: '', description: '' })
+    Object.assign(createForm, { Code: '', Name: '', Description: '' })
     await loadData()
   } catch {
     // 错误由 http 层统一处理
   }
 }
 
-function onEdit(_role: PlatformRoleDto) {
+function onEdit(_role: PlatformRoleRepDTO) {
   // 后续阶段完善编辑功能
 }
 
@@ -241,11 +241,11 @@ async function onDisable(id: number) {
   }
 }
 
-function onBindPermissions(_role: PlatformRoleDto) {
+function onBindPermissions(_role: PlatformRoleRepDTO) {
   // 后续阶段完善权限绑定功能
 }
 
-function onBindMembers(_role: PlatformRoleDto) {
+function onBindMembers(_role: PlatformRoleRepDTO) {
   // 后续阶段完善成员绑定功能
 }
 

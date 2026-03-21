@@ -221,9 +221,9 @@ async function handleCreate() {
 }
 
 function openEdit(row: SaasPackageRepDTO) {
-  editingId.value = row.id
-  editForm.packageName = row.packageName
-  editForm.description = row.description
+  editingId.value = row.Id
+  editForm.PackageName = row.PackageName
+  editForm.Description = row.Description
   showEditPopup.value = true
 }
 

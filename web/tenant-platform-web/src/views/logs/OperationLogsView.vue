@@ -75,16 +75,16 @@
       @hiding="showDetail = false"
     >
       <div v-if="detailData" class="detail-grid">
-        <p><strong>{{ $t('common.id') }}：</strong>{{ detailData.id }}</p>
-        <p><strong>{{ $t('common.tenantId') }}：</strong>{{ detailData.tenantRefId }}</p>
-        <p><strong>{{ $t('操作者类型') }}：</strong>{{ detailData.operatorType }}</p>
-        <p><strong>{{ $t('操作者ID') }}：</strong>{{ detailData.operatorId }}</p>
-        <p><strong>{{ $t('common.actions') }}：</strong>{{ detailData.action }}</p>
-        <p><strong>{{ $t('资源类型') }}：</strong>{{ detailData.resourceType }}</p>
-        <p><strong>{{ $t('资源ID') }}：</strong>{{ detailData.resourceId }}</p>
-        <p><strong>{{ $t('IP 地址') }}：</strong>{{ detailData.ipAddress }}</p>
-        <p><strong>{{ $t('操作结果') }}：</strong><StatusTag :status="detailData.operationResult" :label-map="resultLabelMap" /></p>
-        <p><strong>{{ $t('common.createdAt') }}：</strong>{{ formatDateTime(detailData.createdAt) }}</p>
+        <p><strong>{{ $t('common.id') }}：</strong>{{ detailData.Id }}</p>
+        <p><strong>{{ $t('common.tenantId') }}：</strong>{{ detailData.TenantRefId }}</p>
+        <p><strong>{{ $t('操作者类型') }}：</strong>{{ detailData.OperatorType }}</p>
+        <p><strong>{{ $t('操作者ID') }}：</strong>{{ detailData.OperatorId }}</p>
+        <p><strong>{{ $t('common.actions') }}：</strong>{{ detailData.Action }}</p>
+        <p><strong>{{ $t('资源类型') }}：</strong>{{ detailData.ResourceType }}</p>
+        <p><strong>{{ $t('资源ID') }}：</strong>{{ detailData.ResourceId }}</p>
+        <p><strong>{{ $t('IP 地址') }}：</strong>{{ detailData.IpAddress }}</p>
+        <p><strong>{{ $t('操作结果') }}：</strong><StatusTag :status="detailData.OperationResult" :label-map="resultLabelMap" /></p>
+        <p><strong>{{ $t('common.createdAt') }}：</strong>{{ formatDateTime(detailData.CreatedAt) }}</p>
       </div>
     </DxPopup>
 
@@ -154,7 +154,7 @@ async function loadData() {
 async function onRowClick(e: { data: OperationLogRepDTO }) {
   try {
     const res = await getOperationLog(e.data.Id)
-    detailData.value = res.data
+    detailData.value = res.data!
     showDetail.value = true
   } catch {
     // 错误由 http 层统一处理

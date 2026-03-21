@@ -258,11 +258,11 @@ async function handleCreate() {
 }
 
 function onEdit(row: StorageStrategyRepDTO) {
-  editingId.value = row.id
+  editingId.value = row.Id
   Object.assign(editForm, {
-    StrategyName: row.strategyName,
-    BucketName: row.bucketName,
-    BasePath: row.basePath,
+    StrategyName: row.StrategyName,
+    BucketName: row.BucketName,
+    BasePath: row.BasePath,
   })
   showEditPopup.value = true
 }

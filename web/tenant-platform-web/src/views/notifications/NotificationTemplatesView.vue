@@ -267,11 +267,11 @@ async function handleCreate() {
 }
 
 function onEdit(row: NotificationTemplateRepDTO) {
-  editingId.value = row.id
+  editingId.value = row.Id
   Object.assign(editForm, {
-    TemplateName: row.templateName,
-    SubjectTemplate: row.subjectTemplate,
-    BodyTemplate: row.bodyTemplate,
+    TemplateName: row.TemplateName,
+    SubjectTemplate: row.SubjectTemplate,
+    BodyTemplate: row.BodyTemplate,
   })
   showEditPopup.value = true
 }

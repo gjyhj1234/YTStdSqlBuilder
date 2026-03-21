@@ -178,7 +178,7 @@ async function handleCreate() {
     const res = await createApiKey(createForm)
     showCreatePopup.value = false
     Object.assign(createForm, { TenantRefId: 0, KeyName: '', ExpiresAt: '' })
-    Object.assign(createdResult, res.data)
+    Object.assign(createdResult, res.data!)
     showSecretPopup.value = true
     await loadData()
   } catch {

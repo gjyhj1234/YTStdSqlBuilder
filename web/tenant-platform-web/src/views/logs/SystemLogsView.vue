@@ -71,12 +71,12 @@
       @hiding="showDetail = false"
     >
       <div v-if="detailData" class="detail-grid">
-        <p><strong>ID：</strong>{{ detailData.id }}</p>
-        <p><strong>服务名称：</strong>{{ detailData.serviceName }}</p>
-        <p><strong>日志等级：</strong><StatusTag :status="detailData.logLevel" :label-map="levelLabelMap" /></p>
-        <p><strong>TraceId：</strong>{{ detailData.traceId }}</p>
-        <p><strong>消息：</strong>{{ detailData.message }}</p>
-        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.createdAt) }}</p>
+        <p><strong>ID：</strong>{{ detailData.Id }}</p>
+        <p><strong>服务名称：</strong>{{ detailData.ServiceName }}</p>
+        <p><strong>日志等级：</strong><StatusTag :status="detailData.LogLevel" :label-map="levelLabelMap" /></p>
+        <p><strong>TraceId：</strong>{{ detailData.TraceId }}</p>
+        <p><strong>消息：</strong>{{ detailData.Message }}</p>
+        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.CreatedAt) }}</p>
       </div>
     </DxPopup>
 
@@ -148,7 +148,7 @@ async function loadData() {
 async function onRowClick(e: { data: SystemLogRepDTO }) {
   try {
     const res = await getSystemLog(e.data.Id)
-    detailData.value = res.data
+    detailData.value = res.data!
     showDetail.value = true
   } catch {
     // 错误由 http 层统一处理

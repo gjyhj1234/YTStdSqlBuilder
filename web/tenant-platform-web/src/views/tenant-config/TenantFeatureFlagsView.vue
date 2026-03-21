@@ -209,11 +209,11 @@ async function handleSave() {
 
 function onEdit(row: TenantFeatureFlagRepDTO) {
   Object.assign(createForm, {
-    TenantRefId: row.tenantRefId,
-    FeatureKey: row.featureKey,
-    FeatureName: row.featureName,
-    Enabled: row.enabled,
-    RolloutType: row.rolloutType,
+    TenantRefId: row.TenantRefId,
+    FeatureKey: row.FeatureKey,
+    FeatureName: row.FeatureName,
+    Enabled: row.Enabled,
+    RolloutType: row.RolloutType,
   })
   isEditing.value = true
   showCreatePopup.value = true
@@ -221,7 +221,7 @@ function onEdit(row: TenantFeatureFlagRepDTO) {
 
 async function onToggle(row: TenantFeatureFlagRepDTO) {
   try {
-    await toggleFeatureFlag(row.id, !row.enabled)
+    await toggleFeatureFlag(row.Id, !row.Enabled)
     await loadData()
   } catch {
     // 错误由 http 层统一处理

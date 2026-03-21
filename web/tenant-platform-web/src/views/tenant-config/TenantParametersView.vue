@@ -206,11 +206,11 @@ async function handleSave() {
 
 function onEdit(row: TenantParameterRepDTO) {
   Object.assign(createForm, {
-    TenantRefId: row.tenantRefId,
-    ParamKey: row.paramKey,
-    ParamName: row.paramName,
-    ParamType: row.paramType,
-    ParamValue: row.paramValue,
+    TenantRefId: row.TenantRefId,
+    ParamKey: row.ParamKey,
+    ParamName: row.ParamName,
+    ParamType: row.ParamType,
+    ParamValue: row.ParamValue,
   })
   isEditing.value = true
   showCreatePopup.value = true

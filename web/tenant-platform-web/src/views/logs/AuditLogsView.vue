@@ -73,14 +73,14 @@
       @hiding="showDetail = false"
     >
       <div v-if="detailData" class="detail-grid">
-        <p><strong>ID：</strong>{{ detailData.id }}</p>
-        <p><strong>租户ID：</strong>{{ detailData.tenantRefId }}</p>
-        <p><strong>审计类型：</strong>{{ detailData.auditType }}</p>
-        <p><strong>严重等级：</strong><StatusTag :status="detailData.severity" :label-map="severityLabelMap" /></p>
-        <p><strong>主体类型：</strong>{{ detailData.subjectType }}</p>
-        <p><strong>主体ID：</strong>{{ detailData.subjectId }}</p>
-        <p><strong>合规标签：</strong>{{ detailData.complianceTag }}</p>
-        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.createdAt) }}</p>
+        <p><strong>ID：</strong>{{ detailData.Id }}</p>
+        <p><strong>租户ID：</strong>{{ detailData.TenantRefId }}</p>
+        <p><strong>审计类型：</strong>{{ detailData.AuditType }}</p>
+        <p><strong>严重等级：</strong><StatusTag :status="detailData.Severity" :label-map="severityLabelMap" /></p>
+        <p><strong>主体类型：</strong>{{ detailData.SubjectType }}</p>
+        <p><strong>主体ID：</strong>{{ detailData.SubjectId }}</p>
+        <p><strong>合规标签：</strong>{{ detailData.ComplianceTag }}</p>
+        <p><strong>创建时间：</strong>{{ formatDateTime(detailData.CreatedAt) }}</p>
       </div>
     </DxPopup>
 
@@ -152,7 +152,7 @@ async function loadData() {
 async function onRowClick(e: { data: AuditLogRepDTO }) {
   try {
     const res = await getAuditLog(e.data.Id)
-    detailData.value = res.data
+    detailData.value = res.data!
     showDetail.value = true
   } catch {
     // 错误由 http 层统一处理

@@ -45,7 +45,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateTenantGroupReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateTenantGroupReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantInfoAppService.CreateGroupAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -70,7 +70,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateTenantDomainReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateTenantDomainReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantInfoAppService.CreateDomainAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -96,7 +96,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateTenantTagReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateTenantTagReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantInfoAppService.CreateTagAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -107,7 +107,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/bind", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<TagBindReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<TagBindReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantInfoAppService.BindTagsAsync(0, user.UserId, req);
                 await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);

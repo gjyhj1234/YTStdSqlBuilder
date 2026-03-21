@@ -40,7 +40,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateApiKeyReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateApiKeyReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await ApiIntegrationAppService.CreateApiKeyAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -103,7 +103,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateWebhookReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateWebhookReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await ApiIntegrationAppService.CreateWebhookAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -114,7 +114,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPut("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateWebhookReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<UpdateWebhookReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await ApiIntegrationAppService.UpdateWebhookAsync(0, user.UserId, id, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }

@@ -38,7 +38,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPut("/{tenantRefId:long}", async (HttpContext ctx, long tenantRefId) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateTenantSystemConfigReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<UpdateTenantSystemConfigReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantConfigAppService.UpdateSystemConfigAsync(0, user.UserId, tenantRefId, req);
                 await WriteJsonAsync(ctx, result, result.Code == 0 ? 200 : 400);
@@ -62,7 +62,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantFeatureFlagReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<SaveTenantFeatureFlagReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantConfigAppService.SaveFeatureFlagAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -95,7 +95,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<SaveTenantParameterReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<SaveTenantParameterReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await TenantConfigAppService.SaveParameterAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }

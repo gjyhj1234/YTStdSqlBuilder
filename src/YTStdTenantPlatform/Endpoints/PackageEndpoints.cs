@@ -46,7 +46,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateSaasPackageReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateSaasPackageReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await PackageAppService.CreatePackageAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -57,7 +57,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPut("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateSaasPackageReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<UpdateSaasPackageReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await PackageAppService.UpdatePackageAsync(0, user.UserId, id, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
@@ -98,7 +98,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/{packageId:long}", async (HttpContext ctx, long packageId) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateSaasPackageVersionReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateSaasPackageVersionReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 req.PackageId = packageId;
                 var result = await PackageAppService.CreateVersionAsync(0, user.UserId, req);
@@ -125,7 +125,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/{packageVersionId:long}", async (HttpContext ctx, long packageVersionId) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<SaveSaasPackageCapabilityReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<SaveSaasPackageCapabilityReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 req.PackageVersionId = packageVersionId;
                 var result = await PackageAppService.SaveCapabilityAsync(0, user.UserId, req);

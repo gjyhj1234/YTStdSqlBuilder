@@ -45,7 +45,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateNotificationTemplateReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateNotificationTemplateReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await NotificationAppService.CreateTemplateAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }
@@ -56,7 +56,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPut("/{id:long}", async (HttpContext ctx, long id) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<UpdateNotificationTemplateReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<UpdateNotificationTemplateReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await NotificationAppService.UpdateTemplateAsync(0, user.UserId, id, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, result, 400); return; }
@@ -105,7 +105,7 @@ namespace YTStdTenantPlatform.Endpoints
             group.MapPost("/", async (HttpContext ctx) =>
             {
                 var user = GetCurrentUser(ctx);
-                var req = await ctx.Request.ReadFromJsonAsync<CreateNotificationReqDTO>();
+                var req = await YTStdTenantPlatform.Infrastructure.Serialization.TenantPlatformJsonRequestReader.ReadAsync<CreateNotificationReqDTO>(ctx.Request, ctx.RequestAborted);
                 if (req == null) { await WriteJsonAsync(ctx, ApiResult.Fail(ErrorCodes.InvalidRequestBody, Messages.InvalidRequestBody), 400); return; }
                 var result = await NotificationAppService.CreateNotificationAsync(0, user.UserId, req);
                 if (result.Code != 0) { await WriteJsonAsync(ctx, ApiResult.Fail(result.Code, result.Message), 400); return; }

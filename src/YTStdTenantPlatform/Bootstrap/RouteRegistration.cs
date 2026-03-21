@@ -148,7 +148,7 @@ namespace YTStdTenantPlatform.Bootstrap
                 LoginReqDTO? request;
                 try
                 {
-                    request = await context.Request.ReadFromJsonAsync<LoginReqDTO>(cancellationToken: cancellationToken);
+                    request = await TenantPlatformJsonRequestReader.ReadAsync<LoginReqDTO>(context.Request, cancellationToken);
                 }
                 catch
                 {
@@ -303,7 +303,7 @@ namespace YTStdTenantPlatform.Bootstrap
                 RefreshTokenReqDTO? request;
                 try
                 {
-                    request = await context.Request.ReadFromJsonAsync<RefreshTokenReqDTO>(cancellationToken: cancellationToken);
+                    request = await TenantPlatformJsonRequestReader.ReadAsync<RefreshTokenReqDTO>(context.Request, cancellationToken);
                 }
                 catch
                 {

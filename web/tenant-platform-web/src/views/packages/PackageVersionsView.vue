@@ -203,7 +203,7 @@ async function loadData() {
 
 async function handleCreate() {
   try {
-    await createPackageVersion(createForm.packageId, createForm)
+    await createPackageVersion(createForm.PackageId, createForm)
     showCreatePopup.value = false
     Object.assign(createForm, {
       PackageId: 0,

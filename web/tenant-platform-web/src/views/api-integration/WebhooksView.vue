@@ -203,8 +203,8 @@ async function handleCreate() {
 }
 
 function onEdit(webhook: TenantWebhookRepDTO) {
-  editingId.value = webhook.id
-  Object.assign(editForm, { WebhookName: webhook.webhookName, TargetUrl: webhook.targetUrl })
+  editingId.value = webhook.Id
+  Object.assign(editForm, { WebhookName: webhook.WebhookName, TargetUrl: webhook.TargetUrl })
   showEditPopup.value = true
 }
 

@@ -2074,7 +2074,7 @@
 
 ### 13.3 禁用 API 密钥
 
-- **接口路径**: `PUT /api/tenant-api-keys/{id}`
+- **接口路径**: `PUT /api/tenant-api-keys/{id}/disable`
 - **请求方式**: PUT
 - **是否需要授权**: 是
 - **特别说明**: 禁用后该密钥无法再使用。
